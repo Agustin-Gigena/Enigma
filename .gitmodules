@@ -1,0 +1,9 @@
+[submodule "Shared"]
+	path = Shared
+	url = https://github.com/Agustin-Gigena/Enigma.Shared.git
+[submodule "Server"]
+	path = Server
+	url = https://github.com/Agustin-Gigena/Enigma.Server.git
+[submodule "Client"]
+	path = Client
+	url = https://github.com/Agustin-Gigena/Enigma.Client.git
