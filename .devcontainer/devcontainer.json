@@ -4,24 +4,16 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "fish",
-        "acp.agents": {
-          "Oh My Pi": {
-            "command": "omp",
-            "args": ["acp"]
-          }
-        }
+        "terminal.integrated.defaultProfile.linux": "bash"
       },
       "extensions": [
         "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit",
-        "es eñ errformulahendry.acp-client"
+        "ms-dotnettools.csdevkit"
       ]
     }
   },
-  "containerEnv": {
-    "PATH": "/root/.local/bin:${containerEnv:PATH}"
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/.local/bin"
   },
-  "remoteUser": "root",
-  "postStartCommand": "bash -lc 'set -e; export PATH=/root/.local/bin:$PATH; mkdir -p /root/.local/bin; if ! command -v omp >/dev/null 2>&1; then curl -fsSL https://raw.githubusercontent.com/can1357/oh-my-pi/main/scripts/install.sh | sh -s -- --binary || true; fi; if command -v omp >/dev/null 2>&1; then echo \"omp installed successfully\"; else echo \"omp installation skipped or failed; you can retry manually\"; fi'"
+  "postCreateCommand": "mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/can1357/oh-my-pi/main/scripts/install.sh | sh && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc"
 }
