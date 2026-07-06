@@ -1,2 +1,51 @@
-bin/
-obj/
+# Build results (submodules)
+Client/bin/
+Client/obj/
+Server/bin/
+Server/obj/
+Shared/bin/
+Shared/obj/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+
+# Build configuration
+*.props
+*.targets
+
+# macOS
+.DS_Store
+
+# Linux
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# NuGet packages (for top-level)
+packages/
+
+# Test results
+TestResults/
+
+# Azure
+AzurePackages/
+*.Publish.xml
+
+# .NET Core
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
