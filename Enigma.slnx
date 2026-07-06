@@ -1,0 +1,7 @@
+<Solution>
+  <Projects>
+    <Project Id="client" Path="Client\Enigma.Client.csproj" />
+    <Project Id="server" Path="Server\Enigma.Server.csproj" />
+    <Project Id="shared" Path="Shared\Enigma.Shared.csproj" />
+  </Projects>
+</Solution>
