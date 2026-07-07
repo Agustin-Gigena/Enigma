@@ -1,6 +1,11 @@
 {
   "name": ".NET 10 SDK",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
+  "features": {
+    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1" : {},
+    "ghcr.io/Agustin-Gigena/devcontainer-features/git-extended:1": {},
+    "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
+  },
   "customizations": {
     "vscode": {
       "settings": {
@@ -11,9 +16,5 @@
         "ms-dotnettools.csdevkit"
       ]
     }
-  },
-  "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/.local/bin"
-  },
-  "postCreateCommand": "mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/can1357/oh-my-pi/main/scripts/install.sh | sh && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc"
+  }
 }

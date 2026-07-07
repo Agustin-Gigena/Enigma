@@ -1,7 +1,12 @@
 <Solution>
-  <Projects>
-    <Project Id="client" Path="Client\Enigma.Client.csproj" />
-    <Project Id="server" Path="Server\Enigma.Server.csproj" />
-    <Project Id="shared" Path="Shared\Enigma.Shared.csproj" />
-  </Projects>
+  <Folder Name="/Client/">
+    <Project Path="Client/Enigma.Client.csproj" />
+  </Folder>
+  <Folder Name="/Server/">
+    <Project Path="Server/Enigma.Server.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/Enigma.Shared.csproj" />
+  </Folder>
+
 </Solution>

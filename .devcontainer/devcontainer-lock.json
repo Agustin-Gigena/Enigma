@@ -1,0 +1,19 @@
+{
+  "features": {
+    "ghcr.io/Agustin-Gigena/devcontainer-features/git-extended:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/agustin-gigena/devcontainer-features/git-extended@sha256:a1a40b2db64a503c4ea1e0bc7cfa2d59de08ec563616221bb548f2140f6e4eb7",
+      "integrity": "sha256:a1a40b2db64a503c4ea1e0bc7cfa2d59de08ec563616221bb548f2140f6e4eb7"
+    },
+    "ghcr.io/devcontainers-extra/features/gh-cli:1": {
+      "version": "1.0.13",
+      "resolved": "ghcr.io/devcontainers-extra/features/gh-cli@sha256:bd667bbc8a0d4614b4c3613ec2cce260ea6cdf893f8a10b8b670e47240e0e993",
+      "integrity": "sha256:bd667bbc8a0d4614b4c3613ec2cce260ea6cdf893f8a10b8b670e47240e0e993"
+    },
+    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/iyaki/devcontainer-features/oh-my-pi@sha256:8d6fbcf27a0e67ae24252200520f5ef3a8c4dd46a3442032ecee110af741b272",
+      "integrity": "sha256:8d6fbcf27a0e67ae24252200520f5ef3a8c4dd46a3442032ecee110af741b272"
+    }
+  }
+}
