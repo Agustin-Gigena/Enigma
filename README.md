@@ -41,3 +41,11 @@ dotnet run --project Client/Enigma.Client.csproj
 docker-compose up -d
 dotnet ef database update --project Server/Enigma.Server.csproj
 ```
+
+## Licencia
+
+Funcional Source License 1.1 (FSL-1.1-ALv2). Ver [`LICENSE-FSL-1.1-ALv2`](./LICENSE-FSL-1.1-ALv2).
+
+Source-available: el código es legible y modificable para **usos permitidos** (uso interno, educación e investigación no comercial, servicios profesionales a licenciatarios). Está **prohibido siempre** usar Enigma en un producto o servicio comercial que sustituya o compita con el Software o ofrezca funcionalidad similar (Competing Use).
+
+A los 2 años de publicada cada versión, convierte automáticamente a Apache 2.0; la cláusula anti-competencia sobrevive al Change Date.
