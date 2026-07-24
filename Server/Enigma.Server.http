@@ -1,0 +1,6 @@
+@Enigma.Server_HostAddress = http://localhost:5064
+
+GET {{Enigma.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
