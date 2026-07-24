@@ -1,0 +1,63 @@
+using Enigma.Server.Data.Entities.Auth;
+using Enigma.Server.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+namespace Enigma.Server.Data
+{
+    public abstract class GenericEntity
+    {
+        public GenericEntity(ICurrentUserService currentUserService)
+        {
+            _currentUserService = currentUserService;
+        }
+        private readonly ICurrentUserService _currentUserService;
+        public int Id { get; set; }
+        public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+        public Usuario CreadoPor { get; set; } = null!;
+        public DateTime? ModificadoEn { get; set; } = null;
+        public Usuario? ModificadoPor { get; set; } = null;
+        public DateTime? BorradoEn { get; set; } = null;
+        public Usuario? BorradoPor { get; set; } = null;
+        public bool BorradoLogico { get; set; } = false;
+
+        public virtual void SetCreadoPor(Usuario? usuario = null)
+        {
+            if (usuario == null)
+            {
+                usuario = _currentUserService.GetCurrentUser();
+            }
+            CreadoPor = usuario ?? throw new InvalidOperationException("No se puede establecer el usuario creador porque no hay un usuario autenticado.");
+            CreadoEn = DateTime.UtcNow;
+        }
+
+        public virtual void SetModificadoPor(Usuario? usuario = null)
+        {
+            if (usuario == null)
+            {
+                usuario = _currentUserService.GetCurrentUser();
+            }
+            ModificadoPor = usuario ?? throw new InvalidOperationException("No se puede establecer el usuario modificador porque no hay un usuario autenticado.");
+            ModificadoEn = DateTime.UtcNow;
+        }
+
+        public virtual void SetBorradoLogico(bool borradoLogico, Usuario? usuario = null)
+        {
+            if (usuario == null)
+            {
+                usuario = _currentUserService.GetCurrentUser();
+            }
+
+            BorradoLogico = borradoLogico;
+            if (borradoLogico)
+            {
+                BorradoPor = usuario ?? throw new InvalidOperationException("No se puede establecer el usuario borrador porque no hay un usuario autenticado.");
+                BorradoEn = DateTime.UtcNow;
+            }
+            else
+            {
+                this.SetModificadoPor();
+                BorradoPor = null;
+                BorradoEn = null;
+            }
+        }
+    }
+}

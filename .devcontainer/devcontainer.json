@@ -2,9 +2,10 @@
   "name": ".NET 10 SDK",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "features": {
+    "ghcr.io/devcontainers/features/node:2.1.0": {},
     "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1" : {},
-    "ghcr.io/Agustin-Gigena/devcontainer-features/git-extended:1": {},
     "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
+    
   },
   "customizations": {
     "vscode": {

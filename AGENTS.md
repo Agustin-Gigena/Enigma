@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-Enigma is a modular, component-based system split across Git submodules: **Client** (Blazor WASM), **Server** (ASP.NET Core API), and **Shared** (common types). Built on .NET 10, it implements soft-delete audit tracking, dependency injection, and repository patterns.
+Enigma is a modular, component-based monorepo with three projects: **Client** (Blazor WASM), **Server** (ASP.NET Core API), and **Shared** (common types), all versioned together in a single Git repository (no submodules). Built on .NET 10, it implements soft-delete audit tracking, dependency injection, and repository patterns.
 
 ---
 

@@ -1,36 +1,43 @@
 # Enigma
 
-Repositorio principal que contiene los submódulos del proyecto Enigma.
+Monorepo del proyecto Enigma: cliente Blazor WebAssembly, API ASP.NET Core y librería compartida, todo sobre .NET 10 con backend MySQL.
 
 ## Estructura
 
 ```
 Enigma/
-├── Client/   → https://github.com/Agustin-Gigena/Enigma.Client
-├── Server/   → https://github.com/Agustin-Gigena/Enigma.Server
-└── Shared/   → https://github.com/Agustin-Gigena/Enigma.Shared
+├── Client/   # Blazor WebAssembly (net10.0)
+├── Server/   # ASP.NET Core Web API + EF Core (net10.0)
+└── Shared/   # Tipos comunes, DTOs (net10.0)
 ```
 
-## Clonar con submódulos
+`Server` y `Client` referencian `Shared` vía `ProjectReference`. La solution `Enigma.slnx` orquesta los tres proyectos.
+
+## Clonar
 
 ```bash
-# Opción 1: Clonar recursivamente
-git clone --recursive https://github.com/Agustin-Gigena/Enigma.git
-
-# Opción 2: Inicializar submódulos después de clonar
 git clone https://github.com/Agustin-Gigena/Enigma.git
 cd Enigma
-git submodule update --init --recursive
 ```
 
-## Actualizar submódulos
+No hay submódulos: es un clonado normal.
+
+## Build
 
 ```bash
-# Actualizar todos los submódulos a la última versión
-git submodule update --remote --recursive
+# Build completo
+dotnet build Enigma.slnx
 
-# O entrar a cada submódulo y hacer pull
-cd Client && git pull && cd ..
-cd Server && git pull && cd ..
-cd Shared && git pull && cd ..
+# Server (API)
+dotnet run --project Server/Enigma.Server.csproj
+
+# Client (Blazor WASM dev server)
+dotnet run --project Client/Enigma.Client.csproj
+```
+
+## Base de datos (MySQL 8.0)
+
+```bash
+docker-compose up -d
+dotnet ef database update --project Server/Enigma.Server.csproj
 ```
