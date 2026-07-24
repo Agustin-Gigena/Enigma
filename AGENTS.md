@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-**Enigma** — Full-stack .NET 10 application with Blazor WebAssembly client, ASP.NET Core Web API server, and MySQL backend.
+**Enigma** — Full-stack .NET 10 application with Blazor WebAssembly client, ASP.NET Core Web API server, and MySQL backend. Licensed under the Functional Source License 1.1 (FSL-1.1-ALv2): source-available, Competing Use prohibited, converts to Apache 2.0 after 2 years per version.
 
 ---
 
