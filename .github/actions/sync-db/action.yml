@@ -116,7 +116,7 @@ runs:
         export MYSQL_USER="root"
         export MYSQL_PASSWORD="${MYSQL_ROOT_PASSWORD}"
 
-        dotnet dotnet-ef database update --project Server
+        dotnet ef database update --project Server
 
         # ── V_NEW: latest migration by filesystem timestamp ─────
         # Parse Server/Data/Migrations/<timestamp>_<name>.cs (exclude
