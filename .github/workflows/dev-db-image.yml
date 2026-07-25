@@ -3,12 +3,8 @@ name: Sync DB to GHCR
 on:
   workflow_dispatch:
     inputs:
-      seed-sql:
-        description: "Seed para bootstrap (s3://bucket/key.sql o path local). Vacio = incremental."
-        required: false
-        default: ""
       target-branch:
-        description: "Sufijo del package GHCR destino (production/development). Vacio = usar la rama del dispatch. Util para bootstrap: correr sobre una rama y crear el package de otra."
+        description: "Sufijo del package GHCR destino (production/development). Vacio = usar la rama del dispatch."
         required: false
         default: ""
       force:
@@ -29,8 +25,6 @@ jobs:
       - uses: actions/checkout@v4
 
       # ── Compute GHCR prefix (un package por rama) ─────────────
-      # El branch va en el nombre del package: enigma-dev-db_<branch>.
-      # Cada package tiene su propio :latest movil.
       - name: Compute GHCR prefix
         id: ghcr
         shell: bash
@@ -50,13 +44,10 @@ jobs:
         uses: ./.github/actions/sync-db
         env:
           GHCR_PREFIX: ${{ steps.ghcr.outputs.prefix }}
-          SEED_SQL: ${{ inputs.seed-sql }}
           FORCE: ${{ inputs.force }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'root_password' }}
           MYSQL_DATABASE: enigma_db
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       # ── Summary ───────────────────────────────────────────────
       - name: Summary
