@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Client/Dockerfile
 # Build context: repo root (docker build -f Client/Dockerfile .)
 
@@ -16,11 +17,5 @@ RUN dotnet publish Client/Enigma.Client.csproj -c Release -o /app --no-restore
 
 FROM caddy:alpine
 COPY --from=build /app/wwwroot /srv
-COPY <<'CADDYFILE' /etc/caddy/Caddyfile
-:80 {
-	root * /srv
-	try_files {path} /index.html
-	file_server
-}
-CADDYFILE
+COPY Client/Caddyfile /etc/caddy/Caddyfile
 EXPOSE 80
