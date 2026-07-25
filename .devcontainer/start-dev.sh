@@ -8,6 +8,25 @@ mkdir -p "$LOG_DIR"
 
 cd "$WORKSPACE"
 
+# --- Validate required env vars ---
+for var in MYSQL_DATABASE MYSQL_USER MYSQL_PASSWORD MYSQL_ROOT_PASSWORD; do
+  if [ -z "${!var:-}" ]; then
+    echo "ERROR: $var is not set. Provide it via remoteEnv or the environment." >&2
+    exit 1
+  fi
+done
+
+# --- PID tracking and cleanup trap ---
+SERVER_PID=""
+CLIENT_PID=""
+cleanup() {
+  echo "dev: cleaning up..." >&2
+  [ -n "$CLIENT_PID" ] && kill "$CLIENT_PID" 2>/dev/null || true
+  [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null || true
+  docker rm -f enigma-dev-db >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
 # --- Idempotency: tear down previous session's processes first. ---
 docker rm -f enigma-dev-db >/dev/null 2>&1 || true
 pkill -f 'dotnet watch --project Server' >/dev/null 2>&1 || true
@@ -61,7 +80,15 @@ set +a
 echo "dev: wrote $ENV_FILE and exported dev vars"
 
 # --- 2. Wait for the DinD daemon (started by the docker-in-docker feature). ---
-for _ in $(seq 1 30); do docker info >/dev/null 2>&1 && break; sleep 1; done
+DIND_READY=false
+for _ in $(seq 1 30); do
+  if docker info >/dev/null 2>&1; then DIND_READY=true; break; fi
+  sleep 1
+done
+if [ "$DIND_READY" != "true" ]; then
+  echo "ERROR: Docker daemon not ready after 30s. Check DinD feature." >&2
+  exit 1
+fi
 
 # --- 3. Pull + run MySQL; volume keyed by tag (per-branch DB state). ---
 docker pull "$IMAGE"
@@ -74,22 +101,32 @@ docker run -d --rm \
   -e MYSQL_DATABASE="$MYSQL_DATABASE" \
   -v "enigma-dev-db-${LONG_BRANCH}-data:/var/lib/mysql" \
   "$IMAGE"
-
 # Wait for MySQL to accept connections before starting Server.
+MYSQL_READY=false
 for _ in $(seq 1 60); do
-  docker exec enigma-dev-db mysqladmin ping -h localhost -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" >/dev/null 2>&1 && break
+  if docker exec enigma-dev-db mysqladmin ping -h localhost -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" >/dev/null 2>&1; then
+    MYSQL_READY=true
+    break
+  fi
   sleep 1
 done
+if [ "$MYSQL_READY" != "true" ]; then
+  echo "ERROR: MySQL not ready after 60s. Last container logs:" >&2
+  docker logs --tail 20 enigma-dev-db >&2
+  exit 1
+fi
 echo "dev: MySQL alive at localhost:3306 (tag $LONG_BRANCH)"
 
 # --- 4. Start Server and Client in watch under nohup; ports via launchSettings.json. ---
 nohup dotnet watch --project Server >"$LOG_DIR/server.log" 2>&1 &
-echo "dev: Server watch started (see $LOG_DIR/server.log)"
+SERVER_PID=$!
+echo "dev: Server watch started (PID $SERVER_PID, see $LOG_DIR/server.log)"
 
 # Small delay so the Server dev certificate / port reservation finishes first.
 sleep 2
 
 nohup dotnet watch --project Client >"$LOG_DIR/client.log" 2>&1 &
-echo "dev: Client watch started (see $LOG_DIR/client.log)"
+CLIENT_PID=$!
+echo "dev: Client watch started (PID $CLIENT_PID, see $LOG_DIR/client.log)"
 
 echo "dev: full stack up — MySQL :3306 | Server :8080 | Client :80/:443"
