@@ -1,5 +1,5 @@
 name: Setup .NET + dotnet-ef
-description: Instala el SDK de .NET 10 y la herramienta dotnet-ef global. Prepara el runner para cualquier operacion .NET sobre el repo (migraciones EF Core, build, test). Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.
+description: 'Instala el SDK de .NET 10 y la herramienta dotnet-ef global. Prepara el runner para cualquier operacion .NET sobre el repo (migraciones EF Core, build, test). Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.'
 
 runs:
   using: "composite"
