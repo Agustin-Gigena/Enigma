@@ -1,5 +1,5 @@
 name: Setup .NET + dotnet-ef
-description: Instala el SDK de .NET 10 y la herramienta dotnet-ef global. Prepara el runner para operar sobre el repo Enigma (restore, build, migraciones EF Core). Versiones fijas (hardcodeadas): SDK 10.0.x, dotnet-ef 10.0.0 (matchea Microsoft.EntityFrameworkCore.* del Server).
+description: Instala el SDK de .NET 10 y la herramienta dotnet-ef global. Prepara el runner para cualquier operacion .NET sobre el repo (migraciones EF Core, build, test). Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.
 
 runs:
   using: "composite"
@@ -8,7 +8,7 @@ runs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: "10.0.x"
-        cache: false
+        cache: true
 
     - name: Install dotnet-ef (global tool)
       shell: bash
@@ -24,10 +24,4 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        dotnet restore Enigma.slnx
-
-    - name: Build Server (required for dotnet ef --no-build in sync-db)
-      shell: bash
-      run: |
-        set -euo pipefail
-        dotnet build Server/Enigma.Server.csproj --no-restore
+        dotnet restore
