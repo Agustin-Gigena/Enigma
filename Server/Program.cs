@@ -10,13 +10,22 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Build the MySQL connection string from environment variables (with dev defaults).
+// NOTE: ${VAR} placeholders in appsettings.json are NOT expanded by .NET
+// IConfiguration (EnvSubst is not native). We assemble the string here.
+var connectionString = $"Server={Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost"};"
+    + $"Port={Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306"};"
+    + $"Database={Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "enigma_db"};"
+    + $"User Id={Environment.GetEnvironmentVariable("MYSQL_USER") ?? "enigma"};"
+    + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};";
+
 // Configure DbContext
+// Use a fixed MySQL 8.0 server version (no AutoDetect) so design-time EF
+// (dotnet ef migrations add / database update) does not open a TCP connection.
 builder.Services.AddDbContext<EnigmaDbContext>(options =>
-    
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(ServerVersion.AutoDetect(connectionString)),
+        new MySqlServerVersion(new Version(8, 0, 42)),
         mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(5),
