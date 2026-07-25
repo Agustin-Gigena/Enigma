@@ -1,11 +1,22 @@
 {
-  "name": ".NET 10 SDK",
+  "name": ".NET 10 + MySQL (DinD)",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
-    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1" : {},
-    "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
-    
+    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashCompose": false
+    }
+  },
+  "postStartCommand": "bash .devcontainer/start-dev.sh",
+  "remoteEnv": {
+    "DB_IMAGE_REPO": "ghcr.io/agustin-gigena/enigma-dev-db",
+    "MYSQL_HOST": "localhost",
+    "MYSQL_PORT": "3306",
+    "MYSQL_DATABASE": "enigma_db",
+    "MYSQL_USER": "enigma",
+    "MYSQL_PASSWORD": "enigma_dev_password",
+    "MYSQL_ROOT_PASSWORD": "root_password"
   },
   "customizations": {
     "vscode": {
@@ -14,7 +25,8 @@
       },
       "extensions": [
         "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "patcx.vscode-nuget-gallery"
       ]
     }
   }
