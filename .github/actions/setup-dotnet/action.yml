@@ -8,7 +8,7 @@ runs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: "10.0.x"
-        cache: true
+        cache: false
 
     - name: Install dotnet-ef (global tool)
       shell: bash
