@@ -101,7 +101,7 @@ docker-compose up -d
 dotnet ef migrations add MigrationName --project Server/Enigma.Server.csproj
 dotnet ef database update --project Server/Enigma.Server.csproj
 
-# Auto-migration enabled in development (Program.cs line 38)
+# Auto-migration enabled in development (Program.cs auto-applies migrations)
 ```
 
 **Test (none implemented):**
@@ -117,9 +117,12 @@ dotnet test
 # 1. Start MySQL container
 docker-compose up -d
 
-# 2. Set environment variables or use appsettings.json
-#    Server/appsettings.json interpolates:
-#    DefaultConnection = Server=${MYSQL_HOST};Port=${MYSQL_PORT};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD}
+# 2. Set environment variables (Program.cs assembles the connection string)
+#    Server/Program.cs reads: MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE,
+#    MYSQL_USER, MYSQL_PASSWORD (with dev defaults: localhost/3306/enigma_db/
+#    enigma/enigma_dev_password). appsettings.json keeps ${MYSQL_*}
+#    placeholders only as documentation — .NET IConfiguration does NOT
+#    expand ${VAR}.
 
 # 3. Apply migrations
 dotnet ef database update --project Server
@@ -380,7 +383,7 @@ dotnet test --collect:"XPlat Code Coverage"
 
 5. **Auth Implementation**: `Usuario` entity exists, but `CurrentUserService.IsAuthenticated()` throws `NotImplementedException`. Authentication middleware (JWT/cookies) is not configured.
 
-6. **Auto-Migration in Dev**: In development, `Program.cs` line 38 auto-applies migrations. Production deployments must run `dotnet ef database update` explicitly.
+6. **Auto-Migration in Dev**: In development, `Program.cs` auto-applies migrations via `db.Database.Migrate()` (called when `ASPNETCORE_ENVIRONMENT=Development`). Production deployments must run `dotnet ef database update` explicitly.
 
 7. **Database Credentials** (dev only):
    - Host: `localhost` or `${MYSQL_HOST}`
