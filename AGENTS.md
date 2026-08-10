@@ -350,7 +350,7 @@ dotnet test --collect:"XPlat Code Coverage"
 **QA Expectations:**
 
 - Unit tests for repository methods ( GetById, SetBorradoLogico, soft-delete logic)
-- Service layer tests with mocked DbContext/ICurrentUserService
+- Service/entity audit tests via the ambient `CurrentUserService` scope (`WebApplicationFactory` E2E, o `InternalsVisibleTo` para `BeginScope`)
 - Controller tests with test server
 - Blazor component tests using bUnit
 - API integration tests using `WebApplicationFactory<Program>`
