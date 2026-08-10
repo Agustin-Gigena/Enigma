@@ -1,12 +1,18 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Enigma.Server.Data;
+using Enigma.Server.Data.Repositories.Auth;
+using Enigma.Server.Services;
+using Enigma.Server.Services.Interfaces;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UsuarioRepository>();
+builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();
@@ -78,7 +84,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("DevFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<CurrentUserMiddleware>();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
