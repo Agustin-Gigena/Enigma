@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Enigma.Server.Data;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     
+    app.MapScalarApiReference("/api/docs", options =>
+    {
+        options.WithTitle("Enigma API")
+               .WithOpenApiRoutePattern("/openapi/v1.json");
+    }   );
     // Auto-apply migrations in development — retry briefly, but never take the
     // app down if the database is unreachable (dev DB may not be up yet).
     using var scope = app.Services.CreateScope();
