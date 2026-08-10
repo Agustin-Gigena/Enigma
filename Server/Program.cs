@@ -9,6 +9,11 @@ builder.Services.AddControllers();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();
+builder.Services.AddCors(options =>
+    options.AddPolicy("DevFrontend", policy =>
+        policy.WithOrigins("http://localhost:80", "http://127.0.0.1:80")
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
 
 // Build the MySQL connection string from environment variables (with dev defaults).
 // NOTE: ${VAR} placeholders in appsettings.json are NOT expanded by .NET
@@ -41,13 +46,32 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     
-    // Auto-apply migrations in development
+    // Auto-apply migrations in development — retry briefly, but never take the
+    // app down if the database is unreachable (dev DB may not be up yet).
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
-    db.Database.Migrate();
+    var migrationsApplied = false;
+    for (var attempt = 1; attempt <= 5 && !migrationsApplied; attempt++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            migrationsApplied = true;
+            app.Logger.LogInformation("Database migrations applied");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Could not apply database migrations (attempt {Attempt}/5) — continuing without DB", attempt);
+            if (attempt < 5)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+    }
 }
 
 app.UseHttpsRedirection();
+app.UseCors("DevFrontend");
 app.UseAuthorization();
 app.MapControllers();
 
