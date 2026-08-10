@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Enigma.Server.Data.Entities.Auth;
-using Enigma.Server.Data.Repositories.Auth;
 using Enigma.Server.Services.Interfaces;
 
 namespace Enigma.Server.Services;
