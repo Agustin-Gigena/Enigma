@@ -251,7 +251,7 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 
 - **Client**: Blazor component state (`@currentCount`, `@loading`)
 - **Server**: EF Core change tracking via DbContext
-- **Audit fields**: Auto-populated via `ICurrentUserService` claims
+- **Audit fields**: Auto-populated via `CurrentUserService.GetCurrentUser()` (acceso ambiental, sin inyección)
 
 ---
 
@@ -262,10 +262,10 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 | `Enigma.slnx` | Solution file | 3 projects: Client, Server, Shared |
 | `Server/Program.cs` | Server entry point | DI, migration auto-run, OpenAPI |
 | `Server/Data/EnigmaDbContext.cs` | EF Core DbContext | Currently minimal, OnModelCreating empty |
-| `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete, ICurrentUserService |
+| `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete; audit via static `CurrentUserService` |
 | `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Synchronous, soft-delete support |
 | `Server/Controllers/GenericController.cs` | Base controller | `[ApiController]`, `[Route("[controller]")]` |
-| `Server/Services/CurrentUserService.cs` | User context | Extracts claims from HttpContext |
+| `Server/Services/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
 | `Client/Program.cs` | Client entry point | WebAssemblyHostBuilder, HttpClient DI |
 | `Client/App.razor` | Root component | Router, default MainLayout, NotFound |
 | `Client/_Imports.razor` | Global usings | Blazor namespaces, HttpClient, Forms |
@@ -368,7 +368,7 @@ dotnet test --collect:"XPlat Code Coverage"
 
 1. **Soft-Delete Awareness**: All entities inherit `BorradoLogico` field. Queries must filter unless explicitly including soft-deleted records.
 
-2. **Audit Field Dependencies**: `GenericEntity` requires `ICurrentUserService` to be registered. New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.
+2. **Audit Field Dependencies**: `GenericEntity` resuelve el usuario vía `CurrentUserService.GetCurrentUser()` (estático, sin inyección). New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.
 
 3. **Sync-to-Async Migration**: Current repositories are synchronous. New code should use async EF Core methods (`FindAsync`, `SaveChangesAsync`) with `CancellationToken`.
 
@@ -381,7 +381,7 @@ dotnet test --collect:"XPlat Code Coverage"
    </ItemGroup>
    ```
 
-5. **Auth Implementation**: `Usuario` entity exists, but `CurrentUserService.IsAuthenticated()` throws `NotImplementedException`. Authentication middleware (JWT/cookies) is not configured.
+5. **Auth Implementation**: `CurrentUserService` expone acceso ambiental al usuario actual: `IsAuthenticated()`, `GetClaimsPrincipal()`, `GetCurrentUser()` (entidad `Usuario`, cacheada por request vía `Lazy`) — consumibles desde repositorios/controladores/entidades **sin inyectar nada**. El contexto se siembra con `CurrentUserMiddleware` (AsyncLocal) usando `IHttpContextAccessor`. JWT/cookies aún no configurados: todo request es anónimo hasta entonces. `ENIGMA_AUTH_REQUIRED=true` hace que `GetCurrentUser()` lance `UnauthorizedAccessException` cuando no hay usuario (ausente/false → `null`).
 
 6. **Auto-Migration in Dev**: In development, `Program.cs` auto-applies migrations via `db.Database.Migrate()` (called when `ASPNETCORE_ENVIRONMENT=Development`). Production deployments must run `dotnet ef database update` explicitly.
 
