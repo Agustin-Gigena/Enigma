@@ -1,17 +1,37 @@
 {
-  "name": ".NET 10 + MySQL (DinD)",
+  "name": ".NET 10 + MySQL",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
     "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {},
     "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "dockerDashCompose": false
-    }
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "mounts": [
-    "source=${env:HOME}/.omp,target=/root/.omp,type=bind,consistency=cached"
+    {
+      "source": "${env:HOME}/.omp",
+      "target": "/root/.omp",
+      "type": "bind"
+    },
+    {
+      "type": "bind",
+      "source": "${localEnv:HOME}/.config/gh/",
+      "target": "/root/.config/gh/"
+    },
+    {
+      "type": "bind",
+      "source": "/run/user/1000/podman/podman.sock",
+      "target": "/run/user/1000/podman/podman.sock"
+
+    }
   ],
+  "runArgs": [
+    "--publish",
+    "127.0.0.1:80:18080",
+    "--publish",
+    "127.0.0.1:8081:18081"
+  ],
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends podman",
   "postStartCommand": "bash .devcontainer/start-dev.sh",
   "remoteEnv": {
     "DB_IMAGE_REPO": "ghcr.io/agustin-gigena/enigma-dev-db",
@@ -25,7 +45,8 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "remote.autoForwardPorts": false
       },
       "extensions": [
         "ms-dotnettools.csharp",
@@ -33,5 +54,11 @@
         "patcx.vscode-nuget-gallery"
       ]
     }
+  },
+  "portsAttributes": {
+    "*": {
+      "onAutoForward": "ignore"
+    }
   }
+
 }
