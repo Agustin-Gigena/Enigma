@@ -47,20 +47,22 @@ cleanup() {
   pkill -f 'dotnet watch --project Server' 2>/dev/null || true
   pkill -f 'dotnet watch --project Client' 2>/dev/null || true
   sleep 1
-  podman rm -f enigma-dev-db >/dev/null 2>&1 || true
+  # Belt and suspenders: dotnet watch can swallow SIGTERM mid-restart.
+  pkill -9 -f 'dotnet watch --project' 2>/dev/null || true
   info "Cleanup complete"
 }
 trap cleanup EXIT
 
 # --- Tear down previous session ---
 step "Tearing down previous session"
-podman rm -f enigma-dev-db >/dev/null 2>&1 && info "Removed old container" || info "No previous container"
 pkill -f 'Enigma\.Server' 2>/dev/null && info "Killed old Server app" || true
 pkill -f 'Enigma\.Client' 2>/dev/null && info "Killed old Client app" || true
 pkill -f 'webassembly\.devserver' 2>/dev/null && info "Killed old Client dev server" || true
 pkill -f 'dotnet watch --project Server' 2>/dev/null && info "Killed old Server watch" || true
 pkill -f 'dotnet watch --project Client' 2>/dev/null && info "Killed old Client watch" || true
 sleep 1
+  # Belt and suspenders: dotnet watch can swallow SIGTERM mid-restart.
+  pkill -9 -f 'dotnet watch --project' 2>/dev/null && info "Force-killed remaining watches" || true
 
 # --- 1. Resolve image tag from branch ancestry ---
 step "Resolving image tag"
@@ -91,22 +93,12 @@ info "Image: $IMAGE"
 
 # --- 2. Write .env files ---
 step "Writing .env files"
-# MySQL runs on the HOST (podman remote socket) while this script runs in the
-# devcontainer's own network namespace — "localhost" does not cross. Reach the
-# host through the bridge gateway read from /proc/net/route.
-HOST_GW=""
-GW_HEX="$(awk '$2=="00000000" {print $3; exit}' /proc/net/route 2>/dev/null || true)"
-if [ -n "$GW_HEX" ] && [ "$GW_HEX" != "00000000" ]; then
-  HOST_GW="$(printf '%d.%d.%d.%d' "0x${GW_HEX:6:2}" "0x${GW_HEX:4:2}" "0x${GW_HEX:2:2}" "0x${GW_HEX:0:2}")"
-fi
-if [ -z "$HOST_GW" ]; then
-  warn "Could not resolve host gateway from /proc/net/route — using localhost"
-  HOST_GW="localhost"
-fi
-info "MySQL host: $HOST_GW (host gateway)"
+# The devcontainer and the MySQL container share the podman network
+# enigma-dev-net; the DB is reachable by its container name (aardvark DNS).
+info "MySQL host: enigma-dev-db (network enigma-dev-net)"
 cat > "$WORKSPACE/Server/.env" <<EOF
 ASPNETCORE_ENVIRONMENT=Development
-MYSQL_HOST=$HOST_GW
+MYSQL_HOST=enigma-dev-db
 MYSQL_PORT=3306
 MYSQL_DATABASE=$MYSQL_DATABASE
 MYSQL_USER=$MYSQL_USER
@@ -212,20 +204,39 @@ step "Pulling database image"
 podman pull "$IMAGE"
 info "Pull complete"
 
-# --- 6. Run MySQL container ---
+# --- 6. Ensure network + run MySQL container ---
+step "Ensuring podman network"
+if ! podman network exists enigma-dev-net; then
+  podman network create enigma-dev-net >/dev/null
+  info "Created network enigma-dev-net"
+else
+  info "Network enigma-dev-net already exists"
+fi
+
 step "Starting MySQL container"
-info "Container: enigma-dev-db"
+info "Container: enigma-dev-db (network enigma-dev-net, volume enigma-db-data)"
 
-podman run -d --rm \
-  --name enigma-dev-db \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
-  -e MYSQL_USER="$MYSQL_USER" \
-  -e MYSQL_PASSWORD="$MYSQL_PASSWORD" \
-  -e MYSQL_DATABASE="$MYSQL_DATABASE" \
-  "$IMAGE"
-
-info "Container started"
+# The DB survives devcontainer rebuilds: never removed on teardown, kept if the
+# image tag is unchanged, and backed by a named volume at the baked datadir.
+RUNNING_IMAGE="$(podman inspect enigma-dev-db --format '{{.ImageName}}' 2>/dev/null || true)"
+if [ -n "$RUNNING_IMAGE" ] && [ "$RUNNING_IMAGE" = "$IMAGE" ]; then
+  info "Container already running with $IMAGE — keeping it"
+else
+  if [ -n "$RUNNING_IMAGE" ]; then
+    warn "Image changed ($RUNNING_IMAGE → $IMAGE) — recreating (data volume persists)"
+    podman rm -f enigma-dev-db >/dev/null 2>&1 || true
+  fi
+  podman run -d \
+    --name enigma-dev-db \
+    --network enigma-dev-net \
+    -v enigma-db-data:/var/lib/mysql-baked \
+    -e MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
+    -e MYSQL_USER="$MYSQL_USER" \
+    -e MYSQL_PASSWORD="$MYSQL_PASSWORD" \
+    -e MYSQL_DATABASE="$MYSQL_DATABASE" \
+    "$IMAGE"
+  info "Container started"
+fi
 
 # --- 7. Wait for MySQL to be ready ---
 step "Waiting for MySQL"
@@ -268,7 +279,7 @@ info "Client started (PID $CLIENT_PID, log: $LOG_DIR/client.log)"
 
 # --- Summary ---
 step "Dev stack ready"
-info "MySQL  : localhost:3306"
+info "MySQL  : enigma-dev-db:3306 (net enigma-dev-net, vol enigma-db-data)"
 info "Server : http://localhost:8081 (container :18081)"
 info "Client : http://localhost:80 (container :18080)"
 info "Logs   : $LOG_DIR/"

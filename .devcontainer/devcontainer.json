@@ -1,5 +1,6 @@
 {
   "name": ".NET 10 + MySQL",
+  "initializeCommand": "podman network exists enigma-dev-net || podman network create enigma-dev-net",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
@@ -26,6 +27,10 @@
     }
   ],
   "runArgs": [
+    "--name",
+    "enigma-devcontainer",
+    "--network",
+    "enigma-dev-net",
     "--publish",
     "127.0.0.1:80:18080",
     "--publish",
@@ -35,18 +40,20 @@
   "postStartCommand": "bash .devcontainer/start-dev.sh",
   "remoteEnv": {
     "DB_IMAGE_REPO": "ghcr.io/agustin-gigena/enigma-dev-db",
-    "MYSQL_HOST": "localhost",
+    "MYSQL_HOST": "enigma-dev-db",
     "MYSQL_PORT": "3306",
     "MYSQL_DATABASE": "enigma_db",
-    "MYSQL_USER": "enigma",
-    "MYSQL_PASSWORD": "enigma_dev_password",
+    "MYSQL_USER": "root",
+    "MYSQL_PASSWORD": "root_password",
     "MYSQL_ROOT_PASSWORD": "root_password"
   },
   "customizations": {
     "vscode": {
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
-        "remote.autoForwardPorts": false
+        "remote.autoForwardPorts": false,
+        "remote.restoreForwardedPorts": false,
+        "remote.autoForwardPortSource": "process"
       },
       "extensions": [
         "ms-dotnettools.csharp",
@@ -59,6 +66,9 @@
     "*": {
       "onAutoForward": "ignore"
     }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
   }
 
 }
