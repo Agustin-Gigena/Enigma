@@ -1,15 +1,9 @@
 using Enigma.Server.Data.Entities.Auth;
-using Enigma.Server.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using Enigma.Server.Services;
 namespace Enigma.Server.Data
 {
     public abstract class GenericEntity
     {
-        public GenericEntity(ICurrentUserService currentUserService)
-        {
-            _currentUserService = currentUserService;
-        }
-        private readonly ICurrentUserService _currentUserService;
         public int Id { get; set; }
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
         public Usuario CreadoPor { get; set; } = null!;
@@ -23,7 +17,7 @@ namespace Enigma.Server.Data
         {
             if (usuario == null)
             {
-                usuario = _currentUserService.GetCurrentUser();
+                usuario = CurrentUserService.GetCurrentUser();
             }
             CreadoPor = usuario ?? throw new InvalidOperationException("No se puede establecer el usuario creador porque no hay un usuario autenticado.");
             CreadoEn = DateTime.UtcNow;
@@ -33,7 +27,7 @@ namespace Enigma.Server.Data
         {
             if (usuario == null)
             {
-                usuario = _currentUserService.GetCurrentUser();
+                usuario = CurrentUserService.GetCurrentUser();
             }
             ModificadoPor = usuario ?? throw new InvalidOperationException("No se puede establecer el usuario modificador porque no hay un usuario autenticado.");
             ModificadoEn = DateTime.UtcNow;
@@ -43,7 +37,7 @@ namespace Enigma.Server.Data
         {
             if (usuario == null)
             {
-                usuario = _currentUserService.GetCurrentUser();
+                usuario = CurrentUserService.GetCurrentUser();
             }
 
             BorradoLogico = borradoLogico;
