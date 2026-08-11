@@ -34,19 +34,15 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        python - <<'PY'
-import json
-import os
-import subprocess
-
-input_json = os.environ['PARAMS_JSON']
-parsed = json.loads(input_json)
-for tool_name, tool_version in parsed.get('tools', {}).items():
-    subprocess.run([
-        'dotnet', 'tool', 'install', '--global', tool_name,
-        '--version', tool_version
-    ], check=True)
-PY
+        # Parse PARAMS_JSON using jq (available on GitHub hosted runners)
+        if [ -n "${PARAMS_JSON:-}" ]; then
+          echo "$PARAMS_JSON" | jq -r '.tools // {} | to_entries[] | "\(.key)\t\(.value)"' | while IFS=$'\t' read -r tool version; do
+            echo "Installing global tool $tool $version"
+            dotnet tool install --global "$tool" --version "$version"
+          done
+        else
+          echo "No additional tools specified."
+        fi
         echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
       env:
         PARAMS_JSON: ${{ inputs.params-json }}
