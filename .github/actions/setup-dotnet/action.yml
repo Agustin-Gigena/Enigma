@@ -1,5 +1,15 @@
 name: Setup .NET + dotnet-ef
-description: 'Instala el SDK de .NET 10 y la herramienta dotnet-ef global. Prepara el runner para cualquier operacion .NET sobre el repo (migraciones EF Core, build, test). Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.'
+description: |
+  Instala el SDK de .NET 10 y la herramienta dotnet-ef global.
+  Prepara el runner para cualquier operación .NET sobre el repo
+  (migraciones EF Core, build, test).
+  Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.
+
+inputs:
+  params-json:
+    description: 'JSON genérico con parámetros opcionales. Ejemplo: {"tools": {"dotnet-format": "9.0.218"}}'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -18,6 +28,28 @@ runs:
           --version "10.0.0"
         echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
         dotnet ef --version
+
+    - name: Install additional global tools
+      if: ${{ inputs.params-json != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        python - <<'PY'
+import json
+import os
+import subprocess
+
+input_json = os.environ['PARAMS_JSON']
+parsed = json.loads(input_json)
+for tool_name, tool_version in parsed.get('tools', {}).items():
+    subprocess.run([
+        'dotnet', 'tool', 'install', '--global', tool_name,
+        '--version', tool_version
+    ], check=True)
+PY
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      env:
+        PARAMS_JSON: ${{ inputs.params-json }}
 
     - name: Restore dependencies
       shell: bash
