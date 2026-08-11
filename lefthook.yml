@@ -1,0 +1,15 @@
+pre-commit:
+  commands:
+    validate:
+      run: bash ./scripts/validate.sh
+      root: true
+pre-push:
+  commands:
+    validate:
+      run: bash ./scripts/validate.sh
+      root: true
+commit-msg:
+  commands:
+    conventional:
+      run: bash ./scripts/validate-commit-msg.sh $1
+      root: true
