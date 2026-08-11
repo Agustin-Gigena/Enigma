@@ -1,11 +1,22 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Enigma.Client;
+using Enigma.Client.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+// Auth: state provider decodifica el JWT de localStorage; AuthService orquesta
+// login/logout/sesión; ThemeService mantiene el modo claro/oscuro persistido.
+builder.Services.AddOptions();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<EnigmaAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(
+    sp => sp.GetRequiredService<EnigmaAuthenticationStateProvider>());
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped(sp => new HttpClient
 {
     // Front (:80) and API (:8081) are different origins; WebAssembly cannot
