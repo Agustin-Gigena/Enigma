@@ -1,28 +1,135 @@
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* ── Enigma type ──
+   Manrope (display, self-hosted, variable 500–800) + system stack for body. */
+@font-face {
+    font-family: 'Manrope';
+    src: url('../fonts/manrope-latin.woff2') format('woff2');
+    font-weight: 500 800;
+    font-style: normal;
+    font-display: swap;
 }
 
-h1:focus {
-    outline: none;
+/* ── Enigma design tokens ──
+   World: petrol-jade greens. The dark palette is the user's (accent #259585,
+   depths #123E3C / #0E3736); the light palette derives from the same hue
+   family (ink = #123E3C, action jade deepened to #14665C for AA on white).
+   Scene: staff and students in offices and classrooms — both modes always. */
+:root {
+    --enigma-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --enigma-font-display: 'Manrope', var(--enigma-font);
+    --enigma-radius: 10px;
+    --enigma-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* light */
+    --enigma-bg: #F3F8F7;
+    --enigma-surface: #FFFFFF;
+    --enigma-ink: #123E3C;
+    --enigma-ink-2: #43605D;
+    --enigma-ink-3: #64807D;
+    --enigma-border: #D5E2E0;
+    --enigma-accent: #14665C;
+    --enigma-accent-hover: #0F524A;
+    --enigma-accent-soft: rgba(20, 102, 92, 0.10);
+    --enigma-error: #B42318;
+    --enigma-error-soft: rgba(180, 35, 24, 0.08);
+    --enigma-shadow: 0 1px 2px rgba(14, 55, 54, 0.06), 0 8px 24px rgba(14, 55, 54, 0.08);
+    --enigma-brand-panel: #0E3736;
+    --enigma-brand-panel-ink: #EAF3F1;
+    --enigma-brand-panel-ink-2: #A9BEBB;
+    --enigma-brand-accent: #4FD1BE;
+}
+
+[data-theme="dark"] {
+    /* dark — user palette: accent #259585, layers #123E3C / #0E3736 */
+    --enigma-bg: #0E3736;
+    --enigma-surface: #123E3C;
+    --enigma-surface-2: #173F3D;
+    --enigma-ink: #E9F2F0;
+    --enigma-ink-2: #A9BEBB;
+    --enigma-ink-3: #86A09D;
+    --enigma-border: #2A615F;
+    --enigma-accent: #259585;
+    --enigma-accent-hover: #2BB09E;
+    --enigma-accent-soft: rgba(37, 149, 133, 0.16);
+    --enigma-accent-link: #4FD1BE;
+    --enigma-error: #F97066;
+    --enigma-error-soft: rgba(249, 112, 102, 0.10);
+    --enigma-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --enigma-brand-panel: #0B2B2A;
+    --enigma-brand-panel-ink: #EAF3F1;
+    --enigma-brand-panel-ink-2: #A9BEBB;
+    --enigma-brand-accent: #259585;
+}
+
+html, body {
+    font-family: var(--enigma-font);
+    background: var(--enigma-bg);
+    color: var(--enigma-ink);
+}
+
+/* ── Brand: monogram E with the shifted middle bar ("enigma") ── */
+.enigma-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.enigma-brand__glyph {
+    width: 32px;
+    height: 32px;
+    flex: none;
+}
+
+.enigma-brand__glyph rect {
+    fill: currentColor;
+}
+
+.enigma-brand__glyph path {
+    fill: none;
+    stroke: var(--enigma-brand-glyph-stroke, #FFFFFF);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+.enigma-brand__logo {
+    flex: none;
+    border-radius: 7px;
+}
+
+.enigma-brand__name {
+    font-family: var(--enigma-font-display);
+    font-size: 1.375rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+}
+
+h1:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 4px;
+    border-radius: 2px;
 }
 
 a, .btn-link {
-    color: #0071c1;
+    color: var(--enigma-accent-link, var(--enigma-accent));
 }
 
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    color: #FFFFFF;
+    background-color: var(--enigma-accent);
+    border-color: var(--enigma-accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    color: #FFFFFF;
+    background-color: var(--enigma-accent-hover);
+    border-color: var(--enigma-accent-hover);
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--enigma-accent-soft);
 }
 
-.content {
-    padding-top: 1.1rem;
-}
 
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
@@ -64,7 +171,7 @@ a, .btn-link {
 }
 
     .blazor-error-boundary::after {
-        content: "An error has occurred."
+        content: "Ocurrió un error inesperado."
     }
 
 .loading-progress {
@@ -85,7 +192,7 @@ a, .btn-link {
     }
 
         .loading-progress circle:last-child {
-            stroke: #1b6ec2;
+            stroke: var(--enigma-accent);
             stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
             transition: stroke-dasharray 0.05s ease-in-out;
         }
@@ -98,7 +205,7 @@ a, .btn-link {
 }
 
     .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
+        content: var(--blazor-load-percentage-text, "Cargando");
     }
 
 code {
