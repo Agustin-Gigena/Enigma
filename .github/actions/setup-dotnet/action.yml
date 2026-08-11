@@ -38,7 +38,17 @@ runs:
         if [ -n "${PARAMS_JSON:-}" ]; then
           echo "$PARAMS_JSON" | jq -r '.tools // {} | to_entries[] | "\(.key)\t\(.value)"' | while IFS=$'\t' read -r tool version; do
             echo "Installing global tool $tool $version"
-            dotnet tool install --global "$tool" --version "$version"
+            if dotnet tool install --global "$tool" --version "$version"; then
+              echo "Installed $tool $version"
+            else
+              echo "Pinned version $version for $tool not available, installing latest available"
+              if dotnet tool install --global "$tool"; then
+                echo "Installed latest $tool"
+              else
+                echo "ERROR: failed to install $tool" >&2
+                exit 1
+              fi
+            fi
           done
         else
           echo "No additional tools specified."
