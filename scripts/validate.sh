@@ -8,7 +8,14 @@ dotnet restore Enigma.slnx
 
 if ! dotnet tool list --global | grep -q dotnet-format; then
   echo "-> Instalando dotnet-format globalmente"
-  dotnet tool install --global dotnet-format --version 9.0.218
+  # Intentar instalar la versión fija; si no está disponible, instalar la última disponible
+  if ! dotnet tool install --global dotnet-format --version 9.0.218; then
+    echo "-> Versión 9.0.218 no disponible en fuentes NuGet, instalando la última versión disponible"
+    if ! dotnet tool install --global dotnet-format; then
+      echo "ERROR: no se pudo instalar 'dotnet-format'" >&2
+      exit 1
+    fi
+  fi
 fi
 
 export PATH="$PATH:$HOME/.dotnet/tools"
