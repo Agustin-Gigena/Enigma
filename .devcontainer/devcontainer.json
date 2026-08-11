@@ -36,7 +36,7 @@
     "--publish",
     "127.0.0.1:8081:18081"
   ],
-  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends podman",
+  "postCreateCommand": "apt-get update && apt-get install -y --no-install-recommends podman curl && if ! command -v lefthook >/dev/null 2>&1; then bash <(curl -fsSL https://raw.githubusercontent.com/evilmartians/lefthook/master/install.sh); fi && lefthook install",
   "postStartCommand": "bash .devcontainer/start-dev.sh",
   "remoteEnv": {
     "DB_IMAGE_REPO": "ghcr.io/agustin-gigena/enigma-dev-db",
