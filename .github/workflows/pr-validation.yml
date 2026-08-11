@@ -45,6 +45,3 @@ jobs:
       - name: Optional lefthook install
         run: |
           curl -fsSL https://raw.githubusercontent.com/evilmartians/lefthook/master/install.sh | bash
-
-    env:
-      PATH: ${{ env.PATH }}:${{ github.workspace }}/.dotnet/tools
