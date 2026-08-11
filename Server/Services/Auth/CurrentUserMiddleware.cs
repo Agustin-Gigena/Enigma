@@ -1,6 +1,6 @@
 using Enigma.Server.Data.Repositories.Auth;
 
-namespace Enigma.Server.Services;
+namespace Enigma.Server.Services.Auth;
 
 /// <summary>
 /// Seeds the ambient CurrentUserService scope for the duration of the request
