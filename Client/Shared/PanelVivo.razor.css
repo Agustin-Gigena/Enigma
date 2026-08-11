@@ -1,0 +1,140 @@
+/* Vida ambiental: solo transform/opacity, sin blur en runtime (los degradados
+   ya vienen suavizados). Todo el movimiento vive bajo prefers-reduced-motion
+   no-preference; la pausa con pestaña oculta la maneja EnigmaMotion. */
+.panel-vivo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    container-type: size;
+}
+
+.panel-vivo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(234, 243, 241, 0.05) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+}
+
+.panel-vivo__blob {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform;
+}
+
+.panel-vivo__blob--a {
+    width: 55%;
+    aspect-ratio: 1;
+    left: -14%;
+    top: -16%;
+    background: radial-gradient(circle, rgba(79, 209, 190, 0.16) 0%, transparent 65%);
+}
+
+.panel-vivo__blob--b {
+    width: 62%;
+    aspect-ratio: 1;
+    right: -18%;
+    bottom: -24%;
+    background: radial-gradient(circle, rgba(37, 149, 133, 0.2) 0%, transparent 65%);
+}
+
+.panel-vivo__blob--c {
+    width: 46%;
+    aspect-ratio: 1;
+    left: 30%;
+    top: 34%;
+    background: radial-gradient(circle, rgba(37, 149, 133, 0.13) 0%, transparent 65%);
+}
+
+.panel-vivo__sweep {
+    position: absolute;
+    top: -25%;
+    bottom: -25%;
+    left: -45%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent, rgba(234, 243, 241, 0.06) 45%, rgba(79, 209, 190, 0.05) 55%, transparent);
+}
+
+.panel-vivo__motes {
+    position: absolute;
+    inset: 0;
+}
+
+.panel-vivo__motes span {
+    position: absolute;
+    top: 102%;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(234, 243, 241, 0.4);
+    opacity: 0;
+}
+
+.panel-vivo__motes span:nth-child(1) { left: 8%;  animation-duration: 21s; animation-delay: -4s; }
+.panel-vivo__motes span:nth-child(2) { left: 22%; animation-duration: 16s; animation-delay: -9s; width: 4px; height: 4px; }
+.panel-vivo__motes span:nth-child(3) { left: 38%; animation-duration: 24s; animation-delay: -2s; }
+.panel-vivo__motes span:nth-child(4) { left: 51%; animation-duration: 18s; animation-delay: -13s; width: 4px; height: 4px; background: rgba(79, 209, 190, 0.45); }
+.panel-vivo__motes span:nth-child(5) { left: 63%; animation-duration: 20s; animation-delay: -7s; }
+.panel-vivo__motes span:nth-child(6) { left: 74%; animation-duration: 15s; animation-delay: -11s; }
+.panel-vivo__motes span:nth-child(7) { left: 86%; animation-duration: 23s; animation-delay: -1s; width: 4px; height: 4px; }
+.panel-vivo__motes span:nth-child(8) { left: 94%; animation-duration: 17s; animation-delay: -15s; }
+.panel-vivo__motes span:nth-child(9) { left: 16%; animation-duration: 26s; animation-delay: -18s; width: 5px; height: 5px; background: rgba(234, 243, 241, 0.28); }
+.panel-vivo__motes span:nth-child(10) { left: 45%; animation-duration: 19s; animation-delay: -6s; }
+
+/* Pausa con la pestaña oculta (EnigmaMotion toggla .panel-vivo--hidden) */
+.panel-vivo--hidden .panel-vivo__blob,
+.panel-vivo--hidden .panel-vivo__sweep,
+.panel-vivo--hidden .panel-vivo__motes span {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .panel-vivo__blob--a {
+        animation: enigma-drift-a 16s ease-in-out infinite alternate;
+    }
+
+    .panel-vivo__blob--b {
+        animation: enigma-drift-b 13s ease-in-out infinite alternate;
+    }
+
+    .panel-vivo__blob--c {
+        animation: enigma-drift-c 21s ease-in-out infinite alternate;
+    }
+
+    .panel-vivo__sweep {
+        animation: enigma-sweep 9s linear infinite;
+    }
+
+    .panel-vivo__motes span {
+        animation: enigma-mote linear infinite;
+    }
+}
+
+@keyframes enigma-drift-a {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(7%, 9%) scale(1.14); }
+}
+
+@keyframes enigma-drift-b {
+    from { transform: translate(0, 0) scale(1.08); }
+    to { transform: translate(-8%, -6%) scale(1); }
+}
+
+@keyframes enigma-drift-c {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(-6%, 7%) scale(1.18); }
+}
+
+@keyframes enigma-sweep {
+    from { transform: translateX(0) skewX(-18deg); }
+    to { transform: translateX(360%) skewX(-18deg); }
+}
+
+@keyframes enigma-mote {
+    0% { opacity: 0; transform: translateY(0) translateX(0); }
+    10% { opacity: 0.9; }
+    90% { opacity: 0.55; }
+    100% { opacity: 0; transform: translateY(calc(-1 * (100cqh + 40px))) translateX(28px); }
+}

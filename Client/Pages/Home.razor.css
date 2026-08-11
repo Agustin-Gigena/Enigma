@@ -1,0 +1,193 @@
+.home {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Franja de identidad: el panel vivo solo como franja superior ── */
+.home__franja {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--enigma-brand-panel);
+    color: var(--enigma-brand-panel-ink);
+    padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+}
+
+.home__franja > *:not(.panel-vivo) {
+    position: relative;
+    z-index: 1;
+}
+
+.home__franja-copy {
+    max-width: 880px;
+}
+
+.home__saludo {
+    margin: 0 0 0.4rem;
+    color: var(--enigma-brand-panel-ink-2);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.home__franja h1 {
+    font-family: var(--enigma-font-display);
+    font-size: clamp(1.75rem, 3vw, 2.4rem);
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+    margin: 0;
+}
+
+.home__tipo {
+    margin: 0.5rem 0 0;
+    color: var(--enigma-brand-panel-ink-2);
+    font-size: 1rem;
+}
+
+/* ── Escritorio: contexto a la izquierda, módulos a la derecha ── */
+.home__escritorio {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) 1fr;
+    gap: 2.5rem;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
+}
+
+.home__contexto-titulo {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--enigma-ink-3);
+    margin: 0 0 1rem;
+}
+
+.home__ficha {
+    margin: 0 0 1.25rem;
+    padding: 1.15rem 1.25rem;
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    box-shadow: var(--enigma-shadow);
+}
+
+.home__ficha dt {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--enigma-ink-3);
+    margin: 0 0 0.3rem;
+}
+
+.home__ficha dd {
+    margin: 0;
+    font-weight: 650;
+    color: var(--enigma-ink);
+}
+
+.home__ficha .home__ficha-sub {
+    margin-top: 0.3rem;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--enigma-ink-2);
+}
+
+.home__modulos-titulo {
+    font-family: var(--enigma-font-display);
+    font-size: 1.25rem;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.25rem;
+}
+
+.home__vacio {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 3rem 1.5rem;
+    border: 1.5px dashed var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    text-align: center;
+}
+
+.home__vacio-marca {
+    width: 40px;
+    height: 40px;
+    color: var(--enigma-ink-3);
+    opacity: 0.45;
+    margin-bottom: 0.5rem;
+}
+
+.home__vacio-marca rect {
+    fill: currentColor;
+}
+
+.home__vacio-marca path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+
+.home__vacio-titulo {
+    font-weight: 650;
+    color: var(--enigma-ink);
+    margin: 0;
+}
+
+.home__vacio-copy {
+    color: var(--enigma-ink-2);
+    margin: 0;
+    max-width: 34ch;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .home__franja ::deep .panel-vivo {
+        animation: home-vivo-in 900ms ease-out both;
+    }
+
+    .home__franja-copy {
+        animation: home-rise 560ms var(--enigma-ease) both;
+    }
+
+    .home__escritorio {
+        animation: home-rise 560ms var(--enigma-ease) 120ms both;
+    }
+}
+
+@keyframes home-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes home-vivo-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ── Mobile: todo en una columna ── */
+@media (max-width: 860px) {
+    .home__franja {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .home__escritorio {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 1.5rem 1.25rem 2.5rem;
+    }
+}
