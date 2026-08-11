@@ -1,0 +1,31 @@
+{
+  "name": "Enigma — Plataforma institucional",
+  "short_name": "Enigma",
+  "description": "La plataforma de tu institución.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3F8F7",
+  "theme_color": "#0E3736",
+  "icons": [
+    {
+      "src": "images/logo_size.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "images/logo_size.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "images/logo_size_invert.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
