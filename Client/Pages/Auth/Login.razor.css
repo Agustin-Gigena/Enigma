@@ -1,0 +1,380 @@
+.login {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(320px, 42%) 1fr;
+}
+
+/* ── Panel de identidad: siempre sobre brand-panel (verde profundo) ──
+   La vida ambiental (aurora, barrido, motas) vive en <PanelVivo />. */
+.login__panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--enigma-brand-panel);
+    color: var(--enigma-brand-panel-ink);
+    padding: 2.5rem clamp(2rem, 4vw, 4rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+}
+
+.login__panel > *:not(.panel-vivo) {
+    position: relative;
+    z-index: 1;
+}
+
+.login__panel .enigma-brand__logo {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 7px;
+}
+
+/* Emblema hero del logo sobre el panel */
+.login__emblem {
+    align-self: center;
+    margin: auto 0;
+    width: clamp(72px, 9vw, 116px);
+}
+
+.login__emblem img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--enigma-radius);
+}
+
+.login__panel-copy h2 {
+    font-family: var(--enigma-font-display);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+    max-width: 16ch;
+    margin: 0 0 0.75rem;
+}
+
+.login__panel-copy p {
+    color: var(--enigma-brand-panel-ink-2);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    max-width: 38ch;
+    margin: 0;
+}
+
+/* ── Formulario ── */
+.login__form {
+    display: grid;
+    place-items: center;
+    padding: 2rem clamp(1.5rem, 5vw, 4rem);
+}
+
+.login__form-inner {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* ── Movimiento: una sola coreografía de entrada + vida ambiental ──
+   La entrada es el momento autoral del login: la aurora respira, el
+   emblema se asienta con su resplandor y el manifiesto sube; el
+   formulario se suma al final. La vida ambiental vive en PanelVivo y
+   se pausa con la pestaña oculta. Con `prefers-reduced-motion` no
+   queda ninguna animación autoral. */
+@media (prefers-reduced-motion: no-preference) {
+    .login__panel .enigma-brand,
+    .login__emblem,
+    .login__panel-copy h2,
+    .login__panel-copy p,
+    .login__form-inner {
+        animation-name: enigma-rise;
+        animation-timing-function: var(--enigma-ease);
+        animation-duration: 600ms;
+        animation-fill-mode: both;
+    }
+
+    .login__panel .enigma-brand {
+        animation-delay: 0ms;
+    }
+    .login__emblem {
+        animation-name: enigma-emblem-in;
+        animation-delay: 90ms;
+    }
+
+    .login__panel-copy h2 {
+        animation-delay: 180ms;
+    }
+
+    .login__panel-copy p {
+        animation-delay: 240ms;
+    }
+
+    .login__form-inner {
+        animation-delay: 140ms;
+        animation-duration: 520ms;
+    }
+
+    .login__panel ::deep .panel-vivo {
+        animation: enigma-aurora-in 900ms ease-out both;
+    }
+
+    .login__emblem img {
+        animation: enigma-glow 5s ease-in-out infinite alternate;
+    }
+
+    .login__error {
+        animation-name: enigma-alert-in;
+        animation-duration: 260ms;
+        animation-timing-function: var(--enigma-ease);
+        animation-fill-mode: both;
+    }
+}
+
+@keyframes enigma-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes enigma-emblem-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes enigma-aurora-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes enigma-glow {
+    from {
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+    to {
+        box-shadow: 0 0 30px 4px rgba(79, 209, 190, 0.22), 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+}
+
+@keyframes enigma-alert-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes enigma-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.login__topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2.5rem;
+}
+
+.login__theme {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--enigma-border);
+    background: var(--enigma-surface);
+    color: var(--enigma-ink);
+    cursor: pointer;
+    transition: background 180ms var(--enigma-ease), color 180ms var(--enigma-ease), border-color 180ms var(--enigma-ease);
+}
+
+.login__theme:hover {
+    background: var(--enigma-accent-soft);
+    border-color: var(--enigma-accent);
+}
+
+.login__form-inner h1 {
+    font-family: var(--enigma-font-display);
+    font-size: 2.25rem;
+    font-weight: 750;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.5rem;
+}
+
+.login__lead {
+    color: var(--enigma-ink-2);
+    margin: 0 0 2rem;
+}
+
+.login__field {
+    display: block;
+    margin-bottom: 1.25rem;
+}
+
+.login__label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+}
+
+.login__input {
+    width: 100%;
+    height: 48px;
+    padding: 0 0.9rem;
+    font: inherit;
+    color: var(--enigma-ink);
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    outline: none;
+    transition: border-color 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease);
+}
+
+.login__input::placeholder {
+    color: var(--enigma-ink-3);
+}
+
+.login__input:focus {
+    border-color: var(--enigma-accent);
+    box-shadow: 0 0 0 3px var(--enigma-accent-soft);
+}
+
+.login__pass {
+    position: relative;
+    display: block;
+}
+
+.login__pass .login__input {
+    padding-right: 3rem;
+}
+
+.login__eye {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: var(--enigma-radius);
+    background: transparent;
+    color: var(--enigma-ink-3);
+    cursor: pointer;
+    transition: color 180ms var(--enigma-ease), background 180ms var(--enigma-ease);
+}
+
+.login__eye:hover {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+.login__error {
+    color: var(--enigma-error);
+    background: var(--enigma-error-soft);
+    border: 1px solid color-mix(in srgb, var(--enigma-error) 35%, transparent);
+    border-radius: var(--enigma-radius);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    margin: 0 0 1.25rem;
+}
+
+.login__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    height: 48px;
+    font: inherit;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: var(--enigma-accent);
+    border: 0;
+    border-radius: var(--enigma-radius);
+    cursor: pointer;
+    transition: background 180ms var(--enigma-ease), transform 120ms var(--enigma-ease);
+}
+
+.login__submit:hover {
+    background: var(--enigma-accent-hover);
+}
+
+.login__submit:active {
+    transform: translateY(1px);
+}
+
+.login__submit:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.login__spinner {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #FFFFFF;
+    animation: enigma-spin 700ms linear infinite;
+}
+
+.login__theme:focus-visible,
+.login__eye:focus-visible,
+.login__submit:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+/* ── Mobile: panel como franja superior ── */
+@media (max-width: 860px) {
+    .login {
+        grid-template-columns: 1fr;
+    }
+
+    .login__panel {
+        padding: 1.5rem;
+        gap: 1.25rem;
+    }
+
+    .login__emblem {
+        display: none;
+    }
+
+    .login__panel-copy h2 {
+        font-size: 1.5rem;
+    }
+
+    .login__panel-copy p {
+        font-size: 0.95rem;
+    }
+
+    .login__form {
+        padding: 2rem 1.5rem;
+        place-items: start center;
+    }
+
+    .login__topbar {
+        margin-bottom: 1.5rem;
+    }
+}
