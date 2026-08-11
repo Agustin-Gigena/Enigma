@@ -1,17 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enigma.Client</title>
+    <title>Enigma</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="images/icon.svg" />
+    <link rel="icon" type="image/jpeg" href="images/logo_size.jpg" />
+    <meta name="description" content="Enigma — la plataforma de tu institución." />
+    <meta name="theme-color" content="#0E3736" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="images/logo_size.jpg" />
     <link href="Enigma.Client.styles.css" rel="stylesheet" />
-    <script type="importmap"></script>
+    <script>
+        // Aplica el tema antes del primer render: preferencia guardada, o la del sistema.
+        (function () {
+            var t = localStorage.getItem('enigma_theme');
+            if (t !== 'light' && t !== 'dark') {
+                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 
 <body>
@@ -24,10 +41,20 @@
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        Ocurrió un error inesperado.
+        <a href="." class="reload">Recargar</a>
+        <span class="dismiss" aria-label="Descartar">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M5 5l14 14M19 5L5 19" />
+            </svg>
+        </span>
     </div>
+    <script src="js/login-motion.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 
