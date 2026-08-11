@@ -1,0 +1,163 @@
+@page "/auth/login"
+@layout AuthLayout
+@attribute [AllowAnonymous]
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ThemeService Theme
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Ingresá · Enigma</PageTitle>
+
+<div class="login">
+    <aside class="login__panel">
+        <PanelVivo />
+
+
+        <a class="enigma-brand" href="/">
+            <img class="enigma-brand__logo" src="images/logo_size_invert.png" alt="" width="32" height="32" />
+            <span class="enigma-brand__name">Enigma</span>
+        </a>
+
+        <div class="login__emblem" aria-hidden="true">
+            <img src="images/logo_size_invert.png" alt="" width="96" height="96" />
+        </div>
+
+        <div class="login__panel-copy">
+            <h2>La plataforma de tu institución</h2>
+            <p>Todas tus instituciones, en un solo lugar.</p>
+        </div>
+    </aside>
+
+    <main class="login__form">
+        <div class="login__form-inner">
+            <div class="login__topbar">
+                <button class="login__theme" type="button" @onclick="ToggleTheme" aria-label="Cambiar tema claro/oscuro">
+                    @if (_temaOscuro)
+                    {
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4.5" />
+                            <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4L19 19M19 5l-1.6 1.6M6.6 17.4L5 19" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
+                        </svg>
+                    }
+                </button>
+            </div>
+
+            <h1>Ingresá</h1>
+            <p class="login__lead">Accedé con tu usuario de la institución.</p>
+
+            <form @onsubmit="LoginAsync" @onsubmit:preventdefault>
+                <label class="login__field">
+                    <span class="login__label">Usuario</span>
+                    <input class="login__input" @bind="_usuario" autocomplete="username" placeholder="usuario" required />
+                </label>
+
+                <label class="login__field">
+                    <span class="login__label">Contraseña</span>
+                    <span class="login__pass">
+                        <input class="login__input" type="@(_mostrar ? "text" : "password")" @bind="_contrasena" autocomplete="current-password" placeholder="••••••••" required />
+                        <button class="login__eye" type="button" @onclick="() => _mostrar = !_mostrar" aria-label="@(_mostrar ? "Ocultar contraseña" : "Mostrar contraseña")">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" />
+                                <circle cx="12" cy="12" r="2.8" />
+                                @if (_mostrar)
+                                {
+                                    <path d="M4 4l16 16" />
+                                }
+                            </svg>
+                        </button>
+                    </span>
+                </label>
+
+                @if (_error is not null)
+                {
+                    <p class="login__error" role="alert">@_error</p>
+                }
+
+                <button class="login__submit" type="submit" disabled="@_cargando">
+                    @if (_cargando)
+                    {
+                        <span class="login__spinner" aria-hidden="true"></span>
+                        <span>Ingresando…</span>
+                    }
+                    else
+                    {
+                        <span>Ingresá</span>
+                    }
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+
+@code {
+    private string _usuario = "";
+    private string _contrasena = "";
+    private bool _mostrar;
+    private bool _cargando;
+    private bool _temaOscuro;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _temaOscuro = await Theme.ObtenerAsync() == "dark";
+    }
+
+    private async Task ToggleTheme()
+    {
+        _temaOscuro = await Theme.ToggleAsync() == "dark";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("EnigmaMotion.init");
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        if (_cargando)
+        {
+            return;
+        }
+
+        _cargando = true;
+        _error = null;
+        try
+        {
+            var resultado = await Auth.LoginAsync(_usuario.Trim(), _contrasena);
+            if (!resultado.Ok || resultado.Datos is null)
+            {
+                _error = resultado.Error ?? "No se pudo iniciar sesión. Intentá de nuevo.";
+                return;
+            }
+
+            var instituciones = resultado.Datos.Instituciones;
+            if (instituciones.Count == 1)
+            {
+                await Auth.SetInstitucionActivaAsync(instituciones[0]);
+                Navigation.NavigateTo("/");
+            }
+            else if (instituciones.Count > 1)
+            {
+                Navigation.NavigateTo("/auth/seleccion-institucion");
+            }
+            else
+            {
+                _error = "Tu usuario no tiene instituciones asignadas. Contactá al administrador.";
+            }
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+}

@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-10",
+  "title": "Design System: Enigma",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Jade Acción",
+        "canonical": "#14665C",
+        "dark": "#259585",
+        "tonalRamp": ["#00140E", "#003028", "#004F46", "#216F65", "#479187", "#6BB5A9", "#90DACE", "#B5FFF3"]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Jade Hover",
+        "canonical": "#0F524A",
+        "dark": "#2BB09E",
+        "tonalRamp": ["#00130E", "#002F28", "#064D45", "#306D65", "#538F86", "#76B3A9", "#99D8CD", "#BEFDF2"]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Tinte de Acento",
+        "canonical": "rgba(20, 102, 92, 0.10)",
+        "dark": "rgba(37, 149, 133, 0.16)",
+        "alphaRamp": ["0.06", "0.10", "0.16"]
+      },
+      "brand-accent": {
+        "role": "primary",
+        "displayName": "Jade de Marca",
+        "canonical": "#4FD1BE",
+        "dark": "#259585",
+        "tonalRamp": ["#00160F", "#003429", "#005446", "#007666", "#009887", "#34BDAA", "#62E2CF", "#8BFFF4"]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Fondo",
+        "canonical": "#F3F8F7",
+        "dark": "#0E3736",
+        "tonalRamp": ["#090C0B", "#222625", "#3F4342", "#5E6261", "#7F8382", "#A1A6A5", "#C5CAC9", "#EBF0EF"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superficie",
+        "canonical": "#FFFFFF",
+        "dark": "#123E3C",
+        "tonalRamp": ["#060D0C", "#1F2726", "#3B4442", "#5A6462", "#7B8583", "#9DA8A6", "#C1CCCA", "#E6F1EF"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#123E3C",
+        "dark": "#E9F2F0",
+        "tonalRamp": ["#001110", "#002C2A", "#1F4A48", "#406A68", "#618C89", "#83AFAC", "#A6D4D0", "#CBF9F6"]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Tinta Secundaria",
+        "canonical": "#43605D",
+        "dark": "#A9BEBB",
+        "tonalRamp": ["#00100E", "#0E2A28", "#2C4845", "#4B6865", "#6B8986", "#8DACA9", "#B1D1CD", "#D6F7F3"]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Tinta Terciaria",
+        "canonical": "#64807D",
+        "dark": "#86A09D",
+        "tonalRamp": ["#000F0E", "#102A28", "#2D4845", "#4C6765", "#6D8986", "#8FACA9", "#B2D0CD", "#D7F6F2"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Borde",
+        "canonical": "#D5E2E0",
+        "dark": "#2A615F",
+        "tonalRamp": ["#050D0C", "#1D2726", "#3A4543", "#596462", "#798583", "#9CA8A6", "#C0CCCA", "#E5F2F0"]
+      },
+      "brand-panel": {
+        "role": "neutral",
+        "displayName": "Verde Institucional Profundo",
+        "canonical": "#0E3736",
+        "dark": "#0B2B2A",
+        "tonalRamp": ["#001010", "#012C2B", "#224A48", "#426968", "#638B89", "#85AEAC", "#A8D3D1", "#CDF9F6"]
+      },
+      "brand-panel-ink": {
+        "role": "neutral",
+        "displayName": "Ink de Panel",
+        "canonical": "#EAF3F1",
+        "dark": "#EAF3F1",
+        "tonalRamp": ["#070D0B", "#202725", "#3D4442", "#5B6361", "#7C8483", "#9FA7A5", "#C3CBC9", "#E8F1EF"]
+      },
+      "brand-panel-ink-2": {
+        "role": "neutral",
+        "displayName": "Ink de Panel 2",
+        "canonical": "#A9BEBB",
+        "dark": "#A9BEBB",
+        "tonalRamp": ["#010E0D", "#182927", "#344644", "#536663", "#738784", "#95AAA7", "#B9CECB", "#DEF4F1"]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Error",
+        "canonical": "#B42318",
+        "dark": "#F97066",
+        "tonalRamp": ["#3B0000", "#620000", "#8A0000", "#B12015", "#DA4A3B", "#FF705E", "#FF9681", "#FFBBA5"]
+      },
+      "error-soft": {
+        "role": "error",
+        "displayName": "Tinte de Error",
+        "canonical": "rgba(180, 35, 24, 0.08)",
+        "dark": "rgba(249, 112, 102, 0.10)",
+        "alphaRamp": ["0.06", "0.10", "0.16"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "H1 de página (selección de institución, inicio); 2.25rem fijo en el login. Manrope 750, tracking −0.03em." },
+      "headline": { "displayName": "Headline", "purpose": "Copy de manifiesto del panel de identidad, máx. 16ch." },
+      "title": { "displayName": "Title", "purpose": "Nombres de entidad en tarjetas (institución)." },
+      "body": { "displayName": "Body", "purpose": "Formularios, leads y copy del panel; secundario en Tinta Secundaria." },
+      "label": { "displayName": "Label", "purpose": "Etiquetas de campos; botones en peso 600." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "Nombre de marca junto al monograma (1.375rem, 750, −0.02em)." }
+    },
+    "shadows": [
+      { "name": "card-rest", "value": "0 1px 2px rgba(14, 55, 54, 0.06), 0 8px 24px rgba(14, 55, 54, 0.08)", "dark": "0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35)", "purpose": "Tarjetas interactivas en reposo: hairline de 1px + ambiente de 24px." },
+      { "name": "card-hover", "value": "0 1px 2px rgba(14, 55, 54, 0.06), 0 14px 32px rgba(14, 55, 54, 0.14)", "purpose": "Ambiente profundizado del hover, junto al levante de 2px." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Curva única del sistema para entradas y transiciones." },
+      { "name": "duration-micro", "value": "180ms", "purpose": "Micro-transiciones de estado (hover, focus, borde, color)." },
+      { "name": "duration-entrance", "value": "400ms", "purpose": "La única entrada autoral por superficie; anulada por prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "860px" },
+      { "name": "sm", "value": "480px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Brand Mark",
+      "kind": "custom",
+      "refersTo": "brand-mark",
+      "description": "Monograma E con la barra del medio corrida a la izquierda + wordmark Manrope. Vive siempre sobre el Verde Institucional Profundo.",
+      "html": "<a class=\"ds-brand\" href=\"#\"><svg class=\"ds-brand__glyph\" viewBox=\"0 0 32 32\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"24\" height=\"24\" rx=\"7\" fill=\"currentColor\"/><path d=\"M11 11.5h10M11 16h6.5M11 20.5h9\" fill=\"none\" stroke=\"var(--enigma-brand-accent, #4FD1BE)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/></svg><span class=\"ds-brand__name\">Enigma</span></a>",
+      "css": ".ds-brand { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--enigma-brand-panel-ink, #EAF3F1); text-decoration: none; } .ds-brand__glyph { width: 32px; height: 32px; flex: none; } .ds-brand__name { font-family: var(--enigma-font-display, 'Manrope', sans-serif); font-size: 1.375rem; font-weight: 750; letter-spacing: -0.02em; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción primaria de formularios (Ingresá): 48px, jade sobre blanco, radio 10px.",
+      "html": "<button class=\"ds-btn-primary\" type=\"submit\">Ingresá</button>",
+      "css": ".ds-btn-primary { width: 100%; height: 48px; font: inherit; font-weight: 600; color: #FFFFFF; background: var(--enigma-accent, #14665C); border: 0; border-radius: var(--enigma-radius, 10px); cursor: pointer; transition: background 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), transform 120ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn-primary:hover { background: var(--enigma-accent-hover, #0F524A); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--enigma-accent, #14665C); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.6; cursor: default; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Acción secundaria discreta (Salir): borde neutral, tinta secundaria, hover jade sobre tinte.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Salir</button>",
+      "css": ".ds-btn-outline { font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--enigma-ink-2, #43605D); background: none; border: 1px solid var(--enigma-border, #D5E2E0); border-radius: var(--enigma-radius, 10px); padding: 0.5rem 1rem; cursor: pointer; transition: color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), border-color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), background 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn-outline:hover { color: var(--enigma-accent, #14665C); border-color: var(--enigma-accent, #14665C); background: var(--enigma-accent-soft, rgba(20, 102, 92, 0.10)); } .ds-btn-outline:focus-visible { outline: 2px solid var(--enigma-accent, #14665C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Campo de formulario: 48px, superficie, borde neutral, focus con borde jade y anillo de 3px de tinte.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">Usuario</span><input class=\"ds-input\" type=\"text\" placeholder=\"usuario\" /></label>",
+      "css": ".ds-field { display: block; margin-bottom: 1.25rem; } .ds-field__label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.45rem; } .ds-input { width: 100%; height: 48px; padding: 0 0.9rem; font: inherit; color: var(--enigma-ink, #123E3C); background: var(--enigma-surface, #FFFFFF); border: 1px solid var(--enigma-border, #D5E2E0); border-radius: var(--enigma-radius, 10px); outline: none; transition: border-color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), box-shadow 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-input::placeholder { color: var(--enigma-ink-3, #64807D); } .ds-input:focus { border-color: var(--enigma-accent, #14665C); box-shadow: 0 0 0 3px var(--enigma-accent-soft, rgba(20, 102, 92, 0.10)); }"
+    },
+    {
+      "name": "Institution Card",
+      "kind": "card",
+      "refersTo": "card-institution",
+      "description": "Tarjeta seleccionable de institución: superficie, borde neutral, sombra ambiental, levante 2px en hover con borde jade y flecha deslizada.",
+      "html": "<button class=\"ds-card\" type=\"button\"><span class=\"ds-card__body\"><span class=\"ds-card__name\">Universidad Nacional</span><span class=\"ds-card__type\">Universidad</span></span><svg class=\"ds-card__arrow\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6l6 6-6 6\" /></svg></button>",
+      "css": ".ds-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; text-align: left; padding: 1.35rem 1.4rem; background: var(--enigma-surface, #FFFFFF); border: 1px solid var(--enigma-border, #D5E2E0); border-radius: var(--enigma-radius, 10px); color: var(--enigma-ink, #123E3C); font: inherit; cursor: pointer; box-shadow: var(--enigma-shadow, 0 1px 2px rgba(14, 55, 54, 0.06), 0 8px 24px rgba(14, 55, 54, 0.08)); transition: border-color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), transform 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), box-shadow 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-card__body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; } .ds-card__name { font-family: var(--enigma-font-display, 'Manrope', sans-serif); font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; } .ds-card__arrow { flex: none; color: var(--enigma-ink-3, #64807D); transition: color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), transform 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-card:hover { border-color: var(--enigma-accent, #14665C); transform: translateY(-2px); box-shadow: 0 1px 2px rgba(14, 55, 54, 0.06), 0 14px 32px rgba(14, 55, 54, 0.14); } .ds-card:hover .ds-card__arrow { color: var(--enigma-accent, #14665C); transform: translateX(3px); } .ds-card:active { transform: translateY(0); } .ds-card:focus-visible { outline: 2px solid var(--enigma-accent, #14665C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Theme Toggle",
+      "kind": "button",
+      "refersTo": "theme-toggle",
+      "description": "Botón circular de 40px que alterna claro/oscuro; persiste en localStorage (enigma_theme).",
+      "html": "<button class=\"ds-theme\" type=\"button\" aria-label=\"Cambiar tema claro/oscuro\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4.5\" /><path d=\"M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4L19 19M19 5l-1.6 1.6M6.6 17.4L5 19\" /></svg></button>",
+      "css": ".ds-theme { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--enigma-border, #D5E2E0); background: var(--enigma-surface, #FFFFFF); color: var(--enigma-ink, #123E3C); cursor: pointer; transition: background 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)), border-color 180ms var(--enigma-ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-theme:hover { background: var(--enigma-accent-soft, rgba(20, 102, 92, 0.10)); border-color: var(--enigma-accent, #14665C); } .ds-theme:focus-visible { outline: 2px solid var(--enigma-accent, #14665C); outline-offset: 2px; }"
+    },
+    {
+      "name": "Error Alert",
+      "kind": "custom",
+      "refersTo": "error-alert",
+      "description": "Alerta de error de formulario: texto Error sobre tinte de Error con borde al 35% del Error.",
+      "html": "<p class=\"ds-error\" role=\"alert\">Usuario o contraseña incorrectos.</p>",
+      "css": ".ds-error { color: var(--enigma-error, #B42318); background: var(--enigma-error-soft, rgba(180, 35, 24, 0.08)); border: 1px solid color-mix(in srgb, var(--enigma-error, #B42318) 35%, transparent); border-radius: var(--enigma-radius, 10px); padding: 0.7rem 0.9rem; font-size: 0.9rem; margin: 0 0 1.25rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Jade Institucional",
+    "overview": "El sistema es una identidad institucional para plataformas educativas hecha de verde petrol-jade: calma, credibilidad y una sola voz. La paleta vive en pares — cada rol de color tiene un valor claro y uno oscuro, porque la escena (personal y estudiantes, oficinas y aulas) exige ambos modos siempre. El verde profundo del panel de identidad, la superficie clara u oscura donde se trabaja y un único acento jade reservado para la interactividad: esa es toda la arquitectura cromática.\n\nLa tipografía es la de una institución seria y moderna: Manrope autohosteado (variable 500–800) para los roles display, en pesos 650–750 con tracking apretado (−0.01 a −0.03em), sobre una pila de sistema neutral para el cuerpo. Las formas son uniformes — un solo radio de 10px — y la profundidad es ambiental: superficies planas, tarjetas que se elevan 2px con sombras difusas, sin neobrutalismo. La voz de la UI es voseo rioplatense imperativo (\"Ingresá\", \"Elegí\", \"Contactá\").\n\nCada superficie de auth autoriza una sola entrada animada de 400ms; todo lo demás transiciona en 180ms con la misma curva. El tema es ciudadano de primera clase: toggle persistido en localStorage (enigma_theme), script pre-render en index.html y fallback a prefers-color-scheme, sin flash.",
+    "keyCharacteristics": [
+      "Paleta petrol-jade en pares claro/oscuro; cada rol tiene ambas variantes.",
+      "Un solo acento (jade) para interactividad; el error vive aparte en su propio rojo.",
+      "Manrope (variable 500–800, autohosteado) solo en roles display, 650–750, tracking −0.01 a −0.03em; el cuerpo usa pila de sistema.",
+      "Radio único de 10px; sombras ambientales de dos capas; elevación por hover de 2px.",
+      "Ambos modos siempre: toggle persistido, script pre-render, fallback prefers-color-scheme.",
+      "Voseo rioplatense imperativo en toda la UI."
+    ],
+    "rules": [
+      { "name": "La Regla del Par", "body": "Cada rol de color existe como par claro/oscuro; nada se define en un solo modo. Ambos modos renderizan siempre, con toggle persistido y sin flash.", "section": "colors" },
+      { "name": "La Regla del Jade de Interacción", "body": "El acento jade se usa solo para interactividad: enlaces, focus, hover, acción primaria, selección. El texto estático y los bordes usan las tintas y el borde neutral; decorar con acento está prohibido.", "section": "colors" },
+      { "name": "La Regla del Panel de Marca", "body": "La identidad (monograma + wordmark) vive siempre sobre el Verde Institucional Profundo con ink pálido; el trazo del glifo cambia a Jade de Marca sobre el panel. Una sola identidad para todas las instituciones — sin variantes por institución.", "section": "colors" },
+      { "name": "La Regla de Manrope Solo Display", "body": "Manrope es solo para roles display (h1, headline de panel, wordmark, nombres de entidad) en pesos 650–750 con tracking −0.01 a −0.03em. El cuerpo, los inputs y los botones usan la pila de sistema; Manrope nunca compone texto corrido.", "section": "typography" },
+      { "name": "La Regla de la Única Entrada", "body": "Una sola animación autoral por superficie, 400ms con la curva del sistema (fade + translateY 14px); prefers-reduced-motion la elimina. Todo lo demás transiciona en 180ms.", "section": "layout" },
+      { "name": "La Regla de Ambos Modos Siempre", "body": "Toda superficie renderiza en claro y oscuro. La preferencia persiste en localStorage (enigma_theme), se aplica con un script inline pre-render en index.html antes del primer render y cae a prefers-color-scheme.", "section": "layout" },
+      { "name": "La Regla del Levante Suave", "body": "Las tarjetas interactivas se elevan 2px en hover con sombra ambiental profundizada; toda sombra es difusa (blur ≥ 24px), nunca offset dura.", "section": "elevation" },
+      { "name": "La Regla de los Diez Píxeles", "body": "Toda superficie comparte el mismo radio (10px): inputs, botones, tarjetas, alertas. Sin píldoras ni esquinas rectas de excepción.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do emparejar cada rol de color en claro y oscuro — ambos modos renderizan siempre, sin flash.",
+      "Do reservar el acento jade para estados interactivos; el texto estático y los bordes usan las tintas y el borde neutral.",
+      "Do usar Manrope solo en roles display, pesos 650–750, tracking −0.01 a −0.03em.",
+      "Do mantener el radio de 10px y el vocabulario de sombras ambientales de dos capas en toda superficie nueva.",
+      "Do escribir la UI en voseo rioplatense imperativo (\"Ingresá\", \"Elegí\", \"Contactá\").",
+      "Do mantener la marca sobre el Verde Institucional Profundo con ink pálido y trazo del glifo en Jade de Marca."
+    ],
+    "donts": [
+      "Don't introducir sombras offset duras ni profundidad neobrutalista — la elevación es ambiental y suave.",
+      "Don't usar micro-etiquetas en mayúsculas con tracking (kickers/eyebrows) — no forman parte del sistema.",
+      "Don't dejar que el display caiga en una fuente de sistema — Manrope se autohostea; hay que enviarlo.",
+      "Don't crear un segundo acento ni branding por institución — una sola identidad para todas.",
+      "Don't pintar validaciones con red/verde crudos — usar los tokens de Error (el build aún carga restos de plantilla en red y #26b050; defecto, no regla)."
+    ]
+  }
+}

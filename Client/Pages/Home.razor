@@ -1,7 +1,58 @@
-﻿@page "/"
+@page "/"
+@attribute [Authorize]
+@inject AuthService Auth
+@using Microsoft.AspNetCore.Authorization
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio · Enigma</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home">
+    <section class="home__franja">
+        <PanelVivo />
+        <div class="home__franja-copy">
+            <p class="home__saludo">Bienvenido, @_usuario?.NombreUsuario</p>
+            <h1>@_institucion?.Nombre</h1>
+            <p class="home__tipo">@_institucion?.Tipo</p>
+        </div>
+    </section>
 
-Welcome to your new app.
+    <div class="home__escritorio">
+        <aside class="home__contexto">
+            <h2 class="home__contexto-titulo">Tu contexto</h2>
+
+            <dl class="home__ficha">
+                <dt>Institución activa</dt>
+                <dd>@_institucion?.Nombre</dd>
+                <dd class="home__ficha-sub">@_institucion?.Tipo</dd>
+            </dl>
+
+            <dl class="home__ficha">
+                <dt>Usuario</dt>
+                <dd>@_usuario?.NombreUsuario</dd>
+                <dd class="home__ficha-sub">@_usuario?.Correo</dd>
+            </dl>
+        </aside>
+
+        <section class="home__modulos">
+            <h2 class="home__modulos-titulo">Tus módulos</h2>
+            <div class="home__vacio">
+                <svg class="home__vacio-marca" viewBox="0 0 32 32" aria-hidden="true">
+                    <rect x="4" y="4" width="24" height="24" rx="7" />
+                    <path d="M11 11.5h10M11 16h6.5M11 20.5h9" />
+                </svg>
+                <p class="home__vacio-titulo">Todavía no hay módulos</p>
+                <p class="home__vacio-copy">Cuando tu institución active uno, lo vas a ver acá.</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private UsuarioDto? _usuario;
+    private InstitucionDto? _institucion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _usuario = await Auth.GetUsuarioAsync();
+        _institucion = await Auth.GetInstitucionActivaAsync();
+    }
+}
