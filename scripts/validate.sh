@@ -13,6 +13,9 @@ fi
 
 export PATH="$PATH:$HOME/.dotnet/tools"
 
+echo "-> Validar YAML"
+bash ./scripts/validate-yaml.sh
+
 echo "-> Formatear código"
 dotnet format Enigma.slnx --verify-no-changes
 

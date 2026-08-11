@@ -1,10 +1,16 @@
 pre-commit:
   commands:
+    yaml-lint:
+      run: bash ./scripts/validate-yaml.sh
+      root: true
     validate:
       run: bash ./scripts/validate.sh
       root: true
 pre-push:
   commands:
+    yaml-lint:
+      run: bash ./scripts/validate-yaml.sh
+      root: true
     validate:
       run: bash ./scripts/validate.sh
       root: true
