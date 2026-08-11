@@ -2,15 +2,15 @@ namespace Enigma.Server.Data.Repositories;
 
 public abstract class GenericRepository<T> where T : class
 {
-    private readonly EnigmaDbContext _context;
+    protected readonly EnigmaDbContext Context;
     public GenericRepository(EnigmaDbContext context)
     {
-        _context = context;
+        Context = context;
     }
 
     public virtual T? GetById(int id, bool borradoLogico = false)
     {
-        var entity = _context.Set<T>().Find(id);
+        var entity = Context.Set<T>().Find(id);
         if (entity == null || (entity is GenericEntity genEntity && genEntity.BorradoLogico && !borradoLogico))
         {
             return null;
@@ -20,7 +20,7 @@ public abstract class GenericRepository<T> where T : class
 
     public bool SetBorradoLogico(int id, bool borradoLogico)
     {
-        var entity = _context.Set<T>().Find(id);
+        var entity = Context.Set<T>().Find(id);
         if (entity == null)
         {
             return false;
@@ -29,7 +29,7 @@ public abstract class GenericRepository<T> where T : class
         if (entity is GenericEntity genEntity)
         {
             genEntity.BorradoLogico = borradoLogico;
-            _context.SaveChanges();
+            Context.SaveChanges();
             return true;
         }
 

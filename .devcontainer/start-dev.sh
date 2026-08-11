@@ -266,14 +266,14 @@ fi
 
 # --- 8. Start Server and Client ---
 step "Starting .NET Server"
-nohup dotnet watch --project Server >"$LOG_DIR/server.log" 2>&1 &
+nohup dotnet watch --no-hot-reload --project Server >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID=$!
 info "Server started (PID $SERVER_PID, log: $LOG_DIR/server.log)"
 
 sleep 2
 
 step "Starting .NET Client"
-nohup dotnet watch --project Client >"$LOG_DIR/client.log" 2>&1 &
+nohup dotnet watch --no-hot-reload --project Client >"$LOG_DIR/client.log" 2>&1 &
 CLIENT_PID=$!
 info "Client started (PID $CLIENT_PID, log: $LOG_DIR/client.log)"
 

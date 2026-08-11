@@ -1,16 +1,56 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+<div class="app">
+    <header class="app__bar">
+        <a class="enigma-brand" href="/">
+            <img class="enigma-brand__logo" src="images/logo_size.jpg" alt="" width="28" height="28" />
+            <span class="enigma-brand__name">Enigma</span>
+        </a>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="app__acciones">
+            @if (_institucion is not null)
+            {
+                <span class="app__institucion" title="@_institucion.Tipo">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 21V8l9-5 9 5v13" />
+                        <path d="M9 21v-6h6v6" />
+                    </svg>
+                    @_institucion.Nombre
+                </span>
+            }
+            <span class="app__usuario">@_usuario?.NombreUsuario</span>
+            <button class="app__salir" type="button" @onclick="CerrarSesion">Salir</button>
         </div>
+    </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="app__main">
+        @Body
     </main>
 </div>
+
+@code {
+    private UsuarioDto? _usuario;
+    private InstitucionDto? _institucion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _usuario = await Auth.GetUsuarioAsync();
+        _institucion = await Auth.GetInstitucionActivaAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("EnigmaMotion.init");
+        }
+    }
+
+    private async Task CerrarSesion()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/auth/login");
+    }
+
+}

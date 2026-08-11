@@ -66,11 +66,37 @@ Client Page (@inject HttpClient)
 | `Server/Data/` | EF Core DbContext, entities | `EnigmaDbContext.cs`, `GenericEntity.cs` |
 | `Server/Data/Entities/` | Domain entities | Organized by domain (Auth, Administración) |
 | `Server/Data/Repositories/` | Repository implementations | Generic pattern with soft-delete |
-| `Server/Controllers/` | API endpoints | Base `GenericController` |
-| `Server/Services/` | Business logic, helpers | `CurrentUserService` |
+| `Server/Controllers/` | API endpoints | Domain folders (Auth/) |
+| `Server/Services/` | Business logic, helpers | Domain folders (Auth/) |
 | `Shared/` | Common types (empty) | Add DTOs, shared enums, constants |
 | `.devcontainer/` | Dev container config | .NET 10 SDK, Oh My Pi, C# extensions |
 
+
+**Domain Folder Structure:** la estructura de carpetas de `Data` (subcarpetas por
+dominio de negocio) se replica en `Controllers` y `Services`:
+
+```
+Server/
+├── Controllers/
+│   └── Auth/            # Enigma.Server.Controllers.<Dominio>
+├── Services/
+│   └── Auth/            # Enigma.Server.Services.<Dominio>
+└── Data/
+    ├── Entities/
+    │   ├── Auth/
+    │   └── Administracion/
+    └── Repositories/
+        └── Auth/
+```
+
+- Cada dominio de negocio (Auth, Administración, …) tiene su carpeta en las
+  tres capas; el namespace C# refleja la ruta (`Enigma.Server.Controllers.Auth`,
+  `Enigma.Server.Services.Auth`, `Enigma.Server.Data.Entities.Auth`).
+- Archivos genéricos o transversales quedan en la raíz de su capa
+  (`GenericEntity`, `GenericRepository`, `EnigmaDbContext`).
+- Interfaz e implementación viven juntas: `IUsuarioService` + `UsuarioService`
+  en `Services/Auth/UsuarioService.cs`, `ICurrentUserService` +
+  `CurrentUserService` en `Services/Auth/CurrentUserService.cs`.
 ---
 
 ## Development Commands
@@ -239,7 +265,6 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 {
     return await _context.Set<T>().FindAsync(id, ct);
 }
-```
 
 **Error Handling:**
 
@@ -263,12 +288,11 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 | `Server/Program.cs` | Server entry point | DI, migration auto-run, OpenAPI |
 | `Server/Data/EnigmaDbContext.cs` | EF Core DbContext | Currently minimal, OnModelCreating empty |
 | `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete; audit via static `CurrentUserService` |
-| `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Synchronous, soft-delete support |
+| `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Base sync methods + soft-delete support |
 | `Server/Controllers/GenericController.cs` | Base controller | `[ApiController]`, `[Route("[controller]")]` |
-| `Server/Services/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
-| `Client/Program.cs` | Client entry point | WebAssemblyHostBuilder, HttpClient DI |
-| `Client/App.razor` | Root component | Router, default MainLayout, NotFound |
-| `Client/_Imports.razor` | Global usings | Blazor namespaces, HttpClient, Forms |
+| `Server/Controllers/Auth/AuthController.cs` | Auth endpoints | `POST auth/login`, `GET auth/me`, `GET auth/instituciones` |
+| `Server/Services/Auth/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
+| `Server/Services/Auth/UsuarioService.cs` | Auth business logic | `IUsuarioService` + `UsuarioService`: login vía Identity (SignInManager/UserManager) + consultas al `UsuarioRepository` |
 | `docker-compose.yml` | MySQL dev DB | Credentials: enigma/enigma_dev_password |
 | `Server/appsettings.json` | Configuration | Environment variable interpolation |
 

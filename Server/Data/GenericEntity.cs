@@ -1,5 +1,5 @@
 using Enigma.Server.Data.Entities.Auth;
-using Enigma.Server.Services;
+using Enigma.Server.Services.Auth;
 namespace Enigma.Server.Data
 {
     public abstract class GenericEntity

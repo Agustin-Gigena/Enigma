@@ -1,0 +1,9 @@
+@inject NavigationManager Navigation
+
+@* Sin markup: redirige al login cuando una ruta [Authorize] no tiene sesión. *@
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/auth/login");
+    }
+}

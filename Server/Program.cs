@@ -1,9 +1,14 @@
+using System.Text;
 using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
 using Enigma.Server.Data;
+using Enigma.Server.Data.Entities.Administracion;
+using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Data.Repositories.Auth;
-using Enigma.Server.Services;
-using Enigma.Server.Services.Interfaces;
+using Enigma.Server.Services.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,15 +17,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UsuarioRepository>();
-builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();
+// CORS: el front (host :80) y la API (host :8081) son orígenes distintos;
+// sin estos headers el navegador bloquea las llamadas cruzadas (error CORS).
+// Política permisiva para desarrollo; restringir orígenes para producción.
 builder.Services.AddCors(options =>
-    options.AddPolicy("DevFrontend", policy =>
-        policy.WithOrigins("http://localhost:80", "http://127.0.0.1:80")
-              .AllowAnyHeader()
-              .AllowAnyMethod()));
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 // Build the MySQL connection string from environment variables (with dev defaults).
 // NOTE: ${VAR} placeholders in appsettings.json are NOT expanded by .NET
@@ -46,18 +58,64 @@ builder.Services.AddDbContext<EnigmaDbContext>(options =>
     )
 );
 
+// ASP.NET Core Identity: usuarios, contraseñas con hash y bloqueo por intentos.
+builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
+    {
+        // Política dev-friendly; endurecer en producción.
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireDigit = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<EnigmaDbContext>()
+    .AddDefaultTokenProviders();
+
+// JWT bearer: el CurrentUserService y el CurrentUserMiddleware consumen los
+// claims (NameIdentifier -> Usuario) emitidos por POST /auth/login.
+var jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
+    ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
+// Identity registra cookies como default scheme; forzamos JWT para la API
+// (los tres defaults, no solo DefaultScheme) para que [Authorize] desafíe
+// con el bearer y no con /Account/Login.
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "Enigma",
+            ValidateAudience = true,
+            ValidAudience = "Enigma.Client",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    
+
     app.MapScalarApiReference("/api/docs", options =>
     {
         options.WithTitle("Enigma API")
                .WithOpenApiRoutePattern("/openapi/v1.json");
-    }   );
+    });
+
     // Auto-apply migrations in development — retry briefly, but never take the
     // app down if the database is unreachable (dev DB may not be up yet).
     using var scope = app.Services.CreateScope();
@@ -80,15 +138,75 @@ if (app.Environment.IsDevelopment())
             }
         }
     }
+
+    if (migrationsApplied)
+    {
+        try
+        {
+            await SeedDevAsync(app.Services, app.Logger);
+            app.Logger.LogInformation("Dev seed applied");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Could not apply dev seed — continuing");
+        }
+    }
 }
+app.UseCors();
 
 app.UseHttpsRedirection();
-app.UseCors("DevFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<CurrentUserMiddleware>();
 app.MapControllers();
 
 app.Run();
+
+/// <summary>
+/// Seed de desarrollo: crea el usuario admin (env ENIGMA_SEED_ADMIN_USER /
+/// ENIGMA_SEED_ADMIN_PASSWORD, defaults admin/admin123) y dos instituciones de
+/// ejemplo con membresía del admin, solo si no existen.
+/// </summary>
+static async Task SeedDevAsync(IServiceProvider services, ILogger logger)
+{
+    using var scope = services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+    var db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
+
+    var adminUserName = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_USER") ?? "admin";
+    var adminPassword = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_PASSWORD") ?? "admin123";
+
+    var admin = await userManager.FindByNameAsync(adminUserName);
+    if (admin is null)
+    {
+        admin = new Usuario
+        {
+            UserName = adminUserName,
+            Email = $"{adminUserName}@enigma.local",
+            EmailConfirmed = true,
+        };
+        var crear = await userManager.CreateAsync(admin, adminPassword);
+        if (!crear.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "No se pudo crear el usuario admin de seed: "
+                + string.Join("; ", crear.Errors.Select(e => e.Description)));
+        }
+        logger.LogInformation("Seed: creado usuario {Admin}", adminUserName);
+    }
+
+    if (!await db.Instituciones.AnyAsync())
+    {
+        var universidad = new Institucion { Nombre = "Universidad Nacional del Plata", Tipo = TipoInstitucion.Universidad };
+        var colegio = new Institucion { Nombre = "Colegio San Martín", Tipo = TipoInstitucion.Secundaria };
+        universidad.SetCreadoPor(admin);
+        colegio.SetCreadoPor(admin);
+        admin.Instituciones.Add(universidad);
+        admin.Instituciones.Add(colegio);
+        db.Instituciones.AddRange(universidad, colegio);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Seed: creadas instituciones de ejemplo");
+    }
+}
 
 public partial class Program { }
