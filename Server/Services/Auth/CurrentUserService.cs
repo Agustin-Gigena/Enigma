@@ -1,8 +1,7 @@
 using System.Security.Claims;
 using Enigma.Server.Data.Entities.Auth;
-using Enigma.Server.Services.Interfaces;
 
-namespace Enigma.Server.Services;
+namespace Enigma.Server.Services.Auth;
 
 public class CurrentUserService : ICurrentUserService
 {
