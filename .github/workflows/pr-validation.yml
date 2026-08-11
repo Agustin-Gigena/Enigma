@@ -1,0 +1,50 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK and restore dependencies
+        uses: ./.github/actions/setup-dotnet
+        with:
+          params-json: '{"tools": {"dotnet-format": "9.0.218", "coverlet.console": "4.0.0"}}'
+
+      - name: Verify code formatting
+        run: dotnet format Enigma.slnx --verify-no-changes
+
+      - name: Validate solution build
+        run: dotnet build Enigma.slnx -c Release /p:TreatWarningsAsErrors=true
+
+      - name: Run tests and coverage
+        run: bash ./tests/coverage.run.sh
+
+      - name: Validate package security
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet list Enigma.slnx package --vulnerable | tee /tmp/vulnerable-packages.txt
+          if grep -iq "no vulnerable packages were found" /tmp/vulnerable-packages.txt; then
+            echo "No vulnerable packages found."
+          else
+            echo "Error: se encontraron paquetes vulnerables o la salida no indica un estado limpio."
+            echo "--- vulnerable output ---"
+            cat /tmp/vulnerable-packages.txt
+            exit 1
+          fi
+
+      - name: Optional lefthook install
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/evilmartians/lefthook/master/install.sh | bash
+
+    env:
+      PATH: ${{ env.PATH }}:${{ github.workspace }}/.dotnet/tools
