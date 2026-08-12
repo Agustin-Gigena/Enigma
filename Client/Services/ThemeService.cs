@@ -9,24 +9,18 @@ namespace Enigma.Client.Services;
 /// </summary>
 public class ThemeService
 {
-    private readonly IJSRuntime _js;
+  private readonly IJSRuntime _js;
 
-    public ThemeService(IJSRuntime js)
-    {
-        _js = js;
-    }
+  public ThemeService(IJSRuntime js) => _js = js;
 
-    public async Task<string> ToggleAsync()
-    {
-        var actual = await ObtenerAsync();
-        var nuevo = actual == "dark" ? "light" : "dark";
-        await _js.InvokeVoidAsync("localStorage.setItem", "enigma_theme", nuevo);
-        await _js.InvokeVoidAsync("document.documentElement.setAttribute", "data-theme", nuevo);
-        return nuevo;
-    }
+  public async Task<string> ToggleAsync()
+  {
+    string actual = await ObtenerAsync();
+    string nuevo = actual == "dark" ? "light" : "dark";
+    await _js.InvokeVoidAsync("localStorage.setItem", "enigma_theme", nuevo);
+    await _js.InvokeVoidAsync("document.documentElement.setAttribute", "data-theme", nuevo);
+    return nuevo;
+  }
 
-    public Task<string> ObtenerAsync()
-    {
-        return _js.InvokeAsync<string>("localStorage.getItem", "enigma_theme").AsTask();
-    }
+  public Task<string> ObtenerAsync() => _js.InvokeAsync<string>("localStorage.getItem", "enigma_theme").AsTask();
 }

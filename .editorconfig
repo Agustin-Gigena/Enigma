@@ -1,6 +1,6 @@
 root = true
 
-[*.{cs,csx}]
+[*.{cs,csx,razor}]
 charset = utf-8
 end_of_line = lf
 insert_final_newline = true
@@ -57,6 +57,8 @@ dotnet_diagnostic.IDE0051.severity = error  # remove unused private members
 dotnet_diagnostic.IDE0059.severity = error  # remove unnecessary locals
 dotnet_diagnostic.IDE0060.severity = error  # remove unused parameters
 dotnet_diagnostic.IDE0063.severity = error  # use simple using statement
+dotnet_diagnostic.IDE0007.severity = error  # use explicit type instead of var
+dotnet_diagnostic.IDE0008.severity = error  # use explicit type (type-apparent cases)
 dotnet_diagnostic.IDE0090.severity = error  # use new(...) expression
 
 dotnet_diagnostic.IDE1006.severity = warning  # naming conventions

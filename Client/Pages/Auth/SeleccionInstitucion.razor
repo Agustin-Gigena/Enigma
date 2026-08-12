@@ -34,7 +34,7 @@
         else
         {
             <div class="seleccion__grilla">
-                @foreach (var institucion in _instituciones)
+                @foreach (InstitucionDto institucion in _instituciones)
                 {
                     <button class="seleccion__tarjeta" type="button" @onclick="() => Seleccionar(institucion)">
                         <span class="seleccion__tarjeta-cuerpo">
