@@ -1,10 +1,5 @@
 {
   "features": {
-    "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef:1": {
-      "version": "1.0.0",
-      "resolved": "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef@sha256:d2e24f05d5926613d742d1ccbf1302b7e5c4c0edb8ae34d15e32dff1698d08b4",
-      "integrity": "sha256:d2e24f05d5926613d742d1ccbf1302b7e5c4c0edb8ae34d15e32dff1698d08b4"
-    },
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "1.1.0",
       "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671",

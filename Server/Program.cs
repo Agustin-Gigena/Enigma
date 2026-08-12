@@ -20,7 +20,7 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();
-// CORS: el front (host :80) y la API (host :8081) son orígenes distintos;
+// CORS: el front (host :8080) y la API (host :8081) son orígenes distintos;
 // sin estos headers el navegador bloquea las llamadas cruzadas (error CORS).
 // Política permisiva para desarrollo; restringir orígenes para producción.
 builder.Services.AddCors(options =>
