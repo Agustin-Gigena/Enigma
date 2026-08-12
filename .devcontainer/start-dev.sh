@@ -33,9 +33,7 @@ info "All required env vars present"
 PODMAN_SOCKET="${PODMAN_SOCKET:-/run/user/1000/podman/podman.sock}"
 podman() { command podman --remote --url "unix://${PODMAN_SOCKET}" "$@"; }
 
-# --- PID tracking and cleanup trap ---
-SERVER_PID=""
-CLIENT_PID=""
+# --- Cleanup trap ---
 cleanup() {
   step "Cleaning up"
   # Kill the whole process tree — dotnet watch only wraps the real app; the
@@ -264,25 +262,13 @@ if [ "$MYSQL_READY" != "true" ]; then
   exit 1
 fi
 
-# --- 8. Start Server and Client ---
-step "Starting .NET Server"
-nohup dotnet watch --no-hot-reload --project Server >"$LOG_DIR/server.log" 2>&1 &
-SERVER_PID=$!
-info "Server started (PID $SERVER_PID, log: $LOG_DIR/server.log)"
-
-sleep 2
-
-step "Starting .NET Client"
-nohup dotnet watch --no-hot-reload --project Client >"$LOG_DIR/client.log" 2>&1 &
-CLIENT_PID=$!
-info "Client started (PID $CLIENT_PID, log: $LOG_DIR/client.log)"
-
-# --- Summary ---
-step "Dev stack ready"
-info "MySQL  : enigma-dev-db:3306 (net enigma-dev-net, vol enigma-db-data)"
-info "Server : http://localhost:8081 (container :18081)"
-info "Client : http://localhost:80 (container :18080)"
-info "Logs   : $LOG_DIR/"
-
-# Keep script alive so trap fires on Ctrl+C
-wait
+# Interactive (terminal) run: keep the script alive so the EXIT trap tears
+# the stack down on Ctrl+C. As a devcontainer postStartCommand the CLI waits
+# for this command to finish and kills it on timeout — DEV_START_DETACHED
+# (set by postStartCommand in devcontainer.json) returns immediately instead.
+if [ "${DEV_START_DETACHED:-0}" = "1" ]; then
+  trap - EXIT
+  info "Detached (postStartCommand): stack left running, returning"
+else
+  wait
+fi

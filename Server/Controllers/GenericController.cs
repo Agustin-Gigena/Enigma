@@ -6,5 +6,5 @@ namespace Enigma.Server.Controllers;
 [Route("[controller]")]
 public abstract class GenericController : ControllerBase
 {
-    
+
 }

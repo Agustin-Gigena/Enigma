@@ -133,14 +133,14 @@
         _error = null;
         try
         {
-            var resultado = await Auth.LoginAsync(_usuario.Trim(), _contrasena);
+            LoginResult resultado = await Auth.LoginAsync(_usuario.Trim(), _contrasena);
             if (!resultado.Ok || resultado.Datos is null)
             {
                 _error = resultado.Error ?? "No se pudo iniciar sesión. Intentá de nuevo.";
                 return;
             }
 
-            var instituciones = resultado.Datos.Instituciones;
+            List<InstitucionDto> instituciones = resultado.Datos.Instituciones;
             if (instituciones.Count == 1)
             {
                 await Auth.SetInstitucionActivaAsync(instituciones[0]);
