@@ -41,7 +41,3 @@ jobs:
             cat /tmp/vulnerable-packages.txt
             exit 1
           fi
-
-      - name: Optional lefthook install
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/evilmartians/lefthook/master/install.sh | bash
