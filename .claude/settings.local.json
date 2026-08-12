@@ -1,4 +1,20 @@
 {
+  "permissions": {
+    "deny": [
+      "Edit(lefthook.yml)",
+      "Write(lefthook.yml)",
+      "MultiEdit(lefthook.yml)",
+      "Edit(.yamllint)",
+      "Write(.yamllint)",
+      "MultiEdit(.yamllint)",
+      "Edit(.github/workflows/**)",
+      "Write(.github/workflows/**)",
+      "MultiEdit(.github/workflows/**)",
+      "Edit(.github/actions/**)",
+      "Write(.github/actions/**)",
+      "MultiEdit(.github/actions/**)"
+    ]
+  },
   "description": "Impeccable design detector: immediate-tier checks after Edit/Write/MultiEdit on UI files, full-rule deep pass on Stop.",
   "hooks": {
     "PostToolUse": [

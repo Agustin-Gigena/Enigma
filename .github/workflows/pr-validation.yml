@@ -1,3 +1,4 @@
+# probe
 name: PR Validation
 
 on:
@@ -30,11 +31,14 @@ jobs:
         run: |
           set -euo pipefail
           dotnet list Enigma.slnx package --vulnerable | tee /tmp/vulnerable-packages.txt
-          if grep -iq "no vulnerable packages were found" /tmp/vulnerable-packages.txt; then
-            echo "No vulnerable packages found."
-          else
-            echo "Error: se encontraron paquetes vulnerables o la salida no indica un estado limpio."
+          # `dotnet list package --vulnerable` termina con exit code 0 incluso cuando
+          # encuentra vulnerabilidades, así que se detectan por la marca que SOLO
+          # aparece en la tabla de paquetes vulnerables. Detección de presencia
+          # (no de ausencia): cubre el caso mixto (algunos limpios, otros no).
+          if grep -iqE 'has the following vulnerable packages|advisory url' /tmp/vulnerable-packages.txt; then
+            echo "Error: se encontraron paquetes vulnerables."
             echo "--- vulnerable output ---"
             cat /tmp/vulnerable-packages.txt
             exit 1
           fi
+          echo "No se encontraron paquetes vulnerables."

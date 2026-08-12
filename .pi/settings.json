@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "rules": [
+      {
+        "message": "Protegido: el pipeline de validación (lefthook.yml, .yamllint, .github/workflows, .github/actions) no es editable por agentes",
+        "priority": 100,
+        "match": {
+          "tool": "write",
+          "paths": ["lefthook.yml", ".yamllint", ".github/workflows/**", ".github/actions/**"]
+        },
+        "action": "deny"
+      },
+      {
+        "message": "Protegido: el pipeline de validación no es editable por agentes",
+        "priority": 100,
+        "match": {
+          "tool": "edit",
+          "params": {
+            "input": "(lefthook\\.yml|\\.yamllint|\\.github/(workflows|actions)/)"
+          }
+        },
+        "action": "deny"
+      }
+    ]
+  }
+}
