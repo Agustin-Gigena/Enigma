@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
@@ -11,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -26,18 +25,18 @@ builder.Services.AddOpenApi();
 // Política permisiva para desarrollo; restringir orígenes para producción.
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
+  options.AddDefaultPolicy(policy =>
+  {
+    policy.AllowAnyOrigin()
+          .AllowAnyHeader()
+          .AllowAnyMethod();
+  });
 });
 
 // Build the MySQL connection string from environment variables (with dev defaults).
 // NOTE: ${VAR} placeholders in appsettings.json are NOT expanded by .NET
 // IConfiguration (EnvSubst is not native). We assemble the string here.
-var connectionString = $"Server={Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost"};"
+string connectionString = $"Server={Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost"};"
     + $"Port={Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306"};"
     + $"Database={Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "enigma_db"};"
     + $"User Id={Environment.GetEnvironmentVariable("MYSQL_USER") ?? "enigma"};"
@@ -61,96 +60,96 @@ builder.Services.AddDbContext<EnigmaDbContext>(options =>
 // ASP.NET Core Identity: usuarios, contraseñas con hash y bloqueo por intentos.
 builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
     {
-        // Política dev-friendly; endurecer en producción.
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireDigit = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireLowercase = false;
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-        options.User.RequireUniqueEmail = true;
+      // Política dev-friendly; endurecer en producción.
+      options.Password.RequiredLength = 6;
+      options.Password.RequireNonAlphanumeric = false;
+      options.Password.RequireDigit = false;
+      options.Password.RequireUppercase = false;
+      options.Password.RequireLowercase = false;
+      options.Lockout.MaxFailedAccessAttempts = 5;
+      options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+      options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<EnigmaDbContext>()
     .AddDefaultTokenProviders();
 
 // JWT bearer: el CurrentUserService y el CurrentUserMiddleware consumen los
 // claims (NameIdentifier -> Usuario) emitidos por POST /auth/login.
-var jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
+string jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
     ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
 // Identity registra cookies como default scheme; forzamos JWT para la API
 // (los tres defaults, no solo DefaultScheme) para que [Authorize] desafíe
 // con el bearer y no con /Account/Login.
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+      options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+      options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+      options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = "Enigma",
-            ValidateAudience = true,
-            ValidAudience = "Enigma.Client",
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ClockSkew = TimeSpan.FromMinutes(1),
-        };
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+        ValidateIssuer = true,
+        ValidIssuer = "Enigma",
+        ValidateAudience = true,
+        ValidAudience = "Enigma.Client",
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.FromMinutes(1),
+      };
     });
 builder.Services.AddAuthorization();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+  app.MapOpenApi();
 
-    app.MapScalarApiReference("/api/docs", options =>
-    {
-        options.WithTitle("Enigma API")
-               .WithOpenApiRoutePattern("/openapi/v1.json");
-    });
+  app.MapScalarApiReference("/api/docs", options =>
+  {
+    options.WithTitle("Enigma API")
+             .WithOpenApiRoutePattern("/openapi/v1.json");
+  });
 
-    // Auto-apply migrations in development — retry briefly, but never take the
-    // app down if the database is unreachable (dev DB may not be up yet).
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
-    var migrationsApplied = false;
-    for (var attempt = 1; attempt <= 5 && !migrationsApplied; attempt++)
+  // Auto-apply migrations in development — retry briefly, but never take the
+  // app down if the database is unreachable (dev DB may not be up yet).
+  using IServiceScope scope = app.Services.CreateScope();
+  EnigmaDbContext db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
+  bool migrationsApplied = false;
+  for (int attempt = 1; attempt <= 5 && !migrationsApplied; attempt++)
+  {
+    try
     {
-        try
-        {
-            db.Database.Migrate();
-            migrationsApplied = true;
-            app.Logger.LogInformation("Database migrations applied");
-        }
-        catch (Exception ex)
-        {
-            app.Logger.LogWarning(ex, "Could not apply database migrations (attempt {Attempt}/5) — continuing without DB", attempt);
-            if (attempt < 5)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(5));
-            }
-        }
+      db.Database.Migrate();
+      migrationsApplied = true;
+      app.Logger.LogInformation("Database migrations applied");
     }
-
-    if (migrationsApplied)
+    catch (Exception ex)
     {
-        try
-        {
-            await SeedDevAsync(app.Services, app.Logger);
-            app.Logger.LogInformation("Dev seed applied");
-        }
-        catch (Exception ex)
-        {
-            app.Logger.LogWarning(ex, "Could not apply dev seed — continuing");
-        }
+      app.Logger.LogWarning(ex, "Could not apply database migrations (attempt {Attempt}/5) — continuing without DB", attempt);
+      if (attempt < 5)
+      {
+        await Task.Delay(TimeSpan.FromSeconds(5));
+      }
     }
+  }
+
+  if (migrationsApplied)
+  {
+    try
+    {
+      await SeedDevAsync(app.Services, app.Logger);
+      app.Logger.LogInformation("Dev seed applied");
+    }
+    catch (Exception ex)
+    {
+      app.Logger.LogWarning(ex, "Could not apply dev seed — continuing");
+    }
+  }
 }
 app.UseCors();
 
@@ -169,44 +168,44 @@ app.Run();
 /// </summary>
 static async Task SeedDevAsync(IServiceProvider services, ILogger logger)
 {
-    using var scope = services.CreateScope();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-    var db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
+  using IServiceScope scope = services.CreateScope();
+  UserManager<Usuario> userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+  EnigmaDbContext db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
 
-    var adminUserName = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_USER") ?? "admin";
-    var adminPassword = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_PASSWORD") ?? "admin123";
+  string adminUserName = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_USER") ?? "admin";
+  string adminPassword = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_PASSWORD") ?? "admin123";
 
-    var admin = await userManager.FindByNameAsync(adminUserName);
-    if (admin is null)
+  Usuario? admin = await userManager.FindByNameAsync(adminUserName);
+  if (admin is null)
+  {
+    admin = new Usuario
     {
-        admin = new Usuario
-        {
-            UserName = adminUserName,
-            Email = $"{adminUserName}@enigma.local",
-            EmailConfirmed = true,
-        };
-        var crear = await userManager.CreateAsync(admin, adminPassword);
-        if (!crear.Succeeded)
-        {
-            throw new InvalidOperationException(
-                "No se pudo crear el usuario admin de seed: "
-                + string.Join("; ", crear.Errors.Select(e => e.Description)));
-        }
-        logger.LogInformation("Seed: creado usuario {Admin}", adminUserName);
-    }
-
-    if (!await db.Instituciones.AnyAsync())
+      UserName = adminUserName,
+      Email = $"{adminUserName}@enigma.local",
+      EmailConfirmed = true,
+    };
+    IdentityResult crear = await userManager.CreateAsync(admin, adminPassword);
+    if (!crear.Succeeded)
     {
-        var universidad = new Institucion { Nombre = "Universidad Nacional del Plata", Tipo = TipoInstitucion.Universidad };
-        var colegio = new Institucion { Nombre = "Colegio San Martín", Tipo = TipoInstitucion.Secundaria };
-        universidad.SetCreadoPor(admin);
-        colegio.SetCreadoPor(admin);
-        admin.Instituciones.Add(universidad);
-        admin.Instituciones.Add(colegio);
-        db.Instituciones.AddRange(universidad, colegio);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Seed: creadas instituciones de ejemplo");
+      throw new InvalidOperationException(
+          "No se pudo crear el usuario admin de seed: "
+          + string.Join("; ", crear.Errors.Select(e => e.Description)));
     }
+    logger.LogInformation("Seed: creado usuario {Admin}", adminUserName);
+  }
+
+  if (!await db.Instituciones.AnyAsync())
+  {
+    Institucion universidad = new() { Nombre = "Universidad Nacional del Plata", Tipo = TipoInstitucion.Universidad };
+    Institucion colegio = new() { Nombre = "Colegio San Martín", Tipo = TipoInstitucion.Secundaria };
+    universidad.SetCreadoPor(admin);
+    colegio.SetCreadoPor(admin);
+    admin.Instituciones.Add(universidad);
+    admin.Instituciones.Add(colegio);
+    db.Instituciones.AddRange(universidad, colegio);
+    await db.SaveChangesAsync();
+    logger.LogInformation("Seed: creadas instituciones de ejemplo");
+  }
 }
 
 public partial class Program { }

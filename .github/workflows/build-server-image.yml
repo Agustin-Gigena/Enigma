@@ -1,0 +1,73 @@
+name: Build Server Image
+
+on:
+  push:
+    branches: [production]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: enigma-server
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Compute GHCR image ─────────────────────────────────────
+      - name: Compute GHCR image
+        id: meta
+        shell: bash
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "GHCR image: ${IMAGE}"
+
+      # ── Docker meta for tags ───────────────────────────────────
+      - name: Docker meta
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.meta.outputs.image }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      # ── Login to GHCR ──────────────────────────────────────────
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Build and push ─────────────────────────────────────────
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Server/Dockerfile
+          push: true
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Summary ────────────────────────────────────────────────
+      - name: Summary
+        if: always()
+        shell: bash
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+        run: |
+          {
+            echo "## Server Image"
+            echo ""
+            echo "Image: \`${IMAGE}\`"
+            echo "Tags: commit SHA + \`latest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
