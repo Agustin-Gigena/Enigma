@@ -1,0 +1,64 @@
+name: Setup .NET + dotnet-ef
+description: |
+  Instala el SDK de .NET 10 y la herramienta dotnet-ef global.
+  Prepara el runner para cualquier operación .NET sobre el repo
+  (migraciones EF Core, build, test).
+  Versiones fijas: SDK 10.0.x, dotnet-ef 10.0.0.
+
+inputs:
+  params-json:
+    description: 'JSON genérico con parámetros opcionales. Ejemplo: {"tools": {"dotnet-format": "9.0.218"}}'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "10.0.x"
+        cache: false
+
+    - name: Install dotnet-ef (global tool)
+      shell: bash
+      run: |
+        set -euo pipefail
+        dotnet tool install --global dotnet-ef \
+          --version "10.0.0"
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+        dotnet ef --version
+
+    - name: Install additional global tools
+      if: ${{ inputs.params-json != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Parse PARAMS_JSON using jq (available on GitHub hosted runners)
+        if [ -n "${PARAMS_JSON:-}" ]; then
+          echo "$PARAMS_JSON" | jq -r '.tools // {} | to_entries[] | "\(.key)\t\(.value)"' | while IFS=$'\t' read -r tool version; do
+            echo "Installing global tool $tool $version"
+            if dotnet tool install --global "$tool" --version "$version"; then
+              echo "Installed $tool $version"
+            else
+              echo "Pinned version $version for $tool not available, installing latest available"
+              if dotnet tool install --global "$tool"; then
+                echo "Installed latest $tool"
+              else
+                echo "ERROR: failed to install $tool" >&2
+                exit 1
+              fi
+            fi
+          done
+        else
+          echo "No additional tools specified."
+        fi
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      env:
+        PARAMS_JSON: ${{ inputs.params-json }}
+
+    - name: Restore dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        dotnet restore

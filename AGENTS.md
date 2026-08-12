@@ -66,11 +66,37 @@ Client Page (@inject HttpClient)
 | `Server/Data/` | EF Core DbContext, entities | `EnigmaDbContext.cs`, `GenericEntity.cs` |
 | `Server/Data/Entities/` | Domain entities | Organized by domain (Auth, Administración) |
 | `Server/Data/Repositories/` | Repository implementations | Generic pattern with soft-delete |
-| `Server/Controllers/` | API endpoints | Base `GenericController` |
-| `Server/Services/` | Business logic, helpers | `CurrentUserService` |
+| `Server/Controllers/` | API endpoints | Domain folders (Auth/) |
+| `Server/Services/` | Business logic, helpers | Domain folders (Auth/) |
 | `Shared/` | Common types (empty) | Add DTOs, shared enums, constants |
 | `.devcontainer/` | Dev container config | .NET 10 SDK, Oh My Pi, C# extensions |
 
+
+**Domain Folder Structure:** la estructura de carpetas de `Data` (subcarpetas por
+dominio de negocio) se replica en `Controllers` y `Services`:
+
+```
+Server/
+├── Controllers/
+│   └── Auth/            # Enigma.Server.Controllers.<Dominio>
+├── Services/
+│   └── Auth/            # Enigma.Server.Services.<Dominio>
+└── Data/
+    ├── Entities/
+    │   ├── Auth/
+    │   └── Administracion/
+    └── Repositories/
+        └── Auth/
+```
+
+- Cada dominio de negocio (Auth, Administración, …) tiene su carpeta en las
+  tres capas; el namespace C# refleja la ruta (`Enigma.Server.Controllers.Auth`,
+  `Enigma.Server.Services.Auth`, `Enigma.Server.Data.Entities.Auth`).
+- Archivos genéricos o transversales quedan en la raíz de su capa
+  (`GenericEntity`, `GenericRepository`, `EnigmaDbContext`).
+- Interfaz e implementación viven juntas: `IUsuarioService` + `UsuarioService`
+  en `Services/Auth/UsuarioService.cs`, `ICurrentUserService` +
+  `CurrentUserService` en `Services/Auth/CurrentUserService.cs`.
 ---
 
 ## Development Commands
@@ -101,7 +127,7 @@ docker-compose up -d
 dotnet ef migrations add MigrationName --project Server/Enigma.Server.csproj
 dotnet ef database update --project Server/Enigma.Server.csproj
 
-# Auto-migration enabled in development (Program.cs line 38)
+# Auto-migration enabled in development (Program.cs auto-applies migrations)
 ```
 
 **Test (none implemented):**
@@ -117,9 +143,12 @@ dotnet test
 # 1. Start MySQL container
 docker-compose up -d
 
-# 2. Set environment variables or use appsettings.json
-#    Server/appsettings.json interpolates:
-#    DefaultConnection = Server=${MYSQL_HOST};Port=${MYSQL_PORT};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD}
+# 2. Set environment variables (Program.cs assembles the connection string)
+#    Server/Program.cs reads: MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE,
+#    MYSQL_USER, MYSQL_PASSWORD (with dev defaults: localhost/3306/enigma_db/
+#    enigma/enigma_dev_password). appsettings.json keeps ${MYSQL_*}
+#    placeholders only as documentation — .NET IConfiguration does NOT
+#    expand ${VAR}.
 
 # 3. Apply migrations
 dotnet ef database update --project Server
@@ -236,7 +265,6 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 {
     return await _context.Set<T>().FindAsync(id, ct);
 }
-```
 
 **Error Handling:**
 
@@ -248,7 +276,7 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 
 - **Client**: Blazor component state (`@currentCount`, `@loading`)
 - **Server**: EF Core change tracking via DbContext
-- **Audit fields**: Auto-populated via `ICurrentUserService` claims
+- **Audit fields**: Auto-populated via `CurrentUserService.GetCurrentUser()` (acceso ambiental, sin inyección)
 
 ---
 
@@ -259,13 +287,12 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 | `Enigma.slnx` | Solution file | 3 projects: Client, Server, Shared |
 | `Server/Program.cs` | Server entry point | DI, migration auto-run, OpenAPI |
 | `Server/Data/EnigmaDbContext.cs` | EF Core DbContext | Currently minimal, OnModelCreating empty |
-| `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete, ICurrentUserService |
-| `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Synchronous, soft-delete support |
+| `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete; audit via static `CurrentUserService` |
+| `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Base sync methods + soft-delete support |
 | `Server/Controllers/GenericController.cs` | Base controller | `[ApiController]`, `[Route("[controller]")]` |
-| `Server/Services/CurrentUserService.cs` | User context | Extracts claims from HttpContext |
-| `Client/Program.cs` | Client entry point | WebAssemblyHostBuilder, HttpClient DI |
-| `Client/App.razor` | Root component | Router, default MainLayout, NotFound |
-| `Client/_Imports.razor` | Global usings | Blazor namespaces, HttpClient, Forms |
+| `Server/Controllers/Auth/AuthController.cs` | Auth endpoints | `POST auth/login`, `GET auth/me`, `GET auth/instituciones` |
+| `Server/Services/Auth/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
+| `Server/Services/Auth/UsuarioService.cs` | Auth business logic | `IUsuarioService` + `UsuarioService`: login vía Identity (SignInManager/UserManager) + consultas al `UsuarioRepository` |
 | `docker-compose.yml` | MySQL dev DB | Credentials: enigma/enigma_dev_password |
 | `Server/appsettings.json` | Configuration | Environment variable interpolation |
 
@@ -347,7 +374,7 @@ dotnet test --collect:"XPlat Code Coverage"
 **QA Expectations:**
 
 - Unit tests for repository methods ( GetById, SetBorradoLogico, soft-delete logic)
-- Service layer tests with mocked DbContext/ICurrentUserService
+- Service/entity audit tests via the ambient `CurrentUserService` scope (`WebApplicationFactory` E2E, o `InternalsVisibleTo` para `BeginScope`)
 - Controller tests with test server
 - Blazor component tests using bUnit
 - API integration tests using `WebApplicationFactory<Program>`
@@ -365,7 +392,7 @@ dotnet test --collect:"XPlat Code Coverage"
 
 1. **Soft-Delete Awareness**: All entities inherit `BorradoLogico` field. Queries must filter unless explicitly including soft-deleted records.
 
-2. **Audit Field Dependencies**: `GenericEntity` requires `ICurrentUserService` to be registered. New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.
+2. **Audit Field Dependencies**: `GenericEntity` resuelve el usuario vía `CurrentUserService.GetCurrentUser()` (estático, sin inyección). New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.
 
 3. **Sync-to-Async Migration**: Current repositories are synchronous. New code should use async EF Core methods (`FindAsync`, `SaveChangesAsync`) with `CancellationToken`.
 
@@ -378,9 +405,9 @@ dotnet test --collect:"XPlat Code Coverage"
    </ItemGroup>
    ```
 
-5. **Auth Implementation**: `Usuario` entity exists, but `CurrentUserService.IsAuthenticated()` throws `NotImplementedException`. Authentication middleware (JWT/cookies) is not configured.
+5. **Auth Implementation**: `CurrentUserService` expone acceso ambiental al usuario actual: `IsAuthenticated()`, `GetClaimsPrincipal()`, `GetCurrentUser()` (entidad `Usuario`, cacheada por request vía `Lazy`) — consumibles desde repositorios/controladores/entidades **sin inyectar nada**. El contexto se siembra con `CurrentUserMiddleware` (AsyncLocal) usando `IHttpContextAccessor`. JWT/cookies aún no configurados: todo request es anónimo hasta entonces. `ENIGMA_AUTH_REQUIRED=true` hace que `GetCurrentUser()` lance `UnauthorizedAccessException` cuando no hay usuario (ausente/false → `null`).
 
-6. **Auto-Migration in Dev**: In development, `Program.cs` line 38 auto-applies migrations. Production deployments must run `dotnet ef database update` explicitly.
+6. **Auto-Migration in Dev**: In development, `Program.cs` auto-applies migrations via `db.Database.Migrate()` (called when `ASPNETCORE_ENVIRONMENT=Development`). Production deployments must run `dotnet ef database update` explicitly.
 
 7. **Database Credentials** (dev only):
    - Host: `localhost` or `${MYSQL_HOST}`

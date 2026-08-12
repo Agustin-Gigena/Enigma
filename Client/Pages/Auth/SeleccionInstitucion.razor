@@ -1,0 +1,90 @@
+@page "/auth/seleccion-institucion"
+@layout AuthLayout
+@attribute [Authorize]
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Elegí tu institución · Enigma</PageTitle>
+
+<div class="seleccion">
+    <header class="seleccion__header">
+        <a class="enigma-brand" href="/">
+            <svg class="enigma-brand__glyph enigma-brand__glyph--ink" viewBox="0 0 32 32" aria-hidden="true">
+                <rect x="4" y="4" width="24" height="24" rx="7" />
+                <path d="M11 11.5h10M11 16h6.5M11 20.5h9" />
+            </svg>
+            <span class="enigma-brand__name">Enigma</span>
+        </a>
+        <button class="seleccion__logout" type="button" @onclick="CerrarSesion">Salir</button>
+    </header>
+
+    <main class="seleccion__main">
+        <h1>Elegí tu institución</h1>
+        <p class="seleccion__lead">Tu usuario tiene acceso a varias instituciones. Elegí en cuál querés trabajar.</p>
+
+        @if (_cargando)
+        {
+            <p class="seleccion__estado">Cargando instituciones…</p>
+        }
+        else if (_error is not null)
+        {
+            <p class="seleccion__error" role="alert">@_error</p>
+        }
+        else
+        {
+            <div class="seleccion__grilla">
+                @foreach (InstitucionDto institucion in _instituciones)
+                {
+                    <button class="seleccion__tarjeta" type="button" @onclick="() => Seleccionar(institucion)">
+                        <span class="seleccion__tarjeta-cuerpo">
+                            <span class="seleccion__tarjeta-nombre">@institucion.Nombre</span>
+                            <span class="seleccion__tarjeta-tipo">@institucion.Tipo</span>
+                        </span>
+                        <svg class="seleccion__tarjeta-flecha" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 6l6 6-6 6" />
+                        </svg>
+                    </button>
+                }
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    private List<InstitucionDto> _instituciones = [];
+    private bool _cargando = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _instituciones = await Auth.GetInstitucionesAsync();
+            if (_instituciones.Count == 0)
+            {
+                _error = "Tu usuario no tiene instituciones asignadas. Contactá al administrador.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            _error = "No se pudieron cargar las instituciones. Verificá tu conexión e intentá de nuevo.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task Seleccionar(InstitucionDto institucion)
+    {
+        await Auth.SetInstitucionActivaAsync(institucion);
+        Navigation.NavigateTo("/");
+    }
+
+    private async Task CerrarSesion()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/auth/login");
+    }
+}

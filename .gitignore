@@ -1,3 +1,6 @@
+# Global
+*/.env
+
 # Build results (monorepo)
 **/bin/
 **/obj/
@@ -45,3 +48,7 @@ AzurePackages/
 *.pdb
 *.deps.json
 *.runtimeconfig.json
+
+# superpowers
+/docs/superpowers/
+.superpowers/

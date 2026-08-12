@@ -1,0 +1,75 @@
+name: Sync DB to GHCR
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-branch:
+        description: "Sufijo del package GHCR destino (production/development). Vacio = usar la rama del dispatch."
+        required: false
+        default: ""
+      force:
+        description: "Forzar rebuild aunque no haya migraciones nuevas"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Compute GHCR prefix (un package por rama) ─────────────
+      - name: Compute GHCR prefix
+        id: ghcr
+        shell: bash
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          DISPATCH_BRANCH="${{ github.ref_name }}"
+          TARGET_BRANCH="${{ inputs.target-branch }}"
+          PACKAGE_BRANCH="${TARGET_BRANCH:-${DISPATCH_BRANCH}}"
+          PREFIX="ghcr.io/${OWNER}/enigma-dev-db_${PACKAGE_BRANCH}"
+          echo "prefix=${PREFIX}" >> "$GITHUB_OUTPUT"
+          echo "package-branch=${PACKAGE_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "GHCR prefix: ${PREFIX} (package: ${PACKAGE_BRANCH}, dispatch: ${DISPATCH_BRANCH})"
+
+      # ── Sync: migrate latest image + push as new version ──────
+      - name: Sync DB to GHCR
+        id: sync
+        uses: ./.github/actions/sync-db
+        env:
+          GHCR_PREFIX: ${{ steps.ghcr.outputs.prefix }}
+          FORCE: ${{ inputs.force }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'root_password' }}
+          MYSQL_DATABASE: enigma_db
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Summary ───────────────────────────────────────────────
+      - name: Summary
+        if: always()
+        shell: bash
+        env:
+          PUSHED: ${{ steps.sync.outputs.pushed }}
+          VERSION: ${{ steps.sync.outputs.version }}
+          PACKAGE_BRANCH: ${{ steps.ghcr.outputs.package-branch }}
+          DISPATCH_BRANCH: ${{ github.ref_name }}
+        run: |
+          {
+            echo "## DB Sync — package \`${PACKAGE_BRANCH}\`"
+            echo ""
+            echo "Package: \`enigma-dev-db_${PACKAGE_BRANCH}\`"
+            if [ "${PACKAGE_BRANCH}" != "${DISPATCH_BRANCH}" ]; then
+              echo "Corrido sobre la rama \`${DISPATCH_BRANCH}\` — migraciones aplicadas desde ahi."
+            fi
+            echo ""
+            if [ "${PUSHED}" = "true" ]; then
+              echo "Nueva imagen: schema version \`${VERSION}\` — tags \`${VERSION}\` y \`latest\`."
+            else
+              echo "Sin migraciones nuevas — la imagen ya esta al dia (version \`${VERSION}\`)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

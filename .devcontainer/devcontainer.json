@@ -1,21 +1,78 @@
 {
-  "name": ".NET 10 SDK",
+  "name": ".NET 10 + MySQL",
   "image": "mcr.microsoft.com/dotnet/sdk:10.0",
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
-    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1" : {},
-    "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
-    
+    "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {},
+    "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "mounts": [
+    {
+      "source": "${env:HOME}/.omp",
+      "target": "/root/.omp",
+      "type": "bind"
+    },
+    {
+      "type": "bind",
+      "source": "${localEnv:HOME}/.config/gh/",
+      "target": "/root/.config/gh/"
+    },
+    {
+      "type": "bind",
+      "source": "/run/user/1000/podman/podman.sock",
+      "target": "/run/user/1000/podman/podman.sock"
+
+    }
+  ],
+  "runArgs": [
+    "--name",
+    "enigma-devcontainer",
+    "--network",
+    "enigma-dev-net",
+    "--publish",
+    "127.0.0.1:80:18080",
+    "--publish",
+    "127.0.0.1:8081:18081"
+  ],
+  "initializeCommand": "podman network exists enigma-dev-net || podman network create --dns 1.1.1.1 --dns 9.9.9.9 enigma-dev-net; podman network inspect enigma-dev-net --format '{{.NetworkDNSServers}}' | grep -q 1.1.1.1 || podman network update enigma-dev-net --dns-add 1.1.1.1 --dns-add 9.9.9.9; [ -S /run/user/1000/podman/podman.sock ] && chmod 666 /run/user/1000/podman/podman.sock",
+  "postCreateCommand": {
+    "Install podman client (host socket)": "apt-get update -qq && apt-get install -y -qq --no-install-recommends podman",
+    "Install yamllint": "apt-get update && apt-get install -y --no-install-recommends yamllint",
+    "Install and register lefthook": "npm install -g lefthook && lefthook install"
+  },
+  "postStartCommand": "DEV_START_DETACHED=1 bash .devcontainer/start-dev.sh",
+  "remoteEnv": {
+    "DB_IMAGE_REPO": "ghcr.io/agustin-gigena/enigma-dev-db",
+    "MYSQL_HOST": "enigma-dev-db",
+    "MYSQL_PORT": "3306",
+    "MYSQL_DATABASE": "enigma_db",
+    "MYSQL_USER": "root",
+    "MYSQL_PASSWORD": "root_password",
+    "MYSQL_ROOT_PASSWORD": "root_password"
   },
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "remote.autoForwardPorts": false,
+        "remote.restoreForwardedPorts": false,
+        "remote.autoForwardPortSource": "process"
       },
       "extensions": [
         "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "patcx.vscode-nuget-gallery"
       ]
     }
+  },
+  "portsAttributes": {
+    "*": {
+      "onAutoForward": "ignore"
+    }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
   }
+
 }

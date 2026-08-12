@@ -1,0 +1,37 @@
+---
+pre-commit:
+  parallel: true
+  jobs:
+    - name: validate
+      run: |
+        dotnet restore Enigma.slnx
+        dotnet format Enigma.slnx --verify-no-changes
+        dotnet build Enigma.slnx -c Release \
+          /p:TreatWarningsAsErrors=true
+    - name: yaml-lint
+      run: >-
+        yamllint -c .yamllint --strict
+        $(find . -type f
+        \( -name '*.yml' -o -name '*.yaml' \)
+        -not -path '*/.git/*')
+
+pre-push:
+  jobs:
+    - name: validate
+      run: |
+        dotnet restore Enigma.slnx
+        dotnet format Enigma.slnx --verify-no-changes
+        dotnet build Enigma.slnx -c Release \
+          /p:TreatWarningsAsErrors=true
+
+commit-msg:
+  jobs:
+    - name: conventional
+      run: |
+        commit_msg=$(head -1 "{1}")
+        if ! echo "$commit_msg" | grep -qE \
+          '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9_.-]+\))?:[[:space:]]+.+$'; then
+          echo "Error: no cumple Conventional Commits." >&2
+          echo "Formato: <type>(<scope>): <desc>" >&2
+          exit 1
+        fi
