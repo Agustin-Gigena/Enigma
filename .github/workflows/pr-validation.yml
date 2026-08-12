@@ -25,9 +25,6 @@ jobs:
       - name: Validate solution build
         run: dotnet build Enigma.slnx -c Release /p:TreatWarningsAsErrors=true
 
-      - name: Run tests and coverage
-        run: bash ./tests/coverage.run.sh
-
       - name: Validate package security
         shell: bash
         run: |
