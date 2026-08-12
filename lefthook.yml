@@ -28,9 +28,7 @@ commit-msg:
   jobs:
     - name: conventional
       run: |
-        echo "DEBUG: args=$@ file=$1"
-        echo "DEBUG: LEFTHOOK=$LEFTHOOK"
-        commit_msg=$(head -1 "$1")
+        commit_msg=$(head -1 "{1}")
         if ! echo "$commit_msg" | grep -qE \
           '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9_.-]+\))?:[[:space:]]+.+$'; then
           echo "Error: no cumple Conventional Commits." >&2
