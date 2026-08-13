@@ -4,38 +4,29 @@
 # of the host repo, so .git/config is shared host<->container; we set BOTH the
 # container's global config and this repo's local config. No hardcoded values.
 #
-# Runs from postCreateCommand. Fails soft (warns, leaves config untouched) if gh is
-# not installed or not authenticated — never blocks container creation.
+# HARD FAIL: if it cannot configure the identity (gh missing, not authenticated, or
+# name/email unresolvable) it exits non-zero, so postCreateCommand fails and the
+# container creation ABORTS — forcing you to fix gh auth before the container is
+# usable. Identity is a hard requirement, not best-effort.
 set -uo pipefail
 
 _ts() { date -u +%H:%M:%S; }
 info() { echo "[$(_ts)] git-id: $*"; }
-warn() { echo "[$(_ts)] git-id: WARN — $*" >&2; }
+die() { echo "[$(_ts)] git-id: ERROR — $*" >&2; exit 1; }
 
 # True if $1 looks like an email (guards against gh emitting an error JSON body).
 looks_like_email() { case "$1" in *@*.*) return 0 ;; *) return 1 ;; esac; }
 
-# 1. Login detection.
-if ! command -v gh >/dev/null 2>&1; then
-  warn "gh CLI not installed; cannot derive git identity."
-  exit 0
-fi
-if ! gh auth status >/dev/null 2>&1; then
-  warn "gh is not authenticated. Fix on the HOST (the container mounts ~/.config/gh):"
-  warn "  gh auth login -h github.com -s user"
-  warn "Leaving git identity untouched."
-  exit 0
-fi
+# 1. Login detection (HARD requirement).
+command -v gh >/dev/null 2>&1 || die "gh CLI not installed; cannot derive git identity. Container creation aborted."
+gh auth status >/dev/null 2>&1 || die "gh is not authenticated. Fix on the HOST (the container mounts ~/.config/gh): gh auth login -h github.com -s user — then recreate the container."
 
 login="$(gh api user --jq '.login' 2>/dev/null | tr -d '\r\n')"
 info "gh authenticated as ${login:-?}."
 
 # 2. Name: display name, fallback to login.
 git_name="$(gh api user --jq '.name // .login' 2>/dev/null | tr -d '\r\n')"
-if [ -z "$git_name" ]; then
-  warn "Could not resolve name from gh; leaving identity untouched."
-  exit 0
-fi
+[ -n "$git_name" ] || die "Could not resolve name from gh. Container creation aborted."
 
 # 3. Email: primary verified email (needs 'user' scope) -> public profile email -> noreply.
 git_email=""
@@ -49,15 +40,11 @@ if [ -z "$git_email" ]; then
   uid="$(gh api user --jq '.id' 2>/dev/null | tr -d '\r\n')"
   if [ -n "$uid" ] && [ -n "$login" ]; then
     git_email="${uid}+${login}@users.noreply.github.com"
-    warn "No 'user' scope and no public profile email; using the GitHub noreply address."
-    warn "  For your real email, refresh the token (on the host): gh auth refresh -h github.com -s user"
+    info "No 'user' scope and no public profile email; using the GitHub noreply address."
+    info "  For your real email, refresh the token (on the host): gh auth refresh -h github.com -s user"
   fi
 fi
-
-if [ -z "$git_email" ]; then
-  warn "Could not resolve email from gh; leaving identity untouched."
-  exit 0
-fi
+[ -n "$git_email" ] || die "Could not resolve email from gh. Container creation aborted."
 
 # 4. Apply: container global + this repo's local (.git/config is shared via bind-mount).
 git config --global user.name "$git_name"
