@@ -23,6 +23,7 @@ RUN set -eux; \
         useradd -u 1000 -g 1000 -m -s /bin/bash dotnet; \
     fi; \
     chown -R 1000:1000 /home/dotnet; \
+    install -d -o 1000 -g 1000 /home/dotnet/.config; \
     install -d -m 0755 /etc/sudoers.d; \
     echo 'dotnet ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/dotnet; \
     chmod 0440 /etc/sudoers.d/dotnet
