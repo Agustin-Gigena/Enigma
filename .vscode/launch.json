@@ -7,6 +7,7 @@
         {
             // Debugger .NET para el Server (API). Funciona dentro del devcontainer
             // (la extensión C# instala vsdbg en el primer debug). F5 adjunta breakpoints C#.
+            // Oculta del dropdown: se lanza solo vía el compound "Enigma (Server + Client)".
             "name": "Server (.NET Core)",
             "type": "coreclr",
             "request": "launch",
@@ -23,12 +24,13 @@
                 "HTTP_PORTS": "",
                 "HTTPS_PORTS": ""
             },
-            "console": "internalConsole"
+            "console": "internalConsole",
+            "presentation": { "hidden": true }
         },
         {
             // Levanta el dev server de Blazor WASM en :8080 (dotnet run). No debugea
             // el WASM (corre en el navegador del host); sirve la app para abrir
-            // http://localhost:8080. Pensado para el compound "Enigma (Server + Client)".
+            // http://localhost:8080. Oculta del dropdown: se lanza solo vía el compound.
             "name": "Client (.NET Core)",
             "type": "coreclr",
             "request": "launch",
@@ -47,25 +49,27 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             },
-            "console": "internalConsole"
+            "console": "internalConsole",
+            "presentation": { "hidden": true }
         },
         {
             // SOLO útil si VS Code corre NATIVO en el HOST (no en devcontainer):
-            // el container no tiene navegador. En devcontainer, usá el compound de
-            // abajo y abrí http://localhost:8080 en el navegador del host.
+            // el container no tiene navegador. Oculta del dropdown.
             "name": "Launch Chrome (Client)",
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}/Client",
-            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+            "presentation": { "hidden": true }
         }
     ],
     "compounds": [
         {
-            // F5 levanta el stack completo: Server (debuggable, :8081) + Client dev
-            // server (:8080). En el devcontainer abrí http://localhost:8080 en el
-            // navegador del host. stopAll: al detener la sesión, caen ambos procesos.
+            // Única opción de inicio visible: F5 levanta el stack completo —
+            // Server (debuggable, :8081) + Client dev server (:8080). En el devcontainer
+            // abrí http://localhost:8080 en el navegador del host. stopAll: al detener
+            // la sesión, caen ambos procesos.
             "name": "Enigma (Server + Client)",
             "configurations": ["Server (.NET Core)", "Client (.NET Core)"],
             "stopAll": true
