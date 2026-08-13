@@ -36,9 +36,9 @@
     "--network",
     "enigma-dev-net",
     "--publish",
-    "127.0.0.1:8080:18080",
+    "127.0.0.1:8080:8080",
     "--publish",
-    "127.0.0.1:8081:18081"
+    "127.0.0.1:8081:8081"
   ],
   "initializeCommand": "bash .devcontainer/setup.sh",
   "postCreateCommand": "npm install -g lefthook && lefthook install",
