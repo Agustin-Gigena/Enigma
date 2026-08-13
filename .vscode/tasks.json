@@ -26,6 +26,55 @@
       ],
       "problemMatcher": "$msCompile",
       "group": "build"
+    },
+    {
+      "label": "watch-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Server/Enigma.Server.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet-watch-server",
+        "pattern": { "regexp": "^\\b\\B" },
+        "fileLocation": "relative",
+        "activeOnStart": true,
+        "beginsPattern": "watch :",
+        "endsPattern": "Now listening on"
+      }
+    },
+    {
+      "label": "watch-client",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Client/Enigma.Client.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet-watch-client",
+        "pattern": { "regexp": "^\\b\\B" },
+        "fileLocation": "relative",
+        "activeOnStart": true,
+        "beginsPattern": "watch :",
+        "endsPattern": "Now listening on"
+      }
+    },
+    {
+      "label": "dev",
+      "dependsOn": ["watch-server", "watch-client"],
+      "problemMatcher": []
     }
   ]
 }
