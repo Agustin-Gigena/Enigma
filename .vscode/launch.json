@@ -10,7 +10,7 @@
             "name": "Server (.NET Core)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build-server",
+            "preLaunchTask": "prelaunch-server",
             "program": "${workspaceFolder}/Server/bin/Debug/net10.0/Enigma.Server.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Server",
