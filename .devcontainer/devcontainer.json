@@ -41,7 +41,10 @@
     "127.0.0.1:8081:8081"
   ],
   "initializeCommand": "bash .devcontainer/setup.sh",
-  "postCreateCommand": "npm install -g lefthook agent-browser && lefthook install && agent-browser install",
+  "postCreateCommand": {
+    "Install lefthook": "npm install -g lefthook && lefthook install",
+    "Install agent-browser": "npm install -g agent-browser && agent-browser install --with-deps"
+  },
   "postStartCommand": "DEV_START_DETACHED=1 bash .devcontainer/start-dev.sh",
   "remoteEnv": {
     "PODMAN_SOCKET": "/run/podman.sock",
