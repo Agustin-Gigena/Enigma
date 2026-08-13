@@ -1,3 +1,4 @@
+# probe
 name: PR Validation
 
 on:
@@ -6,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   validate:
@@ -30,11 +32,50 @@ jobs:
         run: |
           set -euo pipefail
           dotnet list Enigma.slnx package --vulnerable | tee /tmp/vulnerable-packages.txt
-          if grep -iq "no vulnerable packages were found" /tmp/vulnerable-packages.txt; then
-            echo "No vulnerable packages found."
-          else
-            echo "Error: se encontraron paquetes vulnerables o la salida no indica un estado limpio."
+          # `dotnet list package --vulnerable` termina con exit code 0 incluso cuando
+          # encuentra vulnerabilidades, así que se detectan por la marca que SOLO
+          # aparece en la tabla de paquetes vulnerables. Detección de presencia
+          # (no de ausencia): cubre el caso mixto (algunos limpios, otros no).
+          if grep -iqE 'has the following vulnerable packages|advisory url' /tmp/vulnerable-packages.txt; then
+            echo "Error: se encontraron paquetes vulnerables."
             echo "--- vulnerable output ---"
             cat /tmp/vulnerable-packages.txt
             exit 1
           fi
+          echo "No se encontraron paquetes vulnerables."
+
+      - name: Start dev database (GHCR image, like start-dev.sh)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Tag como en start-dev.sh: production si el PR apunta a production, si no development.
+          base="${GITHUB_BASE_REF:-development}"
+          if [ "$base" = "production" ]; then tag="production"; else tag="development"; fi
+          image="ghcr.io/agustin-gigena/enigma-dev-db_${tag}"
+          echo "Using DB image: $image"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker pull "$image"
+          # El runner no resuelve el DNS del container (como sí hace la red podman del
+          # devcontainer): alias enigma-dev-db -> 127.0.0.1 para que el test
+          # (MYSQL_HOST=enigma-dev-db) alcance el MySQL expuesto en :3306.
+          echo "127.0.0.1 enigma-dev-db" | sudo tee -a /etc/hosts
+          docker run -d --name enigma-dev-db -p 3306:3306 \
+            -e MYSQL_ROOT_PASSWORD=root_password \
+            -e MYSQL_USER=root \
+            -e MYSQL_PASSWORD=root_password \
+            -e MYSQL_DATABASE=enigma_db \
+            "$image"
+          # Esperar a que MySQL acepte conexiones (igual que start-dev.sh).
+          for i in $(seq 1 60); do
+            if docker exec enigma-dev-db sh -c 'echo > /dev/tcp/localhost/3306' 2>/dev/null; then
+              echo "MySQL ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "MySQL not ready after 60s" >&2
+          docker logs enigma-dev-db | tail -20 >&2
+          exit 1
+
+      - name: Run tests
+        run: dotnet test Enigma.slnx -c Release --no-build

@@ -1,0 +1,96 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Server/Enigma.Server.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build-client",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Client/Enigma.Client.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "watch-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Server/Enigma.Server.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet-watch-server",
+        "pattern": { "regexp": "^\\b\\B" },
+        "fileLocation": "relative",
+        "activeOnStart": true,
+        "beginsPattern": "watch :",
+        "endsPattern": "Now listening on"
+      }
+    },
+    {
+      "label": "watch-client",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Client/Enigma.Client.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet-watch-client",
+        "pattern": { "regexp": "^\\b\\B" },
+        "fileLocation": "relative",
+        "activeOnStart": true,
+        "beginsPattern": "watch :",
+        "endsPattern": "Now listening on"
+      }
+    },
+    {
+      "label": "dev",
+      "dependsOn": ["watch-server", "watch-client"],
+      "problemMatcher": []
+    },
+    {
+      "label": "free-dev-ports",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "fuser -k 8080/tcp 8081/tcp 2>/dev/null; pkill -f 'Enigma\\.Server' 2>/dev/null; pkill -f 'Enigma\\.Client' 2>/dev/null; pkill -f 'webassembly\\.devserver' 2>/dev/null; pkill -f 'dotnet watch --project Server' 2>/dev/null; pkill -f 'dotnet watch --project Client' 2>/dev/null; sleep 1; echo '[free-dev-ports] 8080/8081 freed'"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "prelaunch-server",
+      "dependsOrder": "sequence",
+      "dependsOn": ["free-dev-ports", "build-server"],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Debugger .NET para el Server (API). Funciona dentro del devcontainer
+            // (la extensión C# instala vsdbg en el primer debug). F5 adjunta breakpoints C#.
+            // Oculta del dropdown: se lanza solo vía el compound "Enigma (Server + Client)".
+            "name": "Server (.NET Core)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "prelaunch-server",
+            "program": "${workspaceFolder}/Server/bin/Debug/net10.0/Enigma.Server.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Server",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://0.0.0.0:8081",
+                // VS Code inyecta HTTP_PORTS=8080 en el container; lo neutralizamos y
+                // forzamos la URL para que Kestrel escuche solo en :8081.
+                "HTTP_PORTS": "",
+                "HTTPS_PORTS": ""
+            },
+            "console": "internalConsole",
+            "presentation": { "hidden": true }
+        },
+        {
+            // Levanta el dev server de Blazor WASM en :8080 (dotnet run). No debugea
+            // el WASM (corre en el navegador del host); sirve la app para abrir
+            // http://localhost:8080. Oculta del dropdown: se lanza solo vía el compound.
+            "name": "Client (.NET Core)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-client",
+            "program": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/Client/Enigma.Client.csproj",
+                "--launch-profile",
+                "http",
+                "--no-build"
+            ],
+            "cwd": "${workspaceFolder}/Client",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "internalConsole",
+            "presentation": { "hidden": true }
+        },
+        {
+            // SOLO útil si VS Code corre NATIVO en el HOST (no en devcontainer):
+            // el container no tiene navegador. Oculta del dropdown.
+            "name": "Launch Chrome (Client)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/Client",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+            "presentation": { "hidden": true }
+        }
+    ],
+    "compounds": [
+        {
+            // Única opción de inicio visible: F5 levanta el stack completo —
+            // Server (debuggable, :8081) + Client dev server (:8080). En el devcontainer
+            // abrí http://localhost:8080 en el navegador del host. stopAll: al detener
+            // la sesión, caen ambos procesos.
+            "name": "Enigma (Server + Client)",
+            "configurations": ["Server (.NET Core)", "Client (.NET Core)"],
+            "stopAll": true
+        }
+    ]
+}

@@ -63,26 +63,29 @@ sleep 1
   pkill -9 -f 'dotnet watch --project' 2>/dev/null && info "Force-killed remaining watches" || true
 
 # --- 1. Resolve image tag from branch ancestry ---
+# ¿De qué rama larga desciende HEAD? Preguntamos "¿HEAD desciende de
+# origin/<cand>?" (no "¿un ancestro de HEAD está en origin/<cand>?"):
+# development suele ir por delante de production, así que una rama basada en
+# development SÍ tiene a origin/development como ancestro (y, como development
+# contiene la historia de production, también a origin/production). Por eso hay
+# que comprobar development PRIMERO: si no, production gana siempre. Cuando
+# ambas apuntan al mismo commit, es convención: development.
 step "Resolving image tag"
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 info "Current branch: $CURRENT_BRANCH"
 
 LONG_BRANCH=""
-SEARCH_DEPTH=0
-for ref in $(git rev-list --first-parent --simplify-merges HEAD); do
-  SEARCH_DEPTH=$((SEARCH_DEPTH + 1))
-  for cand in production development; do
-    if git merge-base --is-ancestor "$ref" "origin/$cand" 2>/dev/null; then
-      LONG_BRANCH="$cand"
-      info "Found ancestor $ref (depth $SEARCH_DEPTH) is part of origin/$cand"
-      break
-    fi
-  done
-  [ -n "$LONG_BRANCH" ] && break
+for cand in development production; do
+  if git rev-parse --verify --quiet "origin/$cand" >/dev/null \
+     && git merge-base --is-ancestor "origin/$cand" HEAD 2>/dev/null; then
+    LONG_BRANCH="$cand"
+    info "HEAD descends from origin/$cand ($(git rev-parse --short "origin/$cand"))"
+    break
+  fi
 done
 
 if [ -z "$LONG_BRANCH" ]; then
-  warn "No production/development ancestor found after $SEARCH_DEPTH commits, defaulting to development"
+  warn "HEAD is not descended from origin/production or origin/development; defaulting to development"
   LONG_BRANCH=development
 fi
 
