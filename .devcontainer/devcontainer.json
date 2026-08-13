@@ -43,7 +43,8 @@
   "initializeCommand": "bash .devcontainer/setup.sh",
   "postCreateCommand": {
     "Install lefthook": "npm install -g lefthook && lefthook install",
-    "Install agent-browser": "npm install -g agent-browser && agent-browser install --with-deps"
+    "Install agent-browser": "npm install -g agent-browser && agent-browser install --with-deps",
+    "Configure git identity": "bash .devcontainer/configure-git-identity.sh"
   },
   "postStartCommand": "DEV_START_DETACHED=1 bash .devcontainer/start-dev.sh",
   "remoteEnv": {
