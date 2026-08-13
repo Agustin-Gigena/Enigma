@@ -32,8 +32,14 @@ RUN set -eux; \
 #   yamllint -> CI lint target
 #   sudo     -> lets the non-root `dotnet` user run the privileged postCreate
 #               step (`npm install -g lefthook`); NOPASSWD is granted above.
+#   Chrome headless deps -> libs que agent-browser (Chrome for Testing) necesita
+#                           para arrancar; ausentes en la imagen base (Ubuntu noble).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends podman yamllint sudo \
+ && apt-get install -y --no-install-recommends \
+      podman yamllint sudo \
+      libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+      libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+      libxss1 libasound2t64 libpango-1.0-0 libcairo2 libatspi2.0-0 \
  && rm -rf /var/lib/apt/lists/*
 
 # dotnet-ef global tool, installed to a shared path so the non-root `dotnet` user
