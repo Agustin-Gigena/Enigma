@@ -6,7 +6,8 @@
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
     "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/shyim/devcontainers-features/bun:0": {}
   },
   "containerUser": "dotnet",
   "remoteUser": "dotnet",

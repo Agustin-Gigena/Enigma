@@ -50,3 +50,5 @@ AzurePackages/
 # superpowers
 /docs/superpowers/
 .superpowers/
+
+dotnet/
