@@ -46,14 +46,12 @@ public class ArchitectureTests
 
   private static bool IsDtoCandidate(string path)
   {
-    string fileName = Path.GetFileName(path);
-    if (Regex.IsMatch(fileName, "dto", RegexOptions.IgnoreCase))
-    {
-      return true;
-    }
-
     string content = File.ReadAllText(path);
-    return Regex.IsMatch(content, @"\b[A-Za-z_][A-Za-z0-9_]*dto[A-Za-z0-9_]*\b", RegexOptions.IgnoreCase);
+    // Matchea solo DEFINICIONES de tipos (class/record/struct) cuyo nombre contiene
+    // "Dto" — no meras menciones. Así no marca imports (`using Enigma.Shared.Dtos;`)
+    // ni usos de tipos DTO (InstitucionDto, etc.), que es lo esperado fuera de Shared,
+    // ni el propio texto de este test.
+    return Regex.IsMatch(content, @"(?:class|record|struct)\s+\w*Dto\w*", RegexOptions.IgnoreCase);
   }
 
   private static string FindRepositoryRoot(string startDirectory)
