@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "rules": [
+      {
+        "message": "Editar .editorconfig / .gitignore / lefthook.yml / .yamllint requiere confirmación del usuario",
+        "match": {
+          "tool": "edit",
+          "params": {
+            "input": "(?:\\.editorconfig|\\.gitignore|lefthook\\.yml|\\.yamllint)#[0-9A-Fa-f]{4}\\]"
+          }
+        },
+        "action": "ask"
+      },
+      {
+        "message": "Sobrescribir .editorconfig / .gitignore / lefthook.yml / .yamllint requiere confirmación del usuario",
+        "match": {
+          "tool": "write",
+          "paths": [".editorconfig", ".gitignore", "lefthook.yml", ".yamllint"]
+        },
+        "action": "ask"
+      },
+      {
+        "message": "Modificar .editorconfig / .gitignore / lefthook.yml / .yamllint desde bash requiere confirmación del usuario",
+        "match": {
+          "tool": "bash",
+          "params": {
+            "command": "(?:>{1,2}\\s*(?:\\.editorconfig|\\.gitignore|lefthook\\.yml|\\.yamllint)|\\b(?:tee|cp|mv|rm|install|truncate|dd|sed|perl|vi|vim|nano|emacs|ed)\\b[^|;&\\n]*(?:\\.editorconfig|\\.gitignore|lefthook\\.yml|\\.yamllint))"
+          }
+        },
+        "action": "deny"
+      }
+    ]
+  }
+}
