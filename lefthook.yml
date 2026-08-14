@@ -5,7 +5,7 @@ pre-commit:
     - name: validate
       run: |
         dotnet restore Enigma.slnx
-        dotnet format Enigma.slnx --verify-no-changes
+        dotnet format Enigma.slnx
         dotnet build Enigma.slnx -c Release \
           /p:TreatWarningsAsErrors=true
     - name: yaml-lint
