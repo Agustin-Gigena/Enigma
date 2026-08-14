@@ -4,8 +4,9 @@ pre-commit:
   jobs:
     - name: validate
       run: |
+        set -e
         dotnet restore Enigma.slnx
-        dotnet format Enigma.slnx
+        dotnet format Enigma.slnx --verify-no-changes
         dotnet build Enigma.slnx -c Release \
           /p:TreatWarningsAsErrors=true
     - name: yaml-lint
@@ -19,6 +20,7 @@ pre-push:
   jobs:
     - name: validate
       run: |
+        set -e
         dotnet restore Enigma.slnx
         dotnet format Enigma.slnx --verify-no-changes
         dotnet build Enigma.slnx -c Release \
