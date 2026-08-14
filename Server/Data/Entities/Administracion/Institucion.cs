@@ -4,10 +4,10 @@ namespace Enigma.Server.Data.Entities.Administracion;
 
 public enum TipoInstitucion
 {
-  Universidad,
-  Secundaria,
-  Primaria,
-  Curso
+    Universidad,
+    Secundaria,
+    Primaria,
+    Curso
 }
 
 /// <summary>
@@ -16,8 +16,8 @@ public enum TipoInstitucion
 /// </summary>
 public class Institucion : GenericEntity
 {
-  public string Nombre { get; set; } = null!;
-  public TipoInstitucion Tipo { get; set; }
+    public string Nombre { get; set; } = null!;
+    public TipoInstitucion Tipo { get; set; }
 
-  public List<Usuario> Usuarios { get; set; } = [];
+    public List<Usuario> Usuarios { get; set; } = [];
 }

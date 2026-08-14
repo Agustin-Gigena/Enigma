@@ -14,65 +14,65 @@ namespace Enigma.Client.Services;
 /// </summary>
 public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
 {
-  private readonly IJSRuntime _js;
+    private readonly IJSRuntime _js;
 
-  public EnigmaAuthenticationStateProvider(IJSRuntime js) => _js = js;
+    public EnigmaAuthenticationStateProvider(IJSRuntime js) => _js = js;
 
-  public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-  {
-    string token = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_token");
-    List<Claim> claims = DecodificarClaims(token);
-    if (claims.Count == 0)
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-      return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        string token = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_token");
+        List<Claim> claims = DecodificarClaims(token);
+        if (claims.Count == 0)
+        {
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        }
+
+        ClaimsIdentity identity = new(claims, authenticationType: "jwt");
+        return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 
-    ClaimsIdentity identity = new(claims, authenticationType: "jwt");
-    return new AuthenticationState(new ClaimsPrincipal(identity));
-  }
+    public void NotificarEstado() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
 
-  public void NotificarEstado() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-
-  private static List<Claim> DecodificarClaims(string? token)
-  {
-    List<Claim> claims = new();
-    if (string.IsNullOrEmpty(token))
+    private static List<Claim> DecodificarClaims(string? token)
     {
-      return claims;
+        List<Claim> claims = new();
+        if (string.IsNullOrEmpty(token))
+        {
+            return claims;
+        }
+
+        string[] partes = token.Split('.');
+        if (partes.Length != 3)
+        {
+            return claims;
+        }
+
+        string payload = partes[1].Replace('-', '+').Replace('_', '/');
+        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+
+        using JsonDocument documento = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
+        JsonElement datos = documento.RootElement;
+
+        // Expirado → anónimo.
+        if (datos.TryGetProperty("exp", out JsonElement exp) && exp.TryGetInt64(out long expSegundos)
+            && expSegundos < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+        {
+            return claims;
+        }
+
+        string? id = datos.TryGetProperty("nameid", out JsonElement nameid) ? nameid.GetString()
+               : datos.TryGetProperty("sub", out JsonElement sub) ? sub.GetString() : null;
+        string? nombre = datos.TryGetProperty("unique_name", out JsonElement uniqueName) ? uniqueName.GetString()
+                   : datos.TryGetProperty("name", out JsonElement name) ? name.GetString() : null;
+
+        if (id is not null)
+        {
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, id));
+        }
+        if (nombre is not null)
+        {
+            claims.Add(new Claim(ClaimTypes.Name, nombre));
+        }
+        return claims;
     }
-
-    string[] partes = token.Split('.');
-    if (partes.Length != 3)
-    {
-      return claims;
-    }
-
-    string payload = partes[1].Replace('-', '+').Replace('_', '/');
-    payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
-
-    using JsonDocument documento = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
-    JsonElement datos = documento.RootElement;
-
-    // Expirado → anónimo.
-    if (datos.TryGetProperty("exp", out JsonElement exp) && exp.TryGetInt64(out long expSegundos)
-        && expSegundos < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-    {
-      return claims;
-    }
-
-    string? id = datos.TryGetProperty("nameid", out JsonElement nameid) ? nameid.GetString()
-           : datos.TryGetProperty("sub", out JsonElement sub) ? sub.GetString() : null;
-    string? nombre = datos.TryGetProperty("unique_name", out JsonElement uniqueName) ? uniqueName.GetString()
-               : datos.TryGetProperty("name", out JsonElement name) ? name.GetString() : null;
-
-    if (id is not null)
-    {
-      claims.Add(new Claim(ClaimTypes.NameIdentifier, id));
-    }
-    if (nombre is not null)
-    {
-      claims.Add(new Claim(ClaimTypes.Name, nombre));
-    }
-    return claims;
-  }
 }
