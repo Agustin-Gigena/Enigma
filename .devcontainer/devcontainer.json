@@ -6,6 +6,7 @@
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {},
     "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {},
+    "ghcr.io/iyaki/devcontainer-features/lefthook:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/shyim/devcontainers-features/bun:0": {}
   },
@@ -30,6 +31,8 @@
     }
   ],
   "runArgs": [
+    "--memory=3g",
+    "--cpus=2",
     "--userns=keep-id",
     "--name",
     "enigma-devcontainer",
@@ -42,7 +45,6 @@
   ],
   "initializeCommand": "bash .devcontainer/setup.sh",
   "postCreateCommand": {
-    "Install lefthook": "npm install -g lefthook && lefthook install",
     "Install agent-browser": "npm install -g agent-browser && agent-browser install --with-deps",
     "Configure git identity": "bash .devcontainer/configure-git-identity.sh"
   },
