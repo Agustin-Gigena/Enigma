@@ -34,7 +34,7 @@
             "name": "Client (.NET Core)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build-client",
+            "preLaunchTask": "prelaunch-client",
             "program": "dotnet",
             "args": [
                 "run",
@@ -50,6 +50,9 @@
                 "ASPNETCORE_ENVIRONMENT": "Development"
             },
             "console": "internalConsole",
+            "launchBrowser": {
+                "enabled": true
+            },
             "presentation": { "hidden": true }
         },
         {

@@ -91,6 +91,12 @@
       "dependsOrder": "sequence",
       "dependsOn": ["free-dev-ports", "build-server"],
       "problemMatcher": []
+    },
+    {
+      "label": "prelaunch-client",
+      "dependsOrder": "sequence",
+      "dependsOn": ["free-dev-ports", "build-client"],
+      "problemMatcher": []
     }
   ]
 }
