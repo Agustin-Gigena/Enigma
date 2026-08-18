@@ -42,7 +42,9 @@
       "isBackground": true,
       "problemMatcher": {
         "owner": "dotnet-watch-server",
-        "pattern": { "regexp": "^\\b\\B" },
+        "pattern": {
+          "regexp": "^\\b\\B"
+        },
         "fileLocation": "relative",
         "activeOnStart": true,
         "beginsPattern": "watch :",
@@ -64,7 +66,9 @@
       "isBackground": true,
       "problemMatcher": {
         "owner": "dotnet-watch-client",
-        "pattern": { "regexp": "^\\b\\B" },
+        "pattern": {
+          "regexp": "^\\b\\B"
+        },
         "fileLocation": "relative",
         "activeOnStart": true,
         "beginsPattern": "watch :",
@@ -73,7 +77,10 @@
     },
     {
       "label": "dev",
-      "dependsOn": ["watch-server", "watch-client"],
+      "dependsOn": [
+        "watch-server",
+        "watch-client"
+      ],
       "problemMatcher": []
     },
     {
@@ -82,20 +89,26 @@
       "command": "bash",
       "args": [
         "-c",
-        "fuser -k 8080/tcp 8081/tcp 2>/dev/null; pkill -f 'Enigma\\.Server' 2>/dev/null; pkill -f 'Enigma\\.Client' 2>/dev/null; pkill -f 'webassembly\\.devserver' 2>/dev/null; pkill -f 'dotnet watch --project Server' 2>/dev/null; pkill -f 'dotnet watch --project Client' 2>/dev/null; sleep 1; echo '[free-dev-ports] 8080/8081 freed'"
+        "${workspaceFolder}/scripts/free-ports.sh"
       ],
       "problemMatcher": []
     },
     {
       "label": "prelaunch-server",
       "dependsOrder": "sequence",
-      "dependsOn": ["free-dev-ports", "build-server"],
+      "dependsOn": [
+        "free-dev-ports",
+        "build-server"
+      ],
       "problemMatcher": []
     },
     {
       "label": "prelaunch-client",
       "dependsOrder": "sequence",
-      "dependsOn": ["free-dev-ports", "build-client"],
+      "dependsOn": [
+        "free-dev-ports",
+        "build-client"
+      ],
       "problemMatcher": []
     }
   ]
