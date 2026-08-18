@@ -39,13 +39,12 @@ public class AuthService
                 return new LoginResult(false, "Usuario o contraseña incorrectos.");
             }
 
-            LoginResponse? datos = await response.Content.ReadFromJsonAsync<LoginResponse>(Json);
+            LoginBody? datos = await response.Content.ReadFromJsonAsync<LoginBody>(Json);
             if (datos is null)
             {
                 return new LoginResult(false, "El servidor devolvió una respuesta inválida.");
             }
 
-            await _js.InvokeVoidAsync("localStorage.setItem", TokenKey, datos.Token);
             await _js.InvokeVoidAsync("localStorage.setItem", UsuarioKey, JsonSerializer.Serialize(datos.Usuario, Json));
             await _js.InvokeVoidAsync("localStorage.setItem", InstitucionesKey, JsonSerializer.Serialize(datos.Instituciones, Json));
             _authState.NotificarEstado();
