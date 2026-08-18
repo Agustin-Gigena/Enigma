@@ -1,13 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Services.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 
 namespace Enigma.Server.Controllers.Auth;
@@ -17,8 +13,13 @@ namespace Enigma.Server.Controllers.Auth;
 public class AuthController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
+    private readonly ITokenService _tokenService;
 
-    public AuthController(IUsuarioService usuarioService) => _usuarioService = usuarioService;
+    public AuthController(IUsuarioService usuarioService, ITokenService tokenService)
+    {
+        _usuarioService = usuarioService;
+        _tokenService = tokenService;
+    }
 
 
     /// <summary>
@@ -35,7 +36,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { mensaje = "Usuario o contraseña incorrectos." });
         }
 
-        (string? token, DateTime expiracion) = GenerarToken(resultado.Usuario);
+        (string token, DateTime expiracion) = _tokenService.GenerarAccessToken(resultado.Usuario);
         List<InstitucionDto> instituciones = resultado.Instituciones
             .Select(i => new InstitucionDto(i.Id, i.Nombre, i.Tipo.ToString()))
             .ToList();
@@ -74,30 +75,4 @@ public class AuthController : ControllerBase
     }
 
     private static UsuarioDto ToDto(Usuario usuario) => new(usuario.Id, usuario.UserName ?? "", usuario.Email);
-
-    private static (string Token, DateTime Expiracion) GenerarToken(Usuario usuario)
-    {
-        string secret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
-            ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(secret));
-        SigningCredentials credenciales = new(key, SecurityAlgorithms.HmacSha256);
-        DateTime expiracion = DateTime.UtcNow.AddHours(8);
-
-        List<Claim> claims = new()
-    {
-            new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-            new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new(ClaimTypes.Name, usuario.UserName ?? ""),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        };
-
-        JwtSecurityToken token = new(
-            issuer: "Enigma",
-            audience: "Enigma.Client",
-            claims: claims,
-            expires: expiracion,
-            signingCredentials: credenciales);
-
-        return (new JwtSecurityTokenHandler().WriteToken(token), expiracion);
-    }
 }

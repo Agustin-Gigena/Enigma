@@ -3,10 +3,12 @@ using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Data.Repositories.Auth;
+using Enigma.Server.Options;
 using Enigma.Server.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
@@ -75,8 +77,13 @@ builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
 
 // JWT bearer: el CurrentUserService y el CurrentUserMiddleware consumen los
 // claims (NameIdentifier -> Usuario) emitidos por POST /auth/login.
-string jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
-    ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
+string jwtSecret = JwtSecretResolver.Resolve(
+    Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET"),
+    builder.Environment.IsDevelopment());
+JwtOptions jwtOptions = new() { Secret = jwtSecret };
+jwtOptions.EnsureValid();
+builder.Services.AddSingleton(Options.Create(jwtOptions));
+builder.Services.AddSingleton<ITokenService, TokenService>();
 // Identity registra cookies como default scheme; forzamos JWT para la API
 // (los tres defaults, no solo DefaultScheme) para que [Authorize] desafíe
 // con el bearer y no con /Account/Login.
@@ -96,7 +103,7 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = "Enigma.Client",
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
             ClockSkew = TimeSpan.FromMinutes(1),
         };
     });
