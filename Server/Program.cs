@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
@@ -7,6 +8,7 @@ using Enigma.Server.Options;
 using Enigma.Server.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -42,6 +44,20 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter("login", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+});
+
 // CORS: el front (host :8080) y la API (host :8081) son orígenes distintos;
 // sin estos headers el navegador bloquea las llamadas cruzadas (error CORS).
 // Política permisiva para desarrollo; restringir orígenes para producción.
@@ -184,6 +200,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<CurrentUserMiddleware>();

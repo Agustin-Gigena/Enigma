@@ -1,9 +1,11 @@
+using System.Threading.RateLimiting;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Services.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 namespace Enigma.Server.Controllers.Auth;
@@ -28,7 +30,8 @@ public class AuthController : ControllerBase
     /// selección post-login sin roundtrip extra.
     /// </summary>
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
+    [EnableRateLimiting("login")]
+    public async Task<ActionResult<LoginBody>> Login([FromBody] LoginRequest request)
     {
         LoginResultado? resultado = await _usuarioService.LoginAsync(request.Usuario, request.Contrasena);
         if (resultado is null)
@@ -41,7 +44,7 @@ public class AuthController : ControllerBase
             .Select(i => new InstitucionDto(i.Id, i.Nombre, i.Tipo.ToString()))
             .ToList();
 
-        return Ok(new LoginResponse(token, expiracion, ToDto(resultado.Usuario), instituciones));
+        return Ok(new LoginBody(ToDto(resultado.Usuario), instituciones));
     }
 
     /// <summary>Devuelve el usuario autenticado actual (valida el JWT de punta a punta).</summary>
