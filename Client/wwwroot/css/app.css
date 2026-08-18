@@ -174,39 +174,190 @@ a, .btn-link {
         content: "Ocurrió un error inesperado."
     }
 
-.loading-progress {
-    position: absolute;
-    display: block;
-    width: 8rem;
-    height: 8rem;
-    inset: 20vh 0 auto 0;
-    margin: 0 auto 0 auto;
+/* ── Loading screen (pre-Blazor) ──
+   Full-viewport branded intro: dark petrol-jade background, aurora blobs,
+   floating motes, centered logo inside a progress ring, brand wordmark. */
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0E3736;
+    z-index: 1;
+    overflow: hidden;
+    gap: 1.25rem;
 }
 
-    .loading-progress circle {
-        fill: none;
-        stroke: #e0e0e0;
-        stroke-width: 0.6rem;
-        transform-origin: 50% 50%;
-        transform: rotate(-90deg);
-    }
-
-        .loading-progress circle:last-child {
-            stroke: var(--enigma-accent);
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
-
-.loading-progress-text {
+/* ── Aurora blobs ── */
+.loading-screen__aurora {
     position: absolute;
-    text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    border-radius: 50%;
+    will-change: transform;
+    pointer-events: none;
 }
 
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Cargando");
+.loading-screen__aurora--a {
+    width: 55%;
+    aspect-ratio: 1;
+    left: -14%;
+    top: -16%;
+    background: radial-gradient(circle, rgba(79, 209, 190, 0.16) 0%, transparent 65%);
+}
+
+.loading-screen__aurora--b {
+    width: 62%;
+    aspect-ratio: 1;
+    right: -18%;
+    bottom: -24%;
+    background: radial-gradient(circle, rgba(37, 149, 133, 0.2) 0%, transparent 65%);
+}
+
+/* ── Motes ── */
+.loading-screen__motes {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.loading-screen__motes span {
+    position: absolute;
+    bottom: -4px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(234, 243, 241, 0.4);
+    opacity: 0;
+}
+
+.loading-screen__motes span:nth-child(1) { left: 8%;  animation-duration: 18s; animation-delay: 0s; }
+.loading-screen__motes span:nth-child(2) { left: 20%; animation-duration: 14s; animation-delay: -3s; width: 4px; height: 4px; }
+.loading-screen__motes span:nth-child(3) { left: 35%; animation-duration: 22s; animation-delay: -7s; }
+.loading-screen__motes span:nth-child(4) { left: 48%; animation-duration: 16s; animation-delay: -11s; background: rgba(79, 209, 190, 0.45); width: 4px; height: 4px; }
+.loading-screen__motes span:nth-child(5) { left: 62%; animation-duration: 19s; animation-delay: -5s; }
+.loading-screen__motes span:nth-child(6) { left: 75%; animation-duration: 13s; animation-delay: -9s; }
+.loading-screen__motes span:nth-child(7) { left: 88%; animation-duration: 21s; animation-delay: -2s; width: 4px; height: 4px; }
+.loading-screen__motes span:nth-child(8) { left: 50%; animation-duration: 25s; animation-delay: -14s; width: 5px; height: 5px; background: rgba(234, 243, 241, 0.25); }
+
+/* ── Center: ring + logo ── */
+.loading-screen__center {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    z-index: 1;
+}
+
+.loading-screen__ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.loading-screen__ring-track {
+    fill: none;
+    stroke: rgba(234, 243, 241, 0.1);
+    stroke-width: 3;
+}
+
+.loading-screen__ring-fill {
+    fill: none;
+    stroke: #4FD1BE;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 0 452;
+    transition: stroke-dasharray 0.12s ease-out;
+    filter: drop-shadow(0 0 8px rgba(79, 209, 190, 0.55));
+}
+
+.loading-screen__logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0;
+    animation: loading-logo-in 0.8s var(--enigma-ease) 0.15s forwards;
+    filter: brightness(1.8) contrast(1.1);
+}
+
+/* ── Brand wordmark ── */
+.loading-screen__brand {
+    font-family: var(--enigma-font-display);
+    font-size: 2rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    color: #EAF3F1;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: loading-fade-up 0.7s var(--enigma-ease) 0.35s forwards;
+}
+
+/* ── Status text ── */
+.loading-screen__status {
+    font-family: var(--enigma-font);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(169, 190, 187, 0.8);
+    letter-spacing: 0.04em;
+    z-index: 1;
+    opacity: 0;
+    animation: loading-fade-up 0.6s var(--enigma-ease) 0.55s forwards;
+}
+
+.loading-screen__status::after {
+    content: var(--blazor-load-percentage-text, "Cargando");
+}
+
+/* ── Keyframes ── */
+@keyframes loading-logo-in {
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
     }
+}
+
+@keyframes loading-fade-up {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loading-drift-a {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(7%, 9%) scale(1.14); }
+}
+
+@keyframes loading-drift-b {
+    from { transform: translate(0, 0) scale(1.08); }
+    to { transform: translate(-8%, -6%) scale(1); }
+}
+
+@keyframes loading-mote {
+    0%   { opacity: 0; transform: translateY(0) translateX(0); }
+    10%  { opacity: 0.85; }
+    85%  { opacity: 0.5; }
+    100% { opacity: 0; transform: translateY(-100vh) translateX(20px); }
+}
+
+/* ── Animations (respect reduced motion) ── */
+@media (prefers-reduced-motion: no-preference) {
+    .loading-screen__aurora--a {
+        animation: loading-drift-a 16s ease-in-out infinite alternate;
+    }
+
+    .loading-screen__aurora--b {
+        animation: loading-drift-b 13s ease-in-out infinite alternate;
+    }
+
+    .loading-screen__motes span {
+        animation: loading-mote linear infinite;
+    }
+}
 
 code {
     color: #c02d76;
