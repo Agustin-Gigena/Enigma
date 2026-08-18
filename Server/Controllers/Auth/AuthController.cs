@@ -1,11 +1,9 @@
-using System.Threading.RateLimiting;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Services.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 
 namespace Enigma.Server.Controllers.Auth;
@@ -17,6 +15,9 @@ public class AuthController : ControllerBase
     private readonly IUsuarioService _usuarioService;
     private readonly ITokenService _tokenService;
 
+    private const string CookieName = "enigma_token";
+    private const int CookieMaxAgeSeconds = 8 * 60 * 60; // 8 hours
+
     public AuthController(IUsuarioService usuarioService, ITokenService tokenService)
     {
         _usuarioService = usuarioService;
@@ -25,12 +26,10 @@ public class AuthController : ControllerBase
 
 
     /// <summary>
-    /// Autentica con usuario + contraseña (ASP.NET Core Identity vía UsuarioService) y emite un JWT.
-    /// Incluye las instituciones del usuario: el cliente las usa para la
-    /// selección post-login sin roundtrip extra.
+    /// Autentica con usuario + contraseña (ASP.NET Core Identity vía UsuarioService),
+    /// emite un JWT y lo devuelve como cookie HttpOnly. El body no contiene el token.
     /// </summary>
     [HttpPost("login")]
-    [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginBody>> Login([FromBody] LoginRequest request)
     {
         LoginResultado? resultado = await _usuarioService.LoginAsync(request.Usuario, request.Contrasena);
@@ -39,12 +38,34 @@ public class AuthController : ControllerBase
             return Unauthorized(new { mensaje = "Usuario o contraseña incorrectos." });
         }
 
-        (string token, DateTime expiracion) = _tokenService.GenerarAccessToken(resultado.Usuario);
+        (string token, _) = _tokenService.GenerarAccessToken(resultado.Usuario);
         List<InstitucionDto> instituciones = resultado.Instituciones
             .Select(i => new InstitucionDto(i.Id, i.Nombre, i.Tipo.ToString()))
             .ToList();
 
+        Response.Cookies.Append(CookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            MaxAge = TimeSpan.FromSeconds(CookieMaxAgeSeconds),
+        });
+
         return Ok(new LoginBody(ToDto(resultado.Usuario), instituciones));
+    }
+
+    /// <summary>Elimina la cookie de autenticación (logout).</summary>
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete(CookieName, new CookieOptions
+        {
+            Path = "/",
+            SameSite = SameSiteMode.None,
+            Secure = true,
+        });
+        return NoContent();
     }
 
     /// <summary>Devuelve el usuario autenticado actual (valida el JWT de punta a punta).</summary>
