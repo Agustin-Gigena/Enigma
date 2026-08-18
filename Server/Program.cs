@@ -62,12 +62,7 @@ builder.Services.AddDbContext<EnigmaDbContext>(options =>
 // ASP.NET Core Identity: usuarios, contraseñas con hash y bloqueo por intentos.
 builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
     {
-        // Política dev-friendly; endurecer en producción.
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireDigit = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireLowercase = false;
+        builder.Configuration.GetSection("Identity:Password").Bind(options.Password);
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
         options.User.RequireUniqueEmail = true;
