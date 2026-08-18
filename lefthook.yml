@@ -13,7 +13,9 @@ pre-commit:
         yamllint -c .yamllint --strict
         $(find . -type f
         \( -name '*.yml' -o -name '*.yaml' \)
-        -not -path '*/.git/*')
+        -not -path '*/.git/*'
+        -not -path '*/bin/*'
+        -not -path '*/obj/*')
 
 pre-push:
   jobs:
