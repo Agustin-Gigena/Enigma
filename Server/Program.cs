@@ -160,6 +160,11 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
