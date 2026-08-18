@@ -89,4 +89,75 @@ public class LoginFlowTest
         string? token = await _page.EvaluateAsync<string>("localStorage.getItem('enigma_token')");
         Assert.That(token, Is.Null);
     }
+
+    [Test]
+    public async Task SeleccionInstitucion_MultiTenant()
+    {
+        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
+
+        await _page.GetByLabel("Usuario").FillAsync("admin");
+        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
+
+        // Admin tiene 2 instituciones → debería llegar a selección
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10000 });
+
+        // Click en la primera institución
+        ILocator tarjetas = _page.GetByRole(AriaRole.Button);
+        await tarjetas.First.ClickAsync();
+
+        // Verificar redirect a Home
+        await _page.WaitForURLAsync("**/");
+    }
+
+    [Test]
+    public async Task TokenExpirado_RedirigeLogin()
+    {
+        // Login primero
+        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
+        await _page.GetByLabel("Usuario").FillAsync("admin");
+        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
+        await _page.WaitForURLAsync("**/");
+
+        // Inyectar token expirado en localStorage
+        string tokenExpirado = TokenExpirado();
+        await _page.EvaluateAsync($"localStorage.setItem('enigma_token', '{tokenExpirado}')");
+
+        // Refrescar → auth state lee token expirado → anónimo → redirect a login
+        await _page.ReloadAsync();
+        await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 10000 });
+    }
+
+    private static string TokenExpirado()
+    {
+        // JWT manual con exp en el pasado (2020-01-01)
+        string header = Base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
+        string payload = Base64UrlEncode("{\"sub\":\"1\",\"nameid\":\"1\",\"unique_name\":\"admin\",\"exp\":1577836800}");
+        string signature = "firma-falsa";
+        return $"{header}.{payload}.{signature}";
+    }
+
+    private static string Base64UrlEncode(string json)
+    {
+        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    [Test]
+    public async Task RutaProtegida_YaAutenticado_RedirigeHome()
+    {
+        // Login primero
+        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
+        await _page.GetByLabel("Usuario").FillAsync("admin");
+        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
+        await _page.WaitForURLAsync("**/");
+
+        // Navegar directamente a selección de institución
+        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/seleccion-institucion");
+
+        // Debería redirect a Home (ya está autenticado, route guard redirige)
+        await _page.WaitForURLAsync("**/", new() { Timeout = 10000 });
+    }
 }
