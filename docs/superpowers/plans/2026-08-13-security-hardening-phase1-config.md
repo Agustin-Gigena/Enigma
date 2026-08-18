@@ -25,159 +25,25 @@
 
 ## File Structure
 
-- **Create** `Server/Options/JwtOptions.cs` — options `{ Secret }` + `EnsureValid()` (fail-fast por longitud).
-- **Create** `Server/Options/JwtSecretResolver.cs` — `Resolve(envSecret, isDev)` puro: env > fallback dev > throw prod.
 - **Create** `Server/Services/Auth/TokenService.cs` — `ITokenService` + `TokenService`: genera el access JWT desde `IOptions<JwtOptions>` (reemplaza al `GenerarToken` estático del controller).
-- **Modify** `Server/Program.cs` — registrar `JwtOptions`/`ITokenService`, `AddJwtBearer` consume la key resuelta, `UseHsts` solo en no-dev, política de contraseña vía `Bind` desde config.
-- **Modify** `Server/Controllers/Auth/AuthController.cs` — inyectar `ITokenService`, eliminar el `GenerarToken` estático y la lectura duplicada del secret.
-- **Modify** `Server/appsettings.json` — sección `Identity:Password` **estricta** (base = prod).
-- **Modify** `Server/appsettings.Development.json` — sección `Identity:Password` **laxa** (override dev).
 - **Create** `Tests/Options/JwtOptionsTest.cs` — tests puros del resolver + EnsureValid.
 - **Create** `Tests/Auth/TokenServiceTest.cs` — test puro de generación de token.
 - **Create** `Tests/Config/PasswordPolicyTest.cs` — test del layering de config de password (dev laxa / prod estricta).
 - **Create** `Tests/Security/HstsTest.cs` — test de que el gate excluye dev (sin header `Strict-Transport-Security`).
+- **Modify** `Server/Program.cs` — registrar `JwtOptions`/`ITokenService`, `AddJwtBearer` consume la key resuelta, `UseHsts` solo en no-dev, política de contraseña vía `Bind` desde config.
+- **Modify** `Server/Controllers/Auth/AuthController.cs` — inyectar `ITokenService`, eliminar el `GenerarToken` estático y la lectura duplicada del secret.
+- **Modify** `Server/appsettings.json` — sección `Identity:Password` **estricta** (base = prod).
+- **Modify** `Server/appsettings.Development.json` — sección `Identity:Password` **laxa** (override dev).
 
 ---
 
-### Task 1: `JwtOptions` + `JwtSecretResolver` (lógica pura del fail-fast)
+## Status de tasks completadas
 
-**Files:**
-- Create: `Server/Options/JwtOptions.cs`
-- Create: `Server/Options/JwtSecretResolver.cs`
-- Test: `Tests/Options/JwtOptionsTest.cs`
+### ~~Task 1: `JwtOptions` + `JwtSecretResolver`~~ ✅ COMPLETADA
 
-**Interfaces:**
-- Produces: `JwtOptions` (`{ string Secret; void EnsureValid(); }`, const `MinSecretBytes = 32`); `JwtSecretResolver.Resolve(string? envSecret, bool isDevelopment) -> string`.
-
-- [ ] **Step 1: Write the failing test**
-
-```csharp
-using Enigma.Server.Options;
-using Xunit;
-
-namespace Enigma.Test.Options;
-
-public class JwtOptionsTest
-{
-  // --- JwtSecretResolver.Resolve ---
-
-  [Fact]
-  public void Resolver_ConEnv_DevuelveElEnv()
-  {
-    Assert.Equal("un-secreto-bien-largo-y-aleatorio-1234567890",
-        JwtSecretResolver.Resolve("un-secreto-bien-largo-y-aleatorio-1234567890", isDevelopment: false));
-  }
-
-  [Fact]
-  public void Resolver_Dev_SinEnv_DevuelveFallback()
-  {
-    Assert.Equal("enigma_dev_jwt_secret_cambiar_en_produccion",
-        JwtSecretResolver.Resolve(envSecret: null, isDevelopment: true));
-  }
-
-  [Fact]
-  public void Resolver_Prod_SinEnv_Lanza()
-  {
-    Assert.Throws<InvalidOperationException>(
-        () => JwtSecretResolver.Resolve(envSecret: null, isDevelopment: false));
-  }
-
-  [Fact]
-  public void Resolver_Prod_EnvVacio_Lanza()
-  {
-    Assert.Throws<InvalidOperationException>(
-        () => JwtSecretResolver.Resolve(envSecret: "   ", isDevelopment: false));
-  }
-
-  // --- JwtOptions.EnsureValid ---
-
-  [Fact]
-  public void EnsureValid_SecretDeMasDe32Bytes_NoLanza()
-  {
-    JwtOptions opts = new() { Secret = new string('x', 40) };
-    opts.EnsureValid();
-  }
-
-  [Theory]
-  [InlineData("")]
-  [InlineData("corto")]
-  [InlineData(null)]
-  public void EnsureValid_SecretInvalido_Lanza(string? secret)
-  {
-    JwtOptions opts = new() { Secret = secret! };
-    Assert.Throws<InvalidOperationException>(opts.EnsureValid);
-  }
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `dotnet test Tests/Enigma.Test.csproj --filter "FullyQualifiedName~JwtOptionsTest"`
-Expected: FAIL con "type or namespace 'Options' does not exist".
-
-- [ ] **Step 3: Write minimal implementation**
-
-`Server/Options/JwtOptions.cs`:
-```csharp
-using System.Text;
-
-namespace Enigma.Server.Options;
-
-/// <summary>Configuración del secret JWT. <see cref="EnsureValid"/> aplica el fail-fast de longitud.</summary>
-public sealed class JwtOptions
-{
-  public const int MinSecretBytes = 32;
-
-  public string Secret { get; init; } = "";
-
-  /// <summary>Lanza si el secret no alcanza el mínimo de bytes. Se llama en startup.</summary>
-  public void EnsureValid()
-  {
-    int bytes = string.IsNullOrEmpty(Secret) ? 0 : Encoding.UTF8.GetByteCount(Secret);
-    if (bytes < MinSecretBytes)
-    {
-      throw new InvalidOperationException(
-          $"ENIGMA_JWT_SECRET debe tener >= {MinSecretBytes} bytes (actual: {bytes}). La app no arranca.");
-    }
-  }
-}
-```
-
-`Server/Options/JwtSecretResolver.cs`:
-```csharp
-namespace Enigma.Server.Options;
-
-/// <summary>Resuelve el secret JWT según entorno: variable de entorno > fallback de dev > throw en prod.</summary>
-public static class JwtSecretResolver
-{
-  public const string DevFallback = "enigma_dev_jwt_secret_cambiar_en_produccion";
-
-  public static string Resolve(string? envSecret, bool isDevelopment)
-  {
-    if (!string.IsNullOrWhiteSpace(envSecret))
-    {
-      return envSecret;
-    }
-
-    return isDevelopment
-        ? DevFallback
-        : throw new InvalidOperationException(
-            "ENIGMA_JWT_SECRET es obligatorio en Production (>= 32 bytes).");
-  }
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `dotnet test Tests/Enigma.Test.csproj --filter "FullyQualifiedName~JwtOptionsTest"`
-Expected: PASS (6 tests).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add Server/Options/JwtOptions.cs Server/Options/JwtSecretResolver.cs Tests/Options/JwtOptionsTest.cs
-git commit -m "feat(security): JwtOptions fail-fast + resolver de secret por entorno"
-```
+- Commit: `96812a0` — `feat(security): JwtOptions fail-fast + resolver de secret por entorno`
+- Archivos creados: `Server/Options/JwtOptions.cs`, `Server/Options/JwtSecretResolver.cs`, `Tests/Options/JwtOptionsTest.cs`
+- **Pero**: el resolver no está conectado a `Program.cs` todavía (se hace en Task 3).
 
 ---
 
@@ -319,14 +185,37 @@ git commit -m "feat(security): extraer ITokenService del AuthController"
 
 - [ ] **Step 1: Edits en `Server/Program.cs`**
 
-Reemplazar las líneas que leen el secret duplicado:
+Reemplazar las líneas 78-79 que leen el secret duplicado. El bloque completo a reemplazar (líneas 78-102):
 
+**ANTES** (`Program.cs:78-102`):
 ```csharp
-// ANTES (Program.cs ~78-79):
-// string jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
-//     ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
+string jwtSecret = Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET")
+    ?? "enigma_dev_jwt_secret_cambiar_en_produccion";
+// ...
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "Enigma",
+            ValidateAudience = true,
+            ValidAudience = "Enigma.Client",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+    });
+```
 
-// DESPUÉS:
+**DESPUÉS**:
+```csharp
 using Enigma.Server.Options;
 string jwtSecret = JwtSecretResolver.Resolve(
     Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET"),
@@ -335,16 +224,34 @@ JwtOptions jwtOptions = new() { Secret = jwtSecret };
 jwtOptions.EnsureValid();
 builder.Services.AddSingleton(Options.Create(jwtOptions));
 builder.Services.AddSingleton<ITokenService, TokenService>();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "Enigma",
+            ValidateAudience = true,
+            ValidAudience = "Enigma.Client",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+    });
 ```
 
-En `AddJwtBearer`, reemplazar la lectura del secret por `jwtOptions.Secret`:
+También agregar los `using` que falten al top del archivo:
 ```csharp
-// ANTES:
-//   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-// DESPUÉS (mismo valor, fuente única):
-IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+using Enigma.Server.Options;
+using Microsoft.Extensions.Options;
 ```
-(`jwtSecret` local sigue existiendo y es idéntico; el punto es que **ya no se lee del entorno dos veces** — controller + Program compartían la lectura; ahora solo Program, vía el resolver.)
 
 - [ ] **Step 2: Edits en `Server/Controllers/Auth/AuthController.cs`**
 
@@ -359,16 +266,18 @@ public AuthController(IUsuarioService usuarioService, ITokenService tokenService
   _tokenService = tokenService;
 }
 ```
-En `Login`, reemplazar `GenerarToken(resultado.Usuario)` por `_tokenService.GenerarAccessToken(resultado.Usuario)`:
+
+En `Login` (línea 38), reemplazar `GenerarToken(resultado.Usuario)` por `_tokenService.GenerarAccessToken(resultado.Usuario)`:
 ```csharp
-(string? token, DateTime expiracion) = _tokenService.GenerarAccessToken(resultado.Usuario);
+(string token, DateTime expiracion) = _tokenService.GenerarAccessToken(resultado.Usuario);
 ```
-**Eliminar** el método estático `private static (string Token, DateTime Expiracion) GenerarToken(Usuario usuario)` íntegramente (`AuthController.cs:78-102`) y el `using System.IdentityModel.Tokens.Jwt;` / `Microsoft.IdentityModel.Tokens` / `System.Security.Claims` si quedan sin uso.
+
+**Eliminar** el método estático `private static (string Token, DateTime Expiracion) GenerarToken(Usuario usuario)` íntegramente (líneas 78-102) y los `using` que quedan sin uso (`System.IdentityModel.Tokens.Jwt`, `System.Security.Claims`, `System.Text`, `Microsoft.IdentityModel.Tokens`).
 
 - [ ] **Step 3: Run regression — el E2E existente debe seguir pasando**
 
 Run: `dotnet test Tests/Enigma.Test.csproj --filter "FullyQualifiedName~LoginTest"`
-Expected: PASS (`Login_Admin_RetornaTokenYDosInstituciones`, `Login_CredencialesInvalidas_Retorna401`, `Instituciones_ConToken_RetornaLasMismasDos`). Prueba que el refactor no rompió el contrato de login.
+Expected: PASS (`Login_Admin_RetornaTokenYDosInstituciones`, `Login_CredencialesInvalidas_Retorna401`, `Instituciones_ConToken_RetornaLasMismasDos`). **NOTA**: requiere MySQL (enigma-dev-db). Si no hay DB disponible, al menos verificar que compila con `dotnet build Enigma.slnx`.
 
 - [ ] **Step 4: Build completo**
 
@@ -425,7 +334,7 @@ Expected: PASS ya (hoy no hay HSTS). Este test es de **regresión**: clava que, 
 
 - [ ] **Step 3: Write minimal implementation**
 
-En `Server/Program.cs`, antes de `app.UseHttpsRedirection();` (línea ~156):
+En `Server/Program.cs`, antes de `app.UseHttpsRedirection();` (línea 156):
 ```csharp
 if (!app.Environment.IsDevelopment())
 {
@@ -583,7 +492,7 @@ Expected: FAIL en los dos — la sección `Identity:Password` aún no existe, as
 }
 ```
 
-`Server/Program.cs` — reemplazar el bloque hardcodeado de `AddIdentity`:
+`Server/Program.cs` — reemplazar el bloque hardcodeado de `AddIdentity` (líneas 61-74):
 ```csharp
 // ANTES (Program.cs ~61-72): options.Password.RequiredLength = 6; ... = false; etc.
 
