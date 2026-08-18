@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Xunit;
+using NUnit.Framework;
 
 namespace Enigma.Test.Auth;
 
@@ -31,50 +31,63 @@ public sealed class EnigmaWebFactory : WebApplicationFactory<Program>
 /// E2E del flujo de autenticación: POST /auth/login (Identity + JWT) y
 /// GET /auth/instituciones, contra el stack real.
 /// </summary>
-public class LoginTest : IClassFixture<EnigmaWebFactory>
+[TestFixture]
+public class LoginTest
 {
-    private readonly HttpClient _client;
+    private static EnigmaWebFactory _factory = null!;
+    private HttpClient _client = null!;
 
-    public LoginTest(EnigmaWebFactory factory) => _client = factory.CreateClient();
+    [OneTimeSetUp]
+    public void Setup()
+    {
+        _factory = new EnigmaWebFactory();
+        _client = _factory.CreateClient();
+    }
 
-    [Fact]
+    [OneTimeTearDown]
+    public void TearDown()
+    {
+        _factory?.Dispose();
+    }
+
+    [Test]
     public async Task Login_Admin_RetornaTokenYDosInstituciones()
     {
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "admin123"));
 
-        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
         LoginResponse? response = await login.Content.ReadFromJsonAsync<LoginResponse>();
-        Assert.NotNull(response);
-        Assert.False(string.IsNullOrWhiteSpace(response!.Token));
-        Assert.Equal("admin", response.Usuario.NombreUsuario);
-        Assert.NotNull(response.Instituciones);
-        Assert.Equal(2, response.Instituciones.Count);
+        Assert.That(response, Is.Not.Null);
+        Assert.That(string.IsNullOrWhiteSpace(response!.Token), Is.False);
+        Assert.That(response.Usuario.NombreUsuario, Is.EqualTo("admin"));
+        Assert.That(response.Instituciones, Is.Not.Null);
+        Assert.That(response.Instituciones.Count, Is.EqualTo(2));
     }
 
-    [Fact]
+    [Test]
     public async Task Login_CredencialesInvalidas_Retorna401()
     {
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "incorrecta"));
 
-        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 
-    [Fact]
+    [Test]
     public async Task Instituciones_ConToken_RetornaLasMismasDos()
     {
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "admin123"));
         LoginResponse? response = await login.Content.ReadFromJsonAsync<LoginResponse>();
-        Assert.NotNull(response);
+        Assert.That(response, Is.Not.Null);
 
         using HttpRequestMessage request = new(HttpMethod.Get, "/auth/instituciones");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", response!.Token);
 
         HttpResponseMessage instituciones = await _client.SendAsync(request);
 
-        Assert.Equal(HttpStatusCode.OK, instituciones.StatusCode);
+        Assert.That(instituciones.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         List<InstitucionDto>? lista = await instituciones.Content.ReadFromJsonAsync<List<InstitucionDto>>();
-        Assert.NotNull(lista);
-        Assert.Equal(2, lista!.Count);
+        Assert.That(lista, Is.Not.Null);
+        Assert.That(lista!.Count, Is.EqualTo(2));
     }
 }

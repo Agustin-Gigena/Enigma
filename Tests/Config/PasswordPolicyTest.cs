@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Xunit;
+using NUnit.Framework;
 
 namespace Enigma.Test.Config;
 
@@ -37,25 +37,25 @@ public class PasswordPolicyTest
     return opts;
   }
 
-  [Fact]
+  [Test]
   public void SoloBase_PoliticaEstrictaComoProd()
   {
     PasswordOptions opts = Bind(addDevelopment: false);
-    Assert.Equal(8, opts.RequiredLength);
-    Assert.True(opts.RequireDigit);
-    Assert.True(opts.RequireUppercase);
-    Assert.True(opts.RequireLowercase);
-    Assert.True(opts.RequireNonAlphanumeric);
+    Assert.That(opts.RequiredLength, Is.EqualTo(8));
+    Assert.That(opts.RequireDigit, Is.True);
+    Assert.That(opts.RequireUppercase, Is.True);
+    Assert.That(opts.RequireLowercase, Is.True);
+    Assert.That(opts.RequireNonAlphanumeric, Is.True);
   }
 
-  [Fact]
+  [Test]
   public void ConOverrideDevelopment_PoliticaLaxaComoDev()
   {
     PasswordOptions opts = Bind(addDevelopment: true);
-    Assert.Equal(6, opts.RequiredLength);
-    Assert.False(opts.RequireDigit);
-    Assert.False(opts.RequireUppercase);
-    Assert.False(opts.RequireLowercase);
-    Assert.False(opts.RequireNonAlphanumeric);
+    Assert.That(opts.RequiredLength, Is.EqualTo(6));
+    Assert.That(opts.RequireDigit, Is.False);
+    Assert.That(opts.RequireUppercase, Is.False);
+    Assert.That(opts.RequireLowercase, Is.False);
+    Assert.That(opts.RequireNonAlphanumeric, Is.False);
   }
 }

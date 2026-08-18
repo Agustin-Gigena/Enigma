@@ -1,19 +1,33 @@
 using Enigma.Test.Auth;
-using Xunit;
+using NUnit.Framework;
 
 namespace Enigma.Test.Security;
 
-public class HstsTest : IClassFixture<EnigmaWebFactory>
+[TestFixture]
+public class HstsTest
 {
-  private readonly HttpClient _client;
-  public HstsTest(EnigmaWebFactory factory) => _client = factory.CreateClient();
+  private static EnigmaWebFactory _factory = null!;
+  private HttpClient _client = null!;
 
-  [Fact]
+  [OneTimeSetUp]
+  public void Setup()
+  {
+    _factory = new EnigmaWebFactory();
+    _client = _factory.CreateClient();
+  }
+
+  [OneTimeTearDown]
+  public void TearDown()
+  {
+    _factory?.Dispose();
+  }
+
+  [Test]
   public async Task EnDesarrollo_NoSeEnviaHeaderHsts()
   {
     HttpResponseMessage response = await _client.GetAsync("/auth/me");
 
-    Assert.False(response.Headers.Contains("Strict-Transport-Security"),
+    Assert.That(response.Headers.Contains("Strict-Transport-Security"), Is.False,
         "En Development NO debe aplicarse HSTS (UseHsts lanza si se llama en dev).");
   }
 }

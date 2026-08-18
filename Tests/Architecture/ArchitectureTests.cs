@@ -1,11 +1,11 @@
 using System.Text.RegularExpressions;
-using Xunit;
+using NUnit.Framework;
 
 namespace Enigma.Test.Architecture;
 
 public class ArchitectureTests
 {
-    [Fact]
+    [Test]
     public void TodosLosDtosDebenEstarSoloEnShared()
     {
         string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
@@ -26,7 +26,7 @@ public class ArchitectureTests
             .Select(path => Path.GetRelativePath(repoRoot, path))
             .ToList();
 
-        Assert.True(violatingFiles.Count == 0,
+        Assert.That(violatingFiles.Count, Is.EqualTo(0),
             "Se encontraron archivos DTO fuera de Shared:\n" + string.Join("\n", violatingFiles));
     }
 
