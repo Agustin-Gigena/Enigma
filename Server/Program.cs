@@ -65,9 +65,46 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        string? corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+        string? corsHeaders = Environment.GetEnvironmentVariable("CORS_ALLOWED_HEADERS");
+        string? corsMethods = Environment.GetEnvironmentVariable("CORS_ALLOWED_METHODS");
+
+        if (corsOrigins is null)
+        {
+            // Dev: allow any localhost origin (any port, http or https)
+            policy.SetIsOriginAllowed(origin =>
+                origin.StartsWith("http://localhost:", StringComparison.Ordinal) ||
+                origin.StartsWith("https://localhost:", StringComparison.Ordinal));
+        }
+        else
+        {
+            // Production: explicit origins from env var
+            string[] origins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            policy.WithOrigins(origins);
+        }
+
+        if (corsHeaders is not null)
+        {
+            string[] headers = corsHeaders.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            policy.WithHeaders(headers);
+        }
+        else
+        {
+            policy.AllowAnyHeader();
+        }
+
+        if (corsMethods is not null)
+        {
+            string[] methods = corsMethods.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            policy.WithMethods(methods);
+        }
+        else
+        {
+            policy.AllowAnyMethod();
+        }
+
+        // REQUIRED: sends HttpOnly cookie cross-origin
+        policy.AllowCredentials();
     });
 });
 
