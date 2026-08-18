@@ -15,10 +15,12 @@ public class JwtOptionsTest
     }
 
     [Test]
-    public void Resolver_Dev_SinEnv_DevuelveFallback()
+    public void Resolver_Dev_SinEnv_GeneraSecretoAleatorio()
     {
-        Assert.That(JwtSecretResolver.Resolve(envSecret: null, isDevelopment: true),
-            Is.EqualTo("enigma_dev_jwt_secret_cambiar_en_produccion"));
+        string secret = JwtSecretResolver.Resolve(envSecret: null, isDevelopment: true);
+        Assert.That(secret, Is.Not.Null.And.Not.Empty);
+        Assert.That(secret.Length, Is.GreaterThanOrEqualTo(32),
+            "El secreto generado debe tener al menos 32 caracteres.");
     }
 
     [Test]
@@ -40,7 +42,7 @@ public class JwtOptionsTest
     [Test]
     public void EnsureValid_SecretDeMasDe32Bytes_NoLanza()
     {
-        JwtOptions opts = new() { Secret = new string('x', 40) };
+        JwtOptions opts = new() { Secret = "b4Gx/tR4kDGKglumZlzfhTPTJ/+qVO3fHu4b2jvLgCc=" };
         opts.EnsureValid();
     }
 
@@ -51,5 +53,38 @@ public class JwtOptionsTest
     {
         JwtOptions opts = new() { Secret = secret! };
         Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+    }
+
+    [Test]
+    public void EnsureValid_SecretRepetido_Lanza()
+    {
+        JwtOptions opts = new() { Secret = new string('a', 40) };
+        Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+    }
+
+    // --- Entropy validation ---
+
+    [Test]
+    public void HasMinimumEntropy_SecretValido_DevuelveTrue()
+    {
+        Assert.That(JwtOptions.HasMinimumEntropy("b4Gx/tR4kDGKglumZlzfhTPTJ/+qVO3fHu4b2jvLgCc="), Is.True);
+    }
+
+    [Test]
+    public void HasMinimumEntropy_TodosLosMismosCaracteres_DevuelveFalse()
+    {
+        Assert.That(JwtOptions.HasMinimumEntropy(new string('a', 40)), Is.False);
+    }
+
+    [Test]
+    public void HasMinimumEntropy_PatronDebil_DevuelveFalse()
+    {
+        Assert.That(JwtOptions.HasMinimumEntropy("password_password_password_password"), Is.False);
+    }
+
+    [Test]
+    public void HasMinimumEntropy_MuyCorto_DevuelveFalse()
+    {
+        Assert.That(JwtOptions.HasMinimumEntropy("corto"), Is.False);
     }
 }
