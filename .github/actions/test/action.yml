@@ -44,21 +44,8 @@ runs:
       run: pwsh Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
       shell: bash
 
-    - name: Run unit tests
-      run: dotnet test Tests/Enigma.Test.csproj --filter "FullyQualifiedName!~LoginFlowTest" --no-build
-      shell: bash
-      env:
-        ASPNETCORE_ENVIRONMENT: Development
-        MYSQL_HOST: ${{ inputs.mysql-host }}
-        MYSQL_PORT: ${{ inputs.mysql-port }}
-        MYSQL_DATABASE: ${{ inputs.mysql-database }}
-        MYSQL_USER: ${{ inputs.mysql-user }}
-        MYSQL_PASSWORD: ${{ inputs.mysql-password }}
-        ENIGMA_JWT_SECRET: ${{ inputs.jwt-secret }}
-
-    - name: Run E2E tests
-      if: inputs.skip-e2e != 'true'
-      run: dotnet test Tests/Enigma.Test.csproj --filter "FullyQualifiedName~LoginFlowTest" --no-build
+    - name: Run all tests
+      run: dotnet test Tests/Enigma.Test.csproj --no-build
       shell: bash
       env:
         ASPNETCORE_ENVIRONMENT: Development
