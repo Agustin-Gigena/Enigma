@@ -4,6 +4,8 @@ using Enigma.Server.Services.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 
 namespace Enigma.Server.Controllers.Auth;
@@ -30,6 +32,7 @@ public class AuthController : ControllerBase
     /// emite un JWT y lo devuelve como cookie HttpOnly. El body no contiene el token.
     /// </summary>
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginBody>> Login([FromBody] LoginRequest request)
     {
         LoginResultado? resultado = await _usuarioService.LoginAsync(request.Usuario, request.Contrasena);
