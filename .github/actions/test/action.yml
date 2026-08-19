@@ -1,5 +1,5 @@
 name: 'Run Tests'
-description: 'Build, install Playwright, and run all tests (unit + E2E)'
+description: 'Build, install Playwright, and run all tests (unit + E2E). Requires MySQL to be running.'
 
 inputs:
   mysql-host:
@@ -20,9 +20,6 @@ inputs:
   jwt-secret:
     description: 'JWT secret for tests (min 32 bytes)'
     default: 'ci-test-secret-that-is-at-least-32-bytes'
-  skip-e2e:
-    description: 'Skip E2E tests (Playwright)'
-    default: 'false'
 
 runs:
   using: 'composite'
@@ -40,7 +37,6 @@ runs:
       shell: bash
 
     - name: Install Playwright browsers
-      if: inputs.skip-e2e != 'true'
       run: pwsh Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
       shell: bash
 

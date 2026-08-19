@@ -44,48 +44,29 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: enigma_db
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 10 SDK and restore dependencies
-        uses: ./.github/actions/setup-dotnet
-        with:
-          params-json: '{"tools": {"coverlet.console": "4.0.0"}}'
-
-      - name: Validate solution build
-        run: dotnet build Enigma.slnx -c Release
-
-      - name: Start dev database (GHCR image, like start-dev.sh)
-        shell: bash
-        run: |
-          set -euo pipefail
-          base="${GITHUB_BASE_REF:-development}"
-          if [ "$base" = "production" ]; then tag="production"; else tag="development"; fi
-          image="ghcr.io/agustin-gigena/enigma-dev-db_${tag}"
-          echo "Using DB image: $image"
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          docker pull "$image"
-          echo "127.0.0.1 enigma-dev-db" | sudo tee -a /etc/hosts
-          docker run -d --name enigma-dev-db -p 3306:3306 \
-            -e MYSQL_ROOT_PASSWORD=root_password \
-            -e MYSQL_USER=root \
-            -e MYSQL_PASSWORD=root_password \
-            -e MYSQL_DATABASE=enigma_db \
-            "$image"
-          for i in $(seq 1 60); do
-            if docker exec enigma-dev-db sh -c 'echo > /dev/tcp/localhost/3306' 2>/dev/null; then
-              echo "MySQL ready after ${i}s"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "MySQL not ready after 60s" >&2
-          docker logs enigma-dev-db | tail -20 >&2
-          exit 1
-
       - name: Run tests
-        run: dotnet test Enigma.slnx -c Release --no-build
+        uses: ./.github/actions/test
+        with:
+          mysql-host: localhost
+          mysql-user: root
+          mysql-password: root_password
 
   format:
     needs: [security, validate, test]

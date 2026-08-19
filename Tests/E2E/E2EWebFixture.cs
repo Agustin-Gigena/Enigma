@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 using NUnit.Framework;
 
 namespace Enigma.Test.E2E;
@@ -7,7 +6,7 @@ namespace Enigma.Test.E2E;
 /// <summary>
 /// Fixture compartido para tests E2E: levanta Server (:8081) y Client (:8080)
 /// via dotnet run, y los mata al finalizar todos los tests.
-/// Si MySQL no está disponible, los tests se saltan con Ignore.
+/// Requiere MySQL disponible — si no, los tests fallan.
 /// </summary>
 [SetUpFixture]
 public class E2EWebFixture
@@ -38,16 +37,10 @@ public class E2EWebFixture
     [OneTimeSetUp]
     public async Task StartServers()
     {
-        if (!IsMySqlReachable())
-        {
-            Assert.Ignore("MySQL no está disponible — tests E2E saltados");
-            return;
-        }
-
         _serverProcess = StartDotnet("Server/Enigma.Server.csproj", ServerPort);
         _clientProcess = StartDotnet("Client/Enigma.Client.csproj", ClientPort);
 
-        await WaitForUrl(ServerUrl, TimeSpan.FromSeconds(180));
+        await WaitForUrl(ServerUrl, TimeSpan.FromSeconds(60));
         await WaitForUrl(ClientUrl, TimeSpan.FromSeconds(60));
     }
 
@@ -98,24 +91,5 @@ public class E2EWebFixture
                 process.Kill(entireProcessTree: true);
         }
         catch { }
-    }
-
-    /// <summary>
-    /// Checks if MySQL is reachable on localhost:3306 with a short timeout.
-    /// Used to skip E2E tests when the database is not available.
-    /// </summary>
-    private static bool IsMySqlReachable()
-    {
-        try
-        {
-            using TcpClient client = new();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            client.ConnectAsync("localhost", 3306, cts.Token).GetAwaiter().GetResult();
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }
