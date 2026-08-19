@@ -7,11 +7,10 @@ namespace Enigma.Client.Services;
 
 /// <summary>
 /// Autenticación del cliente: login contra POST /auth/login, persistencia del
-/// token e instituciones en localStorage, y lectura del contexto de sesión.
+/// usuario e instituciones en localStorage (no sensible), y cookie HttpOnly para el JWT.
 /// </summary>
 public class AuthService
 {
-    private const string TokenKey = "enigma_token";
     private const string UsuarioKey = "enigma_usuario";
     private const string InstitucionesKey = "enigma_instituciones";
     private const string InstitucionActivaKey = "enigma_institucion";
@@ -59,7 +58,14 @@ public class AuthService
 
     public async Task LogoutAsync()
     {
-        await _js.InvokeVoidAsync("localStorage.removeItem", TokenKey);
+        try
+        {
+            await _http.PostAsync("auth/logout", null);
+        }
+        catch (HttpRequestException)
+        {
+        }
+
         await _js.InvokeVoidAsync("localStorage.removeItem", UsuarioKey);
         await _js.InvokeVoidAsync("localStorage.removeItem", InstitucionesKey);
         await _js.InvokeVoidAsync("localStorage.removeItem", InstitucionActivaKey);
@@ -80,21 +86,14 @@ public class AuthService
             return JsonSerializer.Deserialize<List<InstitucionDto>>(json, Json) ?? [];
         }
 
-        // Fallback: refrescar desde la API con el token guardado.
         try
         {
-            string? token = await GetTokenAsync();
-            if (!string.IsNullOrEmpty(token))
+            HttpResponseMessage response = await _http.GetAsync("auth/instituciones");
+            if (response.IsSuccessStatusCode)
             {
-                using HttpRequestMessage request = new(HttpMethod.Get, "auth/instituciones");
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                HttpResponseMessage response = await _http.SendAsync(request);
-                if (response.IsSuccessStatusCode)
-                {
-                    List<InstitucionDto> instituciones = await response.Content.ReadFromJsonAsync<List<InstitucionDto>>(Json) ?? [];
-                    await _js.InvokeVoidAsync("localStorage.setItem", InstitucionesKey, JsonSerializer.Serialize(instituciones, Json));
-                    return instituciones;
-                }
+                List<InstitucionDto> instituciones = await response.Content.ReadFromJsonAsync<List<InstitucionDto>>(Json) ?? [];
+                await _js.InvokeVoidAsync("localStorage.setItem", InstitucionesKey, JsonSerializer.Serialize(instituciones, Json));
+                return instituciones;
             }
         }
         catch (HttpRequestException)
@@ -110,6 +109,4 @@ public class AuthService
     }
 
     public async Task SetInstitucionActivaAsync(InstitucionDto institucion) => await _js.InvokeVoidAsync("localStorage.setItem", InstitucionActivaKey, JsonSerializer.Serialize(institucion, Json));
-
-    public async Task<string?> GetTokenAsync() => await _js.InvokeAsync<string>("localStorage.getItem", TokenKey);
 }
