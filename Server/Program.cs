@@ -16,24 +16,9 @@ using Scalar.AspNetCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Kestrel: HTTPS + HTTP endpoints. The dev certificate is generated with:
-//   dotnet dev-certs https -ep /tmp/https/aspnetapp.pfx -p enigma_dev_https
-// In production, use a real certificate or a reverse proxy (nginx, Traefik).
-string httpsCertPath = Environment.GetEnvironmentVariable("HTTPS_CERT_PATH")
-    ?? Path.Combine(Path.GetTempPath(), "https", "aspnetapp.pfx");
-string httpsCertPassword = Environment.GetEnvironmentVariable("HTTPS_CERT_PASSWORD")
-    ?? "enigma_dev_https";
-
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(8081);  // HTTP
-    if (File.Exists(httpsCertPath))
-    {
-        options.ListenAnyIP(8443, listenOptions =>
-        {
-            listenOptions.UseHttps(httpsCertPath, httpsCertPassword);
-        });
-    }
+    options.ListenAnyIP(8081);
 });
 
 // Add services to the container.
@@ -202,7 +187,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseSecurityHeaders();
 
 if (app.Environment.IsDevelopment())
