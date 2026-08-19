@@ -15,7 +15,8 @@ public class EnigmaDbContextFactory : IDesignTimeDbContextFactory<EnigmaDbContex
             + $"Port={Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306"};"
             + $"Database={Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "enigma_db"};"
             + $"User Id={Environment.GetEnvironmentVariable("MYSQL_USER") ?? "enigma"};"
-            + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};";
+            + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};"
+            + $"ConnectionTimeout=3;";
 
         DbContextOptions<EnigmaDbContext> options = new DbContextOptionsBuilder<EnigmaDbContext>()
             .UseMySql(

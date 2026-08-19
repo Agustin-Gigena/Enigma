@@ -115,7 +115,8 @@ string connectionString = $"Server={Environment.GetEnvironmentVariable("MYSQL_HO
     + $"Port={Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306"};"
     + $"Database={Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "enigma_db"};"
     + $"User Id={Environment.GetEnvironmentVariable("MYSQL_USER") ?? "enigma"};"
-    + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};";
+    + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};"
+    + $"ConnectionTimeout=3;";
 
 // Configure DbContext
 // Use a fixed MySQL 8.0 server version (no AutoDetect) so design-time EF
