@@ -151,12 +151,14 @@ internal sealed class CookieContainerHandler : DelegatingHandler
 
         HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
 
-        // Store Set-Cookie headers
+        // Store Set-Cookie headers (strip Secure flag so CookieContainer sends
+        // the cookie over HTTP — required for WebApplicationFactory which uses HTTP).
         if (response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookies))
         {
             foreach (string cookie in setCookies)
             {
-                _cookies.SetCookies(uri, cookie);
+                string sanitized = cookie.Replace("; Secure", "", StringComparison.OrdinalIgnoreCase);
+                _cookies.SetCookies(uri, sanitized);
             }
         }
 
