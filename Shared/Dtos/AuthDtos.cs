@@ -6,9 +6,6 @@ public record UsuarioDto(int Id, string NombreUsuario, string? Correo);
 /// <summary>Institución del usuario; <see cref="Tipo"/> es la enumeración como texto.</summary>
 public record InstitucionDto(int Id, string Nombre, string Tipo);
 
-/// <summary>Respuesta de POST /auth/login: token + expiración + contexto de sesión.</summary>
-public record LoginResponse(string Token, DateTime Expiracion, UsuarioDto Usuario, List<InstitucionDto> Instituciones);
-
 /// <summary>Cuerpo HTTP de POST /auth/login (sin token — el JWT va en cookie HttpOnly).</summary>
 public record LoginBody(UsuarioDto Usuario, List<InstitucionDto> Instituciones);
 
