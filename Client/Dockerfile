@@ -17,5 +17,4 @@ RUN dotnet publish Client/Enigma.Client.csproj -c Release -o /app --no-restore
 
 FROM caddy:alpine
 COPY --from=build /app/wwwroot /srv
-COPY Client/Caddyfile /etc/caddy/Caddyfile
 EXPOSE 80
