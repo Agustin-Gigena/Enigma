@@ -1,78 +1,96 @@
+using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
+using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 namespace Enigma.Client.Services;
 
 /// <summary>
-/// AuthenticationStateProvider basado en el JWT guardado en localStorage:
-/// decodifica los claims del payload (sin roundtrip al servidor) y notifica
-/// cambios de estado tras login/logout. Un token expirado se trata como
-/// anónimo.
+/// AuthenticationStateProvider basado en cookie HttpOnly:
+/// llama a GET /auth/me bajo demanda (no en cada carga de página) y cachea
+/// el resultado. Se invalida en logout o cuando el server devuelve 401.
 /// </summary>
 public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
 {
+    private readonly HttpClient _http;
     private readonly IJSRuntime _js;
 
-    public EnigmaAuthenticationStateProvider(IJSRuntime js) => _js = js;
+    private AuthenticationState? _cachedState;
+    private DateTime _cacheExpiry = DateTime.MinValue;
+
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+    public EnigmaAuthenticationStateProvider(HttpClient http, IJSRuntime js)
+    {
+        _http = http;
+        _js = js;
+    }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        string token = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_token");
-        List<Claim> claims = DecodificarClaims(token);
-        if (claims.Count == 0)
+        if (_cachedState is not null && DateTime.UtcNow < _cacheExpiry)
         {
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            return _cachedState;
         }
 
-        ClaimsIdentity identity = new(claims, authenticationType: "jwt");
-        return new AuthenticationState(new ClaimsPrincipal(identity));
+        string json = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_usuario");
+        if (string.IsNullOrEmpty(json))
+        {
+            _cachedState = Anonymous();
+            return _cachedState;
+        }
+
+        try
+        {
+            HttpResponseMessage response = await _http.GetAsync("auth/me");
+            if (response.IsSuccessStatusCode)
+            {
+                UsuarioDto? usuario = await response.Content.ReadFromJsonAsync<UsuarioDto>();
+                if (usuario is not null)
+                {
+                    ClaimsPrincipal principal = CreatePrincipal(usuario);
+                    _cachedState = new AuthenticationState(principal);
+                    _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);
+                    return _cachedState;
+                }
+            }
+        }
+        catch (HttpRequestException)
+        {
+        }
+
+        _cachedState = Anonymous();
+        return _cachedState;
     }
 
-    public void NotificarEstado() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-
-    private static List<Claim> DecodificarClaims(string? token)
+    public void NotifyAuthStateChanged()
     {
-        List<Claim> claims = new();
-        if (string.IsNullOrEmpty(token))
-        {
-            return claims;
-        }
+        _cachedState = null;
+        _cacheExpiry = DateTime.MinValue;
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    }
 
-        string[] partes = token.Split('.');
-        if (partes.Length != 3)
-        {
-            return claims;
-        }
+    public void NotifyLogout()
+    {
+        _cachedState = null;
+        _cacheExpiry = DateTime.MinValue;
+        NotifyAuthenticationStateChanged(Task.FromResult(Anonymous()));
+    }
 
-        string payload = partes[1].Replace('-', '+').Replace('_', '/');
-        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+    private static AuthenticationState Anonymous()
+    {
+        return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+    }
 
-        using JsonDocument documento = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
-        JsonElement datos = documento.RootElement;
+    private static ClaimsPrincipal CreatePrincipal(UsuarioDto usuario)
+    {
+        List<Claim> claims =
+        [
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+        ];
 
-        // Expirado → anónimo.
-        if (datos.TryGetProperty("exp", out JsonElement exp) && exp.TryGetInt64(out long expSegundos)
-            && expSegundos < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-        {
-            return claims;
-        }
-
-        string? id = datos.TryGetProperty("nameid", out JsonElement nameid) ? nameid.GetString()
-               : datos.TryGetProperty("sub", out JsonElement sub) ? sub.GetString() : null;
-        string? nombre = datos.TryGetProperty("unique_name", out JsonElement uniqueName) ? uniqueName.GetString()
-                   : datos.TryGetProperty("name", out JsonElement name) ? name.GetString() : null;
-
-        if (id is not null)
-        {
-            claims.Add(new Claim(ClaimTypes.NameIdentifier, id));
-        }
-        if (nombre is not null)
-        {
-            claims.Add(new Claim(ClaimTypes.Name, nombre));
-        }
-        return claims;
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "cookie"));
     }
 }

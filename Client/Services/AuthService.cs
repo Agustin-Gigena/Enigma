@@ -46,7 +46,7 @@ public class AuthService
 
             await _js.InvokeVoidAsync("localStorage.setItem", UsuarioKey, JsonSerializer.Serialize(datos.Usuario, Json));
             await _js.InvokeVoidAsync("localStorage.setItem", InstitucionesKey, JsonSerializer.Serialize(datos.Instituciones, Json));
-            _authState.NotificarEstado();
+            _authState.NotifyAuthStateChanged();
 
             return new LoginResult(true, Datos: datos);
         }
@@ -69,7 +69,7 @@ public class AuthService
         await _js.InvokeVoidAsync("localStorage.removeItem", UsuarioKey);
         await _js.InvokeVoidAsync("localStorage.removeItem", InstitucionesKey);
         await _js.InvokeVoidAsync("localStorage.removeItem", InstitucionActivaKey);
-        _authState.NotificarEstado();
+        _authState.NotifyLogout();
     }
 
     public async Task<UsuarioDto?> GetUsuarioAsync()
