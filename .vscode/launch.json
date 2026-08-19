@@ -19,10 +19,7 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://0.0.0.0:8081",
-                // VS Code inyecta HTTP_PORTS=8080 en el container; lo neutralizamos y
-                // forzamos la URL para que Kestrel escuche solo en :8081.
-                "HTTP_PORTS": "",
-                "HTTPS_PORTS": ""
+                "HTTP_PORTS": ""
             },
             "console": "internalConsole",
             "presentation": { "hidden": true }

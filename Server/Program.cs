@@ -181,7 +181,7 @@ builder.Services.AddAuthorization();
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// Order matters: HSTS -> HTTPS -> Exception -> CORS -> Auth -> Authorization.
+// Order matters: Exception -> CORS -> Auth -> Authorization.
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
