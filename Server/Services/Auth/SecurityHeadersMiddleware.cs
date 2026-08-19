@@ -30,13 +30,13 @@ public class SecurityHeadersMiddleware
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
 
         // Content Security Policy — Blazor WASM needs 'wasm-unsafe-eval' for scripts
-        // and 'unsafe-inline' for scoped CSS
+        // and 'unsafe-inline' for scoped CSS. Scalar UI loads from jsDelivr CDN.
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-            "script-src 'self' 'wasm-unsafe-eval'; " +
-            "style-src 'self' 'unsafe-inline'; " +
-            "img-src 'self' data:; " +
-            "font-src 'self'";
+            "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+            "img-src 'self' data: https://cdn.jsdelivr.net; " +
+            "font-src 'self' https://cdn.jsdelivr.net";
 
         await _next(context);
     }
