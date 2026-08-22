@@ -236,8 +236,14 @@ info "Container: enigma-dev-db (network enigma-dev-net, volume enigma-db-data)"
 # The DB survives devcontainer rebuilds: never removed on teardown, kept if the
 # image tag is unchanged, and backed by a named volume at the baked datadir.
 RUNNING_IMAGE="$(podman inspect enigma-dev-db --format '{{.ImageName}}' 2>/dev/null || true)"
+RUNNING_IMAGE="${RUNNING_IMAGE%:latest}"
 if [ -n "$RUNNING_IMAGE" ] && [ "$RUNNING_IMAGE" = "$IMAGE" ]; then
-  info "Container already running with $IMAGE — keeping it"
+  if podman inspect enigma-dev-db --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
+    info "Container already running with $IMAGE — keeping it"
+  else
+    info "Container exists with $IMAGE but is stopped — restarting it"
+    podman start enigma-dev-db >/dev/null
+  fi
 else
   if [ -n "$RUNNING_IMAGE" ]; then
     warn "Image changed ($RUNNING_IMAGE → $IMAGE) — recreating (data volume persists)"
