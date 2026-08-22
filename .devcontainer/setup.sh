@@ -21,7 +21,8 @@ SOCKET="${PODMAN_SOCKET:-$RUNTIME_DIR/podman/podman.sock}"
 step "Ensuring bind-mount sources exist"
 mkdir -p "$HOME/.omp"
 mkdir -p "$HOME/.config/gh"
-info "OK: $HOME/.omp, $HOME/.config/gh"
+mkdir -p "$HOME/.config/opencode"
+info "OK: $HOME/.omp, $HOME/.config/gh, $HOME/.config/opencode"
 
 # 2. Rootless podman socket: bring it up if down, widen its perms so the
 #    container (different uid under the userns mapping) can reach it.

@@ -390,6 +390,13 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ## Notes for AI Assistants
 
+### Protected Configuration and Secrets
+
+- Editing `.editorconfig`, `.gitignore`, `lefthook.yml`, or `.yamllint` requires explicit user confirmation before the edit. This includes overwriting or modifying them through any command or tool.
+- Do not modify those protected files as a side effect of another task. If a requested change requires one of them, pause and ask for confirmation before proceeding.
+- Do not read, write, edit, copy, move, delete, or inspect `*.env` or `*.env.*` files. Treat them as credential-bearing files; the user must handle any required changes directly.
+- Do not expose secrets from environment files or command output in responses, logs, patches, or diagnostics.
+
 1. **Soft-Delete Awareness**: All entities inherit `BorradoLogico` field. Queries must filter unless explicitly including soft-deleted records.
 
 2. **Audit Field Dependencies**: `GenericEntity` resuelve el usuario vía `CurrentUserService.GetCurrentUser()` (estático, sin inyección). New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.

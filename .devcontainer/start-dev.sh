@@ -94,6 +94,17 @@ info "Image: $IMAGE"
 
 # --- 2. Write .env files ---
 step "Writing .env files"
+# Source devcontainer secrets so the heredoc below can expand them.
+DEVENV_ENV="$WORKSPACE/.devcontainer/.env"
+if [ -f "$DEVENV_ENV" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$DEVENV_ENV"
+  set +a
+  info "Sourced $DEVENV_ENV"
+else
+  warn "$DEVENV_ENV not found — optional vars will be empty"
+fi
 # The devcontainer and the MySQL container share the podman network
 # enigma-dev-net; the DB is reachable by its container name (aardvark DNS).
 info "MySQL host: enigma-dev-db (network enigma-dev-net)"
@@ -105,11 +116,11 @@ MYSQL_DATABASE=$MYSQL_DATABASE
 MYSQL_USER=$MYSQL_USER
 MYSQL_PASSWORD=$MYSQL_PASSWORD
 MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
-ENIGMA_JWT_SECRET=$ENIGMA_JWT_SECRET
-ENIGMA_SEED_ADMIN_USER=$ENIGMA_SEED_ADMIN_USER
-ENIGMA_SEED_ADMIN_PASSWORD=$ENIGMA_SEED_ADMIN_PASSWORD
-HTTPS_CERT_PATH=$HTTPS_CERT_PATH
-HTTPS_CERT_PASSWORD=$HTTPS_CERT_PASSWORD
+ENIGMA_JWT_SECRET=${ENIGMA_JWT_SECRET:-}
+ENIGMA_SEED_ADMIN_USER=${ENIGMA_SEED_ADMIN_USER:-}
+ENIGMA_SEED_ADMIN_PASSWORD=${ENIGMA_SEED_ADMIN_PASSWORD:-}
+HTTPS_CERT_PATH=${HTTPS_CERT_PATH:-}
+HTTPS_CERT_PASSWORD=${HTTPS_CERT_PASSWORD:-}
 # VS Code injects HTTP_PORTS=8080 into the container env — neutralize it so
 # Kestrel binds only what launchSettings pins (http://localhost:8081).
 HTTP_PORTS=

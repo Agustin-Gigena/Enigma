@@ -41,17 +41,24 @@ public class LoginFlowTest
     {
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
 
-        await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
 
-        await _page.WaitForURLAsync("**/");
+        // Admin tiene 2 instituciones → pasa por la selección antes del Home.
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10000 });
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
+        await _page.WaitForURLAsync("**/", new() { Timeout = 10000 });
 
-        string? textoHome = await _page.GetByText("admin").TextContentAsync();
-        Assert.That(textoHome, Does.Contain("admin"));
+        ILocator saludo = _page.GetByText("Bienvenido, admin");
+        await saludo.WaitForAsync(new() { Timeout = 10000 });
 
-        string? token = await _page.EvaluateAsync<string>("localStorage.getItem('enigma_token')");
-        Assert.That(token, Is.Not.Null.And.Not.Empty);
+        // El JWT vive en una cookie HttpOnly (ya no se guarda en localStorage).
+        IReadOnlyList<BrowserContextCookiesResult> cookies =
+            await _page.Context.CookiesAsync($"{E2EWebFixture.ClientUrl}/");
+        Assert.That(
+            cookies.Any(c => c.Name == "enigma_token" && !string.IsNullOrEmpty(c.Value)),
+            Is.True, "La cookie enigma_token debería existir tras el login.");
     }
 
     [Test]
@@ -60,7 +67,7 @@ public class LoginFlowTest
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
 
         await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("incorrecta");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("incorrecta");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
 
         ILocator alerta = _page.GetByRole(AriaRole.Alert);
@@ -78,7 +85,7 @@ public class LoginFlowTest
         // Login primero
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
         await _page.WaitForURLAsync("**/");
 
@@ -96,7 +103,7 @@ public class LoginFlowTest
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
 
         await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
 
         // Admin tiene 2 instituciones → debería llegar a selección
@@ -116,7 +123,7 @@ public class LoginFlowTest
         // Login primero
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
         await _page.WaitForURLAsync("**/");
 
@@ -150,7 +157,7 @@ public class LoginFlowTest
         // Login primero
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await _page.GetByLabel("Usuario").FillAsync("admin");
-        await _page.GetByLabel("Contraseña").FillAsync("admin123");
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
         await _page.WaitForURLAsync("**/");
 

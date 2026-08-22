@@ -189,6 +189,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseSecurityHeaders();
 
+if (app.Environment.IsProduction()) {
+    app.UseHttpsRedirection();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -235,6 +239,8 @@ if (app.Environment.IsDevelopment())
         }
     }
 }
+
+app.MapGet("/health", () => Results.Ok());
 
 app.UseCors();
 app.UseRateLimiter();

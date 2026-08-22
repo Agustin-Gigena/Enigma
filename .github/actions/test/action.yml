@@ -32,16 +32,24 @@ runs:
       run: dotnet restore Enigma.slnx
       shell: bash
 
-    - name: Build
-      run: dotnet build Enigma.slnx --no-restore
-      shell: bash
-
     - name: Install Playwright browsers
       run: pwsh Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
       shell: bash
 
     - name: Run all tests
-      run: dotnet test Tests/Enigma.Test.csproj --no-build
+      run: dotnet test
+      shell: bash
+      env:
+        ASPNETCORE_ENVIRONMENT: Development
+        MYSQL_HOST: ${{ inputs.mysql-host }}
+        MYSQL_PORT: ${{ inputs.mysql-port }}
+        MYSQL_DATABASE: ${{ inputs.mysql-database }}
+        MYSQL_USER: ${{ inputs.mysql-user }}
+        MYSQL_PASSWORD: ${{ inputs.mysql-password }}
+        ENIGMA_JWT_SECRET: ${{ inputs.jwt-secret }}
+
+    - name: Run mutation tests
+      run: bash Tests/mutation.run.sh
       shell: bash
       env:
         ASPNETCORE_ENVIRONMENT: Development

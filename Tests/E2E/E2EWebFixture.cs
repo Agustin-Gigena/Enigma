@@ -40,7 +40,9 @@ public class E2EWebFixture
         _serverProcess = StartDotnet("Server/Enigma.Server.csproj", ServerPort);
         _clientProcess = StartDotnet("Client/Enigma.Client.csproj", ClientPort);
 
-        await WaitForUrl(ServerUrl, TimeSpan.FromSeconds(60));
+        // El Server es una API sin ruta raíz: /health es el endpoint canónico
+        // de "está arriba". El Client sí sirve / (Blazor WASM).
+        await WaitForUrl($"{ServerUrl}/health", TimeSpan.FromSeconds(60));
         await WaitForUrl(ClientUrl, TimeSpan.FromSeconds(60));
     }
 
@@ -67,13 +69,15 @@ public class E2EWebFixture
 
     private static async Task WaitForUrl(string url, TimeSpan timeout)
     {
-        using HttpClient client = new() { BaseAddress = new Uri(url) };
+        using HttpClient client = new();
         Stopwatch sw = Stopwatch.StartNew();
         while (sw.Elapsed < timeout)
         {
             try
             {
-                HttpResponseMessage resp = await client.GetAsync("/");
+                // URL absoluta: si fuera relativa, HttpClient la combinaría con
+                // BaseAddress y el path pedido no sería el esperado.
+                HttpResponseMessage resp = await client.GetAsync(url);
                 if (resp.IsSuccessStatusCode) return;
             }
             catch { }
