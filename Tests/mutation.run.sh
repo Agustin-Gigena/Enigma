@@ -12,4 +12,4 @@ export PATH="$PATH:$HOME/.dotnet/tools"
 cd "$script_directory"
 
 echo "==> Ejecutando mutation testing con Stryker"
-dotnet stryker --config-file stryker-config.json --configuration Release --concurrency 4
+dotnet stryker --config-file stryker-config.json --configuration Release --concurrency 1
