@@ -9,21 +9,30 @@ using NUnit.Framework;
 namespace Enigma.Test.Auth;
 
 /// <summary>
-/// WebApplicationFactory que siembra las variables de entorno que el Server lee
-/// en Program (connection string MySQL + entorno) antes de que el host arranque.
-/// Usa el MySQL del devcontainer (enigma-dev-db) con el seed dev admin/admin123.
+/// WebApplicationFactory que siembra defaults de las variables de entorno que el
+/// Server lee en Program (connection string MySQL + entorno) antes de que el host
+/// arranque. Sólo aplica el default cuando la variable no viene en el entorno:
+/// en el devcontainer cae al MySQL del servicio (enigma-dev-db, seed admin/admin123);
+/// en CI respeta lo que inyecta el workflow (MYSQL_HOST=localhost, etc.) — pisarlo
+/// rompía la conexión a la BD y contaminaba el env de los procesos E2E hijos.
 /// </summary>
 public sealed class EnigmaWebFactory : WebApplicationFactory<Program>
 {
     public EnigmaWebFactory()
     {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-        Environment.SetEnvironmentVariable("MYSQL_HOST", "enigma-dev-db");
-        Environment.SetEnvironmentVariable("MYSQL_PORT", "3306");
-        Environment.SetEnvironmentVariable("MYSQL_DATABASE", "enigma_db");
-        Environment.SetEnvironmentVariable("MYSQL_USER", "root");
-        Environment.SetEnvironmentVariable("MYSQL_PASSWORD", "root_password");
-        Environment.SetEnvironmentVariable("MYSQL_ROOT_PASSWORD", "root_password");
+        SetDefault("ASPNETCORE_ENVIRONMENT", "Development");
+        SetDefault("MYSQL_HOST", "enigma-dev-db");
+        SetDefault("MYSQL_PORT", "3306");
+        SetDefault("MYSQL_DATABASE", "enigma_db");
+        SetDefault("MYSQL_USER", "root");
+        SetDefault("MYSQL_PASSWORD", "root_password");
+        SetDefault("MYSQL_ROOT_PASSWORD", "root_password");
+    }
+
+    private static void SetDefault(string name, string value)
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(name)))
+            Environment.SetEnvironmentVariable(name, value);
     }
 }
 
