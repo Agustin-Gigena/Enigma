@@ -33,7 +33,7 @@ runs:
       shell: bash
 
     - name: Install Playwright browsers
-      run: pwsh Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+      run: dotnet exec Tests/bin/Debug/net10.0/playwright.dll install --with-deps chromium
       shell: bash
 
     - name: Run all tests
