@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.0
+        image: ghcr.io/agustin-gigena/enigma-dev-db_development:latest
         ports:
           - 3306:3306
         env:
