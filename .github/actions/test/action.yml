@@ -19,7 +19,7 @@ inputs:
     default: 'enigma_dev_password'
   jwt-secret:
     description: 'JWT secret for tests (min 32 bytes)'
-    default: 'ci-test-secret-that-is-at-least-32-bytes'
+    default: 'ci-jwt-4f9a2b7c8d1e6f3a5b0c9d2e7f4a1b8c'
 
 runs:
   using: 'composite'
