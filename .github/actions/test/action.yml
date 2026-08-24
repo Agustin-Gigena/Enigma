@@ -37,7 +37,7 @@ runs:
       shell: bash
 
     - name: Install Playwright browsers
-      run: playwright install --with-deps chromium
+      run: playwright install --with-deps chromium -p Tests
       shell: bash
 
     - name: Run all tests
