@@ -32,12 +32,12 @@ runs:
       run: dotnet restore Enigma.slnx
       shell: bash
 
-    - name: Install Playwright CLI
-      run: dotnet tool install --global Microsoft.Playwright.CLI
+    - name: Build test project (puts version-matched Playwright CLI in output)
+      run: dotnet build Tests/Enigma.Test.csproj -c Debug
       shell: bash
 
     - name: Install Playwright browsers
-      run: playwright install --with-deps chromium -p Tests
+      run: pwsh Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
       shell: bash
 
     - name: Run all tests
