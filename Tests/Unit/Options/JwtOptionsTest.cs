@@ -26,15 +26,17 @@ public class JwtOptionsTest
     [Test]
     public void Resolver_Prod_SinEnv_Lanza()
     {
-        Assert.Throws<InvalidOperationException>(
+        InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(
             () => JwtSecretResolver.Resolve(envSecret: null, isDevelopment: false));
+        Assert.That(ex!.Message, Is.EqualTo("ENIGMA_JWT_SECRET es obligatorio en Production (>= 32 bytes)."));
     }
 
     [Test]
     public void Resolver_Prod_EnvVacio_Lanza()
     {
-        Assert.Throws<InvalidOperationException>(
+        InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(
             () => JwtSecretResolver.Resolve(envSecret: "   ", isDevelopment: false));
+        Assert.That(ex!.Message, Is.EqualTo("ENIGMA_JWT_SECRET es obligatorio en Production (>= 32 bytes)."));
     }
 
     // --- JwtOptions.EnsureValid ---
@@ -46,20 +48,24 @@ public class JwtOptionsTest
         opts.EnsureValid();
     }
 
-    [TestCase("")]
-    [TestCase("corto")]
-    [TestCase(null)]
-    public void EnsureValid_SecretInvalido_Lanza(string? secret)
+    [TestCase("", 0)]
+    [TestCase("corto", 5)]
+    [TestCase(null, 0)]
+    public void EnsureValid_SecretInvalido_Lanza(string? secret, int bytesEsperados)
     {
         JwtOptions opts = new() { Secret = secret! };
-        Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+        InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+        Assert.That(ex!.Message, Is.EqualTo(
+            $"ENIGMA_JWT_SECRET debe tener >= 32 bytes (actual: {bytesEsperados}). La app no arranca."));
     }
 
     [Test]
     public void EnsureValid_SecretRepetido_Lanza()
     {
         JwtOptions opts = new() { Secret = new string('a', 40) };
-        Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+        InvalidOperationException? ex = Assert.Throws<InvalidOperationException>(opts.EnsureValid);
+        Assert.That(ex!.Message, Is.EqualTo(
+            "ENIGMA_JWT_SECRET tiene baja entropía (caracteres repetidos o patrones débiles). Usá un generador de secretos."));
     }
 
     // --- Entropy validation ---
