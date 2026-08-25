@@ -79,6 +79,11 @@ public class LoginTest
             "Login response should set enigma_token cookie");
         string? cookieHeader = string.Join(",", login.Headers.GetValues("Set-Cookie"));
         Assert.That(cookieHeader, Does.Contain("enigma_token"));
+        Assert.That(cookieHeader, Does.Contain("httponly"), "La cookie del token debe ser HttpOnly.");
+        Assert.That(cookieHeader, Does.Contain("secure"));
+        Assert.That(cookieHeader, Does.Contain("samesite=none"));
+        Assert.That(cookieHeader, Does.Contain("path=/"));
+        Assert.That(cookieHeader, Does.Contain("max-age=28800"), "TTL de cookie = 8h (CookieMaxAgeSeconds).");
     }
 
     [Test]
@@ -87,6 +92,11 @@ public class LoginTest
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "incorrecta"));
 
         Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        JsonElement body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(body.GetProperty("mensaje").GetString(),
+            Is.EqualTo("Usuario o contraseña incorrectos."),
+            "El mensaje de credenciales inválidas es contrato de la API.");
     }
 
     [Test]
@@ -135,6 +145,13 @@ public class LoginTest
         // Verify cookie is cleared
         Assert.That(logout.Headers.Contains("Set-Cookie"), Is.True,
             "Logout response should clear enigma_token cookie");
+        string? setCookie = string.Join(",", logout.Headers.GetValues("Set-Cookie"));
+        Assert.That(setCookie, Does.Contain("enigma_token="));
+        Assert.That(setCookie, Does.Contain("expires=Thu, 01 Jan 1970 00:00:00 GMT"),
+            "Logout debe expirar la cookie en epoch.");
+        Assert.That(setCookie, Does.Contain("path=/"));
+        Assert.That(setCookie, Does.Contain("secure"));
+        Assert.That(setCookie, Does.Contain("samesite=none"));
     }
 
     /// <summary>

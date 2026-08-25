@@ -101,5 +101,6 @@ public class AuthController : ControllerBase
             .ToList());
     }
 
+    // Stryker disable once String: UserName null es inalcanzable via Identity (UserName es requerido no-nulo)
     private static UsuarioDto ToDto(Usuario usuario) => new(usuario.Id, usuario.UserName ?? "", usuario.Email);
 }
