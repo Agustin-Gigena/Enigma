@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using Enigma.Server.Data.Entities.Auth;
+using Enigma.Server.Options;
+using Enigma.Server.Services.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -27,7 +30,15 @@ public sealed class EnigmaWebFactory : WebApplicationFactory<Program>
         SetDefault("MYSQL_USER", "root");
         SetDefault("MYSQL_PASSWORD", "root_password");
         SetDefault("MYSQL_ROOT_PASSWORD", "root_password");
+        SetDefault("ENIGMA_JWT_SECRET", KnownJwtSecret);
     }
+
+    /// <summary>Secret fijo para que los tests puedan firmar JWTs válidos contra el host.
+    /// SetDefault respeta un ENIGMA_JWT_SECRET heredado (CI) — usar JwtSecretParaTests para leerlo.</summary>
+    public const string KnownJwtSecret = "Zb3kV9xQmN7pL2wR5tY8uH4jE6fA1sD0gC5bK3nM9oI=";
+
+    public static string JwtSecretParaTests =>
+        Environment.GetEnvironmentVariable("ENIGMA_JWT_SECRET") ?? KnownJwtSecret;
 
     private static void SetDefault(string name, string value)
     {
@@ -154,6 +165,41 @@ public class LoginTest
         Assert.That(setCookie, Does.Contain("samesite=none"));
     }
 
+    [Test]
+    public async Task Me_ConJwtDeUsuarioInexistente_Retorna401ConMensaje()
+    {
+        string jwt = TokenDeUsuarioInexistente();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/auth/me");
+        request.Headers.TryAddWithoutValidation("Cookie", $"enigma_token={jwt}");
+
+        HttpResponseMessage me = await _client.SendAsync(request);
+
+        Assert.That(me.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        JsonElement body = await me.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(body.GetProperty("mensaje").GetString(), Is.EqualTo("No autenticado."));
+    }
+
+    [Test]
+    public async Task Instituciones_ConJwtDeUsuarioInexistente_Retorna401ConMensaje()
+    {
+        string jwt = TokenDeUsuarioInexistente();
+        using HttpRequestMessage request = new(HttpMethod.Get, "/auth/instituciones");
+        request.Headers.TryAddWithoutValidation("Cookie", $"enigma_token={jwt}");
+
+        HttpResponseMessage instituciones = await _client.SendAsync(request);
+
+        Assert.That(instituciones.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        JsonElement body = await instituciones.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(body.GetProperty("mensaje").GetString(), Is.EqualTo("No autenticado."));
+    }
+
+    private static string TokenDeUsuarioInexistente()
+    {
+        TokenService tokenService = new(
+            Microsoft.Extensions.Options.Options.Create(new JwtOptions { Secret = EnigmaWebFactory.JwtSecretParaTests }));
+        return tokenService.GenerarAccessToken(new Usuario { Id = 999_999, UserName = "fantasma" }).Token;
+    }
+
     /// <summary>
     /// Las instituciones del admin sembradas por el seed de dev. El endpoint debe devolver
     /// exactamente las del usuario — sin duplicados ni instituciones ajenas — sin asumir
@@ -180,10 +226,11 @@ internal sealed class CookieContainerHandler : DelegatingHandler
     {
         request.Version = new Version(1, 1);
 
-        // Attach stored cookies
+        // Attach stored cookies — unless the request already carries an explicit
+        // Cookie header (a test pinning its own cookies keeps full control).
         Uri uri = request.RequestUri!;
         string cookieHeader = _cookies.GetCookieHeader(uri);
-        if (!string.IsNullOrEmpty(cookieHeader))
+        if (!string.IsNullOrEmpty(cookieHeader) && !request.Headers.Contains("Cookie"))
         {
             request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
         }
