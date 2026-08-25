@@ -32,8 +32,6 @@
   ],
   "runArgs": [
     "--userns=keep-id",
-    "--env-file",
-    "${localWorkspaceFolder}/.devcontainer/.env",
     "--memory=3g",
     "--cpus=2",
     "--name",
