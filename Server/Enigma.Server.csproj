@@ -17,6 +17,9 @@
     <PackageReference Include="Microting.EntityFrameworkCore.MySql" Version="10.0.9" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.18" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Enigma.Test" />
+  </ItemGroup>
 
   <ItemGroup>
 	  <ProjectReference Include="..\Shared\Enigma.Shared.csproj" />
