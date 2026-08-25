@@ -62,7 +62,7 @@ public class LoginTest
     }
 
     [Test]
-    public async Task Login_Admin_RetornaUsuarioYDosInstituciones()
+    public async Task Login_Admin_RetornaUsuarioYSusInstituciones()
     {
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "admin123"));
 
@@ -72,7 +72,7 @@ public class LoginTest
         Assert.That(response, Is.Not.Null);
         Assert.That(response!.Usuario.NombreUsuario, Is.EqualTo("admin"));
         Assert.That(response.Instituciones, Is.Not.Null);
-        Assert.That(response.Instituciones.Count, Is.EqualTo(2));
+        AssertInstitucionesDelAdmin(response.Instituciones.Select(i => i.Nombre));
 
         // Verify cookie was set
         Assert.That(login.Headers.Contains("Set-Cookie"), Is.True,
@@ -90,7 +90,7 @@ public class LoginTest
     }
 
     [Test]
-    public async Task Instituciones_ConCookie_RetornaLasMismasDos()
+    public async Task Instituciones_ConCookie_RetornaLasDelUsuario()
     {
         // Login first — cookie is stored in the CookieContainerHandler
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "admin123"));
@@ -102,7 +102,7 @@ public class LoginTest
         Assert.That(instituciones.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         List<InstitucionDto>? lista = await instituciones.Content.ReadFromJsonAsync<List<InstitucionDto>>();
         Assert.That(lista, Is.Not.Null);
-        Assert.That(lista!.Count, Is.EqualTo(2));
+        AssertInstitucionesDelAdmin(lista!.Select(i => i.Nombre));
     }
 
     [Test]
@@ -135,6 +135,19 @@ public class LoginTest
         // Verify cookie is cleared
         Assert.That(logout.Headers.Contains("Set-Cookie"), Is.True,
             "Logout response should clear enigma_token cookie");
+    }
+
+    /// <summary>
+    /// Las instituciones del admin sembradas por el seed de dev. El endpoint debe devolver
+    /// exactamente las del usuario — sin duplicados ni instituciones ajenas — sin asumir
+    /// cuántas puede haber en la BD para otros usuarios.
+    /// </summary>
+    private static void AssertInstitucionesDelAdmin(IEnumerable<string> nombres)
+    {
+        string[] esperadas = ["Colegio San Martín", "Universidad Nacional del Plata"];
+        Assert.That(nombres, Is.EquivalentTo(esperadas));
+        Assert.That(nombres.Distinct().Count(), Is.EqualTo(nombres.Count()),
+            "El usuario no debe tener instituciones duplicadas (el seed debe ser idempotente).");
     }
 }
 

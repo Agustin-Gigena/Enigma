@@ -1,11 +1,11 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Enigma.Server.Data;
-using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Data.Repositories.Auth;
 using Enigma.Server.Options;
 using Enigma.Server.Services.Auth;
+using Enigma.Server.Services.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -226,11 +226,11 @@ if (app.Environment.IsDevelopment())
         }
     }
 
-    if (migrationsApplied)
+    if (migrationsApplied && app.Environment.IsDevelopment())
     {
         try
         {
-            await SeedDevAsync(app.Services, app.Logger);
+            await SeedingService.SeedAsync(app.Services, app.Logger);
             app.Logger.LogInformation("Dev seed applied");
         }
         catch (Exception ex)
@@ -251,51 +251,5 @@ app.MapControllers();
 
 app.Run();
 
-/// <summary>
-/// Seed de desarrollo: crea el usuario admin (env ENIGMA_SEED_ADMIN_USER /
-/// ENIGMA_SEED_ADMIN_PASSWORD, defaults admin/admin123) y dos instituciones de
-/// ejemplo con membresía del admin, solo si no existen.
-/// </summary>
-static async Task SeedDevAsync(IServiceProvider services, ILogger logger)
-{
-    using IServiceScope scope = services.CreateScope();
-    UserManager<Usuario> userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-    EnigmaDbContext db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
-
-    string adminUserName = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_USER") ?? "admin";
-    string adminPassword = Environment.GetEnvironmentVariable("ENIGMA_SEED_ADMIN_PASSWORD") ?? "admin123";
-
-    Usuario? admin = await userManager.FindByNameAsync(adminUserName);
-    if (admin is null)
-    {
-        admin = new Usuario
-        {
-            UserName = adminUserName,
-            Email = $"{adminUserName}@enigma.local",
-            EmailConfirmed = true,
-        };
-        IdentityResult crear = await userManager.CreateAsync(admin, adminPassword);
-        if (!crear.Succeeded)
-        {
-            throw new InvalidOperationException(
-                "No se pudo crear el usuario admin de seed: "
-                + string.Join("; ", crear.Errors.Select(e => e.Description)));
-        }
-        logger.LogInformation("Seed: creado usuario {Admin}", adminUserName);
-    }
-
-    if (!await db.Instituciones.AnyAsync())
-    {
-        Institucion universidad = new() { Nombre = "Universidad Nacional del Plata", Tipo = TipoInstitucion.Universidad };
-        Institucion colegio = new() { Nombre = "Colegio San Martín", Tipo = TipoInstitucion.Secundaria };
-        universidad.SetCreadoPor(admin);
-        colegio.SetCreadoPor(admin);
-        admin.Instituciones.Add(universidad);
-        admin.Instituciones.Add(colegio);
-        db.Instituciones.AddRange(universidad, colegio);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Seed: creadas instituciones de ejemplo");
-    }
-}
 
 public partial class Program { }
