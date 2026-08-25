@@ -12,7 +12,10 @@
       "break": 100
     },
     "mutate": [
-      "**/*.cs"
+      "**/*.cs",
+      "!**/Migrations/**",
+      "!**/Program.cs",
+      "!**/EnigmaDbContextFactory.cs"
     ]
   }
 }
