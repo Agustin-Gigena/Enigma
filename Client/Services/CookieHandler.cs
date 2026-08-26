@@ -10,10 +10,7 @@ namespace Enigma.Client.Services;
 /// </summary>
 public class CookieHandler : DelegatingHandler
 {
-    public CookieHandler()
-    {
-        InnerHandler = new HttpClientHandler();
-    }
+    public CookieHandler() => InnerHandler = new HttpClientHandler();
 
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)

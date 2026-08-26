@@ -15,7 +15,7 @@ public static class JwtSecretResolver
         if (isDevelopment)
         {
             byte[] random = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
+            using RandomNumberGenerator rng = RandomNumberGenerator.Create();
             rng.GetBytes(random);
             string devSecret = Convert.ToBase64String(random);
             Console.WriteLine("[SECURITY] No ENIGMA_JWT_SECRET set — generated random dev secret. Set the env var for stable tokens across restarts.");

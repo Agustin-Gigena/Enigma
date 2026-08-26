@@ -23,10 +23,7 @@ public class CurrentUserServiceTest
     public void Limpiar() => CurrentUserService.EndScope();
 
     [Test]
-    public void IsAuthenticated_SinScope_DevuelveFalse()
-    {
-        Assert.That(CurrentUserService.IsAuthenticated(), Is.False);
-    }
+    public void IsAuthenticated_SinScope_DevuelveFalse() => Assert.That(CurrentUserService.IsAuthenticated(), Is.False);
 
     [Test]
     public void IsAuthenticated_ConPrincipalAutenticado_DevuelveTrue()

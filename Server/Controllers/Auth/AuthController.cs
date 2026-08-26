@@ -5,7 +5,6 @@ using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
 
 
 namespace Enigma.Server.Controllers.Auth;

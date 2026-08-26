@@ -47,16 +47,10 @@ public class GenericRepositoryTest
     private static InstitucionRepository Repo() => new(Db());
 
     [Test]
-    public void GetById_Inexistente_DevuelveNull()
-    {
-        Assert.That(Repo().GetById(999_999), Is.Null);
-    }
+    public void GetById_Inexistente_DevuelveNull() => Assert.That(Repo().GetById(999_999), Is.Null);
 
     [Test]
-    public void SetBorradoLogico_Inexistente_DevuelveFalse()
-    {
-        Assert.That(Repo().SetBorradoLogico(999_999, true), Is.False);
-    }
+    public void SetBorradoLogico_Inexistente_DevuelveFalse() => Assert.That(Repo().SetBorradoLogico(999_999, true), Is.False);
 
     [Test]
     public async Task SoftDelete_Roundtrip_OcultaYRestaura()

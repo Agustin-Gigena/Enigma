@@ -18,16 +18,10 @@ public class LoginFlowTest
     }
 
     [SetUp]
-    public async Task NewPage()
-    {
-        _page = await _browser.NewPageAsync();
-    }
+    public async Task NewPage() => _page = await _browser.NewPageAsync();
 
     [TearDown]
-    public async Task ClosePage()
-    {
-        await _page.CloseAsync();
-    }
+    public async Task ClosePage() => await _page.CloseAsync();
 
     [OneTimeTearDown]
     public async Task BrowserTeardown()
