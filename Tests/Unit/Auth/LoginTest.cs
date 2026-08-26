@@ -19,7 +19,7 @@ namespace Enigma.Test.Auth;
 /// en CI respeta lo que inyecta el workflow (MYSQL_HOST=localhost, etc.) — pisarlo
 /// rompía la conexión a la BD y contaminaba el env de los procesos E2E hijos.
 /// </summary>
-public sealed class EnigmaWebFactory : WebApplicationFactory<Program>
+public class EnigmaWebFactory : WebApplicationFactory<Program>
 {
     public EnigmaWebFactory()
     {
