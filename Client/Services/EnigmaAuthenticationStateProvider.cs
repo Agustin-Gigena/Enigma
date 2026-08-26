@@ -78,7 +78,7 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
         NotifyAuthenticationStateChanged(Task.FromResult(Anonymous()));
     }
 
-    private static AuthenticationState Anonymous() => new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+    private static AuthenticationState Anonymous() => new(new ClaimsPrincipal(new ClaimsIdentity()));
 
     private static ClaimsPrincipal CreatePrincipal(UsuarioDto usuario)
     {
