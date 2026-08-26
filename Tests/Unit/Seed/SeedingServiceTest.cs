@@ -52,6 +52,10 @@ public class SeedingServiceTest
             factory.Services.CreateScope().ServiceProvider.GetRequiredService<UserManager<Usuario>>();
         Usuario? admin = await userManager.FindByNameAsync("admin");
         Assert.That(admin, Is.Not.Null, "El seed debe crear el admin en BD vacía.");
+
+        await db.Entry(admin).Collection(u => u.Instituciones).LoadAsync();
+        Assert.That(admin.Instituciones.Select(i => i.Nombre).Distinct().Count(), Is.EqualTo(2), "Las 2 instituciones deben quedar vinculadas al admin.");
+        Assert.That(admin.Instituciones.Count, Is.EqualTo(2), "Sin membresías duplicadas.");
     }
 }
 
