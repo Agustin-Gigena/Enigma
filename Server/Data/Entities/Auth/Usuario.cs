@@ -12,11 +12,11 @@ namespace Enigma.Server.Data.Entities.Auth;
 /// </summary>
 public class Usuario : IdentityUser<int>
 {
-  public DateTime LastLogin { get; set; } = DateTime.UtcNow;
+    public DateTime LastLogin { get; set; } = DateTime.UtcNow;
 
-  public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
-  public DateTime? ModificadoEn { get; set; }
-  public DateTime? BorradoEn { get; set; }
-  public bool BorradoLogico { get; set; } = false;
-  public List<Institucion> Instituciones { get; set; } = [];
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime? ModificadoEn { get; set; }
+    public DateTime? BorradoEn { get; set; }
+    public bool BorradoLogico { get; set; } = false;
+    public List<Institucion> Instituciones { get; set; } = [];
 }

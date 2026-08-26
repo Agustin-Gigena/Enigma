@@ -2,34 +2,34 @@ namespace Enigma.Server.Data.Repositories;
 
 public abstract class GenericRepository<T> where T : class
 {
-  protected readonly EnigmaDbContext Context;
-  public GenericRepository(EnigmaDbContext context) => Context = context;
+    protected readonly EnigmaDbContext Context;
+    public GenericRepository(EnigmaDbContext context) => Context = context;
 
-  public virtual T? GetById(int id, bool borradoLogico = false)
-  {
-    T? entity = Context.Set<T>().Find(id);
-    if (entity == null || (entity is GenericEntity genEntity && genEntity.BorradoLogico && !borradoLogico))
+    public virtual T? GetById(int id, bool borradoLogico = false)
     {
-      return null;
-    }
-    return entity;
-  }
-
-  public bool SetBorradoLogico(int id, bool borradoLogico)
-  {
-    T? entity = Context.Set<T>().Find(id);
-    if (entity == null)
-    {
-      return false;
+        T? entity = Context.Set<T>().Find(id);
+        if (entity == null || (entity is GenericEntity genEntity && genEntity.BorradoLogico && !borradoLogico))
+        {
+            return null;
+        }
+        return entity;
     }
 
-    if (entity is GenericEntity genEntity)
+    public bool SetBorradoLogico(int id, bool borradoLogico)
     {
-      genEntity.BorradoLogico = borradoLogico;
-      Context.SaveChanges();
-      return true;
-    }
+        T? entity = Context.Set<T>().Find(id);
+        if (entity == null)
+        {
+            return false;
+        }
 
-    return false;
-  }
+        if (entity is GenericEntity genEntity)
+        {
+            genEntity.BorradoLogico = borradoLogico;
+            Context.SaveChanges();
+            return true;
+        }
+
+        return false;
+    }
 }

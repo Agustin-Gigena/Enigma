@@ -1,0 +1,25 @@
+{
+  "stryker-config": {
+    "project": "Enigma.Server.csproj",
+    "test-projects": [
+      "Enigma.Test.csproj"
+    ],
+    "test-case-filter": "FullyQualifiedName!~E2E",
+    "reporters": [
+      "progress",
+      "cleartext",
+      "json"
+    ],
+    "thresholds": {
+      "high": 100,
+      "low": 90,
+      "break": 80
+    },
+    "mutate": [
+      "**/*.cs",
+      "!**/Migrations/**",
+      "!**/Program.cs",
+      "!**/EnigmaDbContextFactory.cs"
+    ]
+  }
+}

@@ -1,19 +1,29 @@
 {
   "features": {
-    "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef:1": {
+    "ghcr.io/Agustin-Gigena/devcontainer-features/dotnet-tools:1": {
       "version": "1.0.0",
-      "resolved": "ghcr.io/agustin-gigena/devcontainer-features/dotnet-ef@sha256:d2e24f05d5926613d742d1ccbf1302b7e5c4c0edb8ae34d15e32dff1698d08b4",
-      "integrity": "sha256:d2e24f05d5926613d742d1ccbf1302b7e5c4c0edb8ae34d15e32dff1698d08b4"
+      "resolved": "ghcr.io/agustin-gigena/devcontainer-features/dotnet-tools@sha256:80b4e51528ce5ffcc463f3f060a487e9d90d708caa37bab1ba8f6fd3698bf698",
+      "integrity": "sha256:80b4e51528ce5ffcc463f3f060a487e9d90d708caa37bab1ba8f6fd3698bf698"
+    },
+    "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+      "version": "1.0.8",
+      "resolved": "ghcr.io/devcontainers-extra/features/apt-get-packages@sha256:776fa11c30c50fa91d5e1bf050444b0f130827457109c349db92e8e126b750ec",
+      "integrity": "sha256:776fa11c30c50fa91d5e1bf050444b0f130827457109c349db92e8e126b750ec"
     },
     "ghcr.io/devcontainers/features/github-cli:1": {
-      "version": "1.1.0",
-      "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671",
-      "integrity": "sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671"
+      "version": "1.1.1",
+      "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:94879eebb6a0e4e2f197de9f12db7427cb4a25b82d93c55239ce8c8fc394a1b4",
+      "integrity": "sha256:94879eebb6a0e4e2f197de9f12db7427cb4a25b82d93c55239ce8c8fc394a1b4"
     },
     "ghcr.io/devcontainers/features/node:2.1.0": {
       "version": "2.1.0",
       "resolved": "ghcr.io/devcontainers/features/node@sha256:586c9a6f7dd40bd3ba2cd41e7f2f88dcc31fbe5d1442afcbf07ffbc66b686857",
       "integrity": "sha256:586c9a6f7dd40bd3ba2cd41e7f2f88dcc31fbe5d1442afcbf07ffbc66b686857"
+    },
+    "ghcr.io/iyaki/devcontainer-features/lefthook:2.0.1": {
+      "version": "2.0.1",
+      "resolved": "ghcr.io/iyaki/devcontainer-features/lefthook@sha256:fb888f615f4eb7f3df34ab020b0ededed229ab391af8b03a4007f8fdedc7241a",
+      "integrity": "sha256:fb888f615f4eb7f3df34ab020b0ededed229ab391af8b03a4007f8fdedc7241a"
     },
     "ghcr.io/iyaki/devcontainer-features/oh-my-pi:1": {
       "version": "1.0.0",

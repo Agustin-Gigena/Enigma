@@ -17,11 +17,12 @@ builder.Services.AddScoped<AuthenticationStateProvider>(
     sp => sp.GetRequiredService<EnigmaAuthenticationStateProvider>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ThemeService>();
-builder.Services.AddScoped(sp => new HttpClient
+builder.Services.AddScoped<CookieHandler>();
+builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
 {
-  // Front (:80) and API (:8081) are different origins; WebAssembly cannot
-  // read process env vars, so the API origin comes from wwwroot/appsettings.json.
-  BaseAddress = new Uri(builder.Configuration["ServerUri"] ?? builder.HostEnvironment.BaseAddress)
+    // Front (:8080) and API (:8081) are different origins; WebAssembly cannot
+    // read process env vars, so the API origin comes from wwwroot/appsettings.json.
+    BaseAddress = new Uri(builder.Configuration["ServerUri"] ?? builder.HostEnvironment.BaseAddress)
 });
 
 await builder.Build().RunAsync();

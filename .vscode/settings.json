@@ -1,3 +1,6 @@
 {
-    "remote.autoForwardPorts": false
+    "remote.autoForwardPorts": false,
+    "chat.tools.terminal.autoApprove": {
+        "dotnet test": true
+    }
 }

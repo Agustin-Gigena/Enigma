@@ -63,26 +63,29 @@ sleep 1
   pkill -9 -f 'dotnet watch --project' 2>/dev/null && info "Force-killed remaining watches" || true
 
 # --- 1. Resolve image tag from branch ancestry ---
+# ¿De qué rama larga desciende HEAD? Preguntamos "¿HEAD desciende de
+# origin/<cand>?" (no "¿un ancestro de HEAD está en origin/<cand>?"):
+# development suele ir por delante de production, así que una rama basada en
+# development SÍ tiene a origin/development como ancestro (y, como development
+# contiene la historia de production, también a origin/production). Por eso hay
+# que comprobar development PRIMERO: si no, production gana siempre. Cuando
+# ambas apuntan al mismo commit, es convención: development.
 step "Resolving image tag"
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 info "Current branch: $CURRENT_BRANCH"
 
 LONG_BRANCH=""
-SEARCH_DEPTH=0
-for ref in $(git rev-list --first-parent --simplify-merges HEAD); do
-  SEARCH_DEPTH=$((SEARCH_DEPTH + 1))
-  for cand in production development; do
-    if git merge-base --is-ancestor "$ref" "origin/$cand" 2>/dev/null; then
-      LONG_BRANCH="$cand"
-      info "Found ancestor $ref (depth $SEARCH_DEPTH) is part of origin/$cand"
-      break
-    fi
-  done
-  [ -n "$LONG_BRANCH" ] && break
+for cand in development production; do
+  if git rev-parse --verify --quiet "origin/$cand" >/dev/null \
+     && git merge-base --is-ancestor "origin/$cand" HEAD 2>/dev/null; then
+    LONG_BRANCH="$cand"
+    info "HEAD descends from origin/$cand ($(git rev-parse --short "origin/$cand"))"
+    break
+  fi
 done
 
 if [ -z "$LONG_BRANCH" ]; then
-  warn "No production/development ancestor found after $SEARCH_DEPTH commits, defaulting to development"
+  warn "HEAD is not descended from origin/production or origin/development; defaulting to development"
   LONG_BRANCH=development
 fi
 
@@ -91,6 +94,17 @@ info "Image: $IMAGE"
 
 # --- 2. Write .env files ---
 step "Writing .env files"
+# Source devcontainer secrets so the heredoc below can expand them.
+DEVENV_ENV="$WORKSPACE/.devcontainer/.env"
+if [ -f "$DEVENV_ENV" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$DEVENV_ENV"
+  set +a
+  info "Sourced $DEVENV_ENV"
+else
+  warn "$DEVENV_ENV not found — optional vars will be empty"
+fi
 # The devcontainer and the MySQL container share the podman network
 # enigma-dev-net; the DB is reachable by its container name (aardvark DNS).
 info "MySQL host: enigma-dev-db (network enigma-dev-net)"
@@ -102,6 +116,11 @@ MYSQL_DATABASE=$MYSQL_DATABASE
 MYSQL_USER=$MYSQL_USER
 MYSQL_PASSWORD=$MYSQL_PASSWORD
 MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+ENIGMA_JWT_SECRET=${ENIGMA_JWT_SECRET:-}
+ENIGMA_SEED_ADMIN_USER=${ENIGMA_SEED_ADMIN_USER:-}
+ENIGMA_SEED_ADMIN_PASSWORD=${ENIGMA_SEED_ADMIN_PASSWORD:-}
+HTTPS_CERT_PATH=${HTTPS_CERT_PATH:-}
+HTTPS_CERT_PASSWORD=${HTTPS_CERT_PASSWORD:-}
 # VS Code injects HTTP_PORTS=8080 into the container env — neutralize it so
 # Kestrel binds only what launchSettings pins (http://localhost:8081).
 HTTP_PORTS=
@@ -217,8 +236,14 @@ info "Container: enigma-dev-db (network enigma-dev-net, volume enigma-db-data)"
 # The DB survives devcontainer rebuilds: never removed on teardown, kept if the
 # image tag is unchanged, and backed by a named volume at the baked datadir.
 RUNNING_IMAGE="$(podman inspect enigma-dev-db --format '{{.ImageName}}' 2>/dev/null || true)"
+RUNNING_IMAGE="${RUNNING_IMAGE%:latest}"
 if [ -n "$RUNNING_IMAGE" ] && [ "$RUNNING_IMAGE" = "$IMAGE" ]; then
-  info "Container already running with $IMAGE — keeping it"
+  if podman inspect enigma-dev-db --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
+    info "Container already running with $IMAGE — keeping it"
+  else
+    info "Container exists with $IMAGE but is stopped — restarting it"
+    podman start enigma-dev-db >/dev/null
+  fi
 else
   if [ -n "$RUNNING_IMAGE" ]; then
     warn "Image changed ($RUNNING_IMAGE → $IMAGE) — recreating (data volume persists)"

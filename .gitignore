@@ -5,8 +5,6 @@
 **/bin/
 **/obj/
 
-# Visual Studio Code
-.vscode/
 
 # Visual Studio
 .vs/
@@ -52,3 +50,6 @@ AzurePackages/
 # superpowers
 /docs/superpowers/
 .superpowers/
+
+dotnet/
+*.code-workspace

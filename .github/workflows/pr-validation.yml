@@ -5,10 +5,11 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
+  packages: read
 
 jobs:
-  validate:
+  security:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -16,25 +17,85 @@ jobs:
 
       - name: Setup .NET 10 SDK and restore dependencies
         uses: ./.github/actions/setup-dotnet
-        with:
-          params-json: '{"tools": {"dotnet-format": "9.0.218", "coverlet.console": "4.0.0"}}'
-
-      - name: Verify code formatting
-        run: dotnet format Enigma.slnx --verify-no-changes
-
-      - name: Validate solution build
-        run: dotnet build Enigma.slnx -c Release /p:TreatWarningsAsErrors=true
 
       - name: Validate package security
         shell: bash
         run: |
           set -euo pipefail
           dotnet list Enigma.slnx package --vulnerable | tee /tmp/vulnerable-packages.txt
-          if grep -iq "no vulnerable packages were found" /tmp/vulnerable-packages.txt; then
-            echo "No vulnerable packages found."
-          else
-            echo "Error: se encontraron paquetes vulnerables o la salida no indica un estado limpio."
-            echo "--- vulnerable output ---"
+          if grep -iqE 'has the following vulnerable packages|advisory url' /tmp/vulnerable-packages.txt; then
+            echo "Error: se encontraron paquetes vulnerables."
             cat /tmp/vulnerable-packages.txt
             exit 1
+          fi
+          echo "No se encontraron paquetes vulnerables."
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lint GitHub Actions workflows
+        uses: rhysd/actionlint@v1.7.12
+
+      - name: Setup .NET 10 SDK and restore dependencies
+        uses: ./.github/actions/setup-dotnet
+
+      - name: Validate solution build
+        run: dotnet build Enigma.slnx -c Release /p:TreatWarningsAsErrors=true
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: ghcr.io/agustin-gigena/enigma-dev-db_development:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: enigma_db
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        uses: ./.github/actions/test
+        with:
+          mysql-host: localhost
+          mysql-user: root
+          mysql-password: root_password
+
+  format:
+    needs: [security, validate, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup .NET 10 SDK and restore dependencies
+        uses: ./.github/actions/setup-dotnet
+
+      - name: Apply formatting and commit if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git reset --hard
+          dotnet format Enigma.slnx
+          if git diff --quiet; then
+            echo "No formatting changes to commit."
+          else
+            git add -A
+            git commit -m "style: apply dotnet format"
+            git push
           fi

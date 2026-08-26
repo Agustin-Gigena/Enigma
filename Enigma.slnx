@@ -8,5 +8,7 @@
   <Folder Name="/Shared/">
     <Project Path="Shared/Enigma.Shared.csproj" />
   </Folder>
-
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Enigma.Test.csproj" />
+  </Folder>
 </Solution>
