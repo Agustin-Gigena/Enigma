@@ -24,17 +24,22 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.x'
+    - name: Setup .NET SDK + dotnet-ef (incluye cache de NuGet)
+      uses: ./.github/actions/setup-dotnet
 
-    - name: Restore
-      run: dotnet restore Enigma.slnx
-      shell: bash
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('Tests/Enigma.Test.csproj') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
 
     - name: Install Playwright browsers (npm CLI, version from csproj)
       run: |
         VERSION="$(grep -oP '(?<=Include="Microsoft.Playwright" Version=")[^"]+' Tests/Enigma.Test.csproj)"
+        # Idempotente: con cache hit los browsers ya estan instalados;
+        # --with-deps reasegura las dependencias de sistema del runner.
         npx -y "playwright@$VERSION" install --with-deps chromium
       shell: bash
 
