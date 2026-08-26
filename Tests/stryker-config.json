@@ -5,7 +5,11 @@
       "Enigma.Test.csproj"
     ],
     "test-case-filter": "FullyQualifiedName!~E2E",
-    "reporters": ["progress", "cleartext"],
+    "reporters": [
+      "progress",
+      "cleartext",
+      "json"
+    ],
     "thresholds": {
       "high": 100,
       "low": 90,
