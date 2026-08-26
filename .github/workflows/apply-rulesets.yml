@@ -1,0 +1,52 @@
+name: Apply Rulesets
+
+on:
+  push:
+    branches: [development]
+    paths:
+      - ".github/rulesets/**"
+      - ".github/workflows/apply-rulesets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # GITHUB_TOKEN no tiene scope para rulesets (verificado en la doc de
+      # permissions): se requiere un fine-grained PAT con "Rulesets: read and
+      # write" sobre este repo, guardado como secret RULESETS_TOKEN.
+      - name: Verify RULESETS_TOKEN secret
+        env:
+          RULESETS_TOKEN: ${{ secrets.RULESETS_TOKEN }}
+        if: ${{ env.RULESETS_TOKEN == '' }}
+        run: |
+          echo "::error::Falta el secret RULESETS_TOKEN."
+          echo "Crealo en Settings > Secrets and variables > Actions:"
+          echo "fine-grained PAT (solo este repo, permission 'Rulesets': Read and write)."
+          exit 1
+
+      - name: Upsert rulesets from .github/rulesets
+        env:
+          GH_TOKEN: ${{ secrets.RULESETS_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for file in .github/rulesets/*.json; do
+            name="$(jq -r '.name' "$file")"
+            id="$(gh api "repos/{owner}/{repo}/rulesets" --jq ".[] | select(.name == \"${name}\") | .id")"
+            if [ -n "${id}" ]; then
+              echo "Updating ruleset '${name}' (id ${id}) from ${file}"
+              gh api -X PUT "repos/{owner}/{repo}/rulesets/${id}" --input "$file" --silent
+            else
+              echo "Creating ruleset '${name}' from ${file}"
+              gh api -X POST "repos/{owner}/{repo}/rulesets" --input "$file" --silent
+            fi
+          done
+          echo "Rulesets applied."
