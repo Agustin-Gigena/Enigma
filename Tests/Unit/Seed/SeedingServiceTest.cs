@@ -50,7 +50,7 @@ public class SeedingServiceTest
 
         UserManager<Usuario> userManager =
             factory.Services.CreateScope().ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-        Usuario? admin = await userManager.FindByNameAsync("admin");
+        Usuario admin = (await userManager.FindByNameAsync("admin"))!;
         Assert.That(admin, Is.Not.Null, "El seed debe crear el admin en BD vacía.");
 
         await db.Entry(admin).Collection(u => u.Instituciones).LoadAsync();
