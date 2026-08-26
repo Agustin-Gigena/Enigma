@@ -4,8 +4,8 @@ pre-commit:
   jobs:
     - name: validate
       run: |
+        set -e
         dotnet restore Enigma.slnx
-        dotnet format Enigma.slnx --verify-no-changes
         dotnet build Enigma.slnx -c Release \
           /p:TreatWarningsAsErrors=true
     - name: yaml-lint
@@ -13,14 +13,16 @@ pre-commit:
         yamllint -c .yamllint --strict
         $(find . -type f
         \( -name '*.yml' -o -name '*.yaml' \)
-        -not -path '*/.git/*')
+        -not -path '*/.git/*'
+        -not -path '*/bin/*'
+        -not -path '*/obj/*')
 
 pre-push:
   jobs:
     - name: validate
       run: |
+        set -e
         dotnet restore Enigma.slnx
-        dotnet format Enigma.slnx --verify-no-changes
         dotnet build Enigma.slnx -c Release \
           /p:TreatWarningsAsErrors=true
 

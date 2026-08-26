@@ -52,7 +52,7 @@
             <h1>Ingresá</h1>
             <p class="login__lead">Accedé con tu usuario de la institución.</p>
 
-            <form @onsubmit="LoginAsync" @onsubmit:preventdefault>
+            <form @onsubmit="LoginAsync" @onsubmit:preventDefault>
                 <label class="login__field">
                     <span class="login__label">Usuario</span>
                     <input class="login__input" @bind="_usuario" autocomplete="username" placeholder="usuario" required />

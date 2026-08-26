@@ -1,0 +1,68 @@
+name: 'Run Tests'
+description: 'Build, install Playwright, and run all tests (unit + E2E). Requires MySQL to be running.'
+
+inputs:
+  mysql-host:
+    description: 'MySQL host'
+    default: 'localhost'
+  mysql-port:
+    description: 'MySQL port'
+    default: '3306'
+  mysql-database:
+    description: 'MySQL database name'
+    default: 'enigma_db'
+  mysql-user:
+    description: 'MySQL user'
+    default: 'enigma'
+  mysql-password:
+    description: 'MySQL password'
+    default: 'enigma_dev_password'
+  jwt-secret:
+    description: 'JWT secret for tests (min 32 bytes)'
+    default: 'ci-jwt-4f9a2b7c8d1e6f3a5b0c9d2e7f4a1b8c'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup .NET SDK + dotnet-ef (incluye cache de NuGet)
+      uses: ./.github/actions/setup-dotnet
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('Tests/Enigma.Test.csproj') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+
+    - name: Install Playwright browsers (npm CLI, version from csproj)
+      run: |
+        VERSION="$(grep -oP '(?<=Include="Microsoft.Playwright" Version=")[^"]+' Tests/Enigma.Test.csproj)"
+        # Idempotente: con cache hit los browsers ya estan instalados;
+        # --with-deps reasegura las dependencias de sistema del runner.
+        npx -y "playwright@$VERSION" install --with-deps chromium
+      shell: bash
+
+    - name: Run all tests
+      run: dotnet test
+      shell: bash
+      env:
+        ASPNETCORE_ENVIRONMENT: Development
+        MYSQL_HOST: ${{ inputs.mysql-host }}
+        MYSQL_PORT: ${{ inputs.mysql-port }}
+        MYSQL_DATABASE: ${{ inputs.mysql-database }}
+        MYSQL_USER: ${{ inputs.mysql-user }}
+        MYSQL_PASSWORD: ${{ inputs.mysql-password }}
+        ENIGMA_JWT_SECRET: ${{ inputs.jwt-secret }}
+
+    - name: Run mutation tests
+      run: bash Tests/mutation.run.sh
+      shell: bash
+      env:
+        ASPNETCORE_ENVIRONMENT: Development
+        MYSQL_HOST: ${{ inputs.mysql-host }}
+        MYSQL_PORT: ${{ inputs.mysql-port }}
+        MYSQL_DATABASE: ${{ inputs.mysql-database }}
+        MYSQL_USER: ${{ inputs.mysql-user }}
+        MYSQL_PASSWORD: ${{ inputs.mysql-password }}
+        ENIGMA_JWT_SECRET: ${{ inputs.jwt-secret }}

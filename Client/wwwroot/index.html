@@ -33,11 +33,23 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="loading-screen">
+            <div class="loading-screen__aurora loading-screen__aurora--a"></div>
+            <div class="loading-screen__aurora loading-screen__aurora--b"></div>
+            <div class="loading-screen__motes">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="loading-screen__center">
+                <svg class="loading-screen__ring" viewBox="0 0 160 160">
+                    <circle class="loading-screen__ring-track" cx="80" cy="80" r="72" />
+                    <circle class="loading-screen__ring-fill" cx="80" cy="80" r="72" />
+                </svg>
+                <img class="loading-screen__logo" src="images/logo_size_invert.svg" alt="" draggable="false" />
+            </div>
+            <div class="loading-screen__brand">Enigma</div>
+            <div class="loading-screen__status"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
@@ -49,6 +61,32 @@
             </svg>
         </span>
     </div>
+    <script>
+        // Bridge: convert --blazor-load-percentage (e.g. "50%") into a stroke-dasharray
+        // length for the loading ring. stroke-dasharray does not accept percentages.
+        (function () {
+            var CIRCUMFERENCE = 2 * Math.PI * 72; // r=72 from the SVG
+            var ring = null;
+            function update() {
+                var el = document.documentElement;
+                var raw = el.style.getPropertyValue('--blazor-load-percentage');
+                if (!raw) return;
+                var pct = parseFloat(raw);
+                if (isNaN(pct)) return;
+                if (!ring) ring = document.querySelector('.loading-screen__ring-fill');
+                if (ring) {
+                    var dash = (CIRCUMFERENCE * pct) / 100;
+                    ring.style.strokeDasharray = dash + ' ' + CIRCUMFERENCE;
+                }
+            }
+            // Observe inline style changes on <html> (Blazor sets via element.style)
+            var observer = new MutationObserver(update);
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        })();
+    </script>
     <script src="js/login-motion.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
