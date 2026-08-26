@@ -189,7 +189,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseSecurityHeaders();
 
-if (app.Environment.IsProduction()) {
+if (app.Environment.IsProduction())
+{
     app.UseHttpsRedirection();
 }
 

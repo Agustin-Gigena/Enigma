@@ -71,26 +71,14 @@ public class JwtOptionsTest
     // --- Entropy validation ---
 
     [Test]
-    public void HasMinimumEntropy_SecretValido_DevuelveTrue()
-    {
-        Assert.That(JwtOptions.HasMinimumEntropy("b4Gx/tR4kDGKglumZlzfhTPTJ/+qVO3fHu4b2jvLgCc="), Is.True);
-    }
+    public void HasMinimumEntropy_SecretValido_DevuelveTrue() => Assert.That(JwtOptions.HasMinimumEntropy("b4Gx/tR4kDGKglumZlzfhTPTJ/+qVO3fHu4b2jvLgCc="), Is.True);
 
     [Test]
-    public void HasMinimumEntropy_TodosLosMismosCaracteres_DevuelveFalse()
-    {
-        Assert.That(JwtOptions.HasMinimumEntropy(new string('a', 40)), Is.False);
-    }
+    public void HasMinimumEntropy_TodosLosMismosCaracteres_DevuelveFalse() => Assert.That(JwtOptions.HasMinimumEntropy(new string('a', 40)), Is.False);
 
     [Test]
-    public void HasMinimumEntropy_PatronDebil_DevuelveFalse()
-    {
-        Assert.That(JwtOptions.HasMinimumEntropy("password_password_password_password"), Is.False);
-    }
+    public void HasMinimumEntropy_PatronDebil_DevuelveFalse() => Assert.That(JwtOptions.HasMinimumEntropy("password_password_password_password"), Is.False);
 
     [Test]
-    public void HasMinimumEntropy_MuyCorto_DevuelveFalse()
-    {
-        Assert.That(JwtOptions.HasMinimumEntropy("corto"), Is.False);
-    }
+    public void HasMinimumEntropy_MuyCorto_DevuelveFalse() => Assert.That(JwtOptions.HasMinimumEntropy("corto"), Is.False);
 }

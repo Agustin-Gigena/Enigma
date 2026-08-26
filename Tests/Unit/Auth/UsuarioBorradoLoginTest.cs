@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Shared.Dtos;
-using Enigma.Test.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
