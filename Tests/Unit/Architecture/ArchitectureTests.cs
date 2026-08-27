@@ -89,6 +89,30 @@ public class ArchitectureTests
             "los services mapean a DTOs:\n" + string.Join("\n", violadores));
     }
 
+    [Test]
+    public void DtosSeArmanSoloEnServices()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string serverRoot = Path.Combine(repoRoot, "Server");
+
+        // Regla arquitectónica: los DTOs se arman (new XxxDto(...)) únicamente en la
+        // capa de services. Controllers devuelven DTOs que reciben de services;
+        // repositories devuelven entidades (ver RepositoriesNoDevuelvenDtos).
+        string servicesRoot = Path.Combine(serverRoot, "Services");
+        Regex patronNewDto = new(@"new\s+\w*Dto\w*\s*\(");
+
+        List<string> violadores = Directory.EnumerateFiles(serverRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.StartsWith(servicesRoot, StringComparison.OrdinalIgnoreCase))
+            .Where(path => patronNewDto.IsMatch(File.ReadAllText(path)))
+            .Select(path => Path.GetRelativePath(repoRoot, path))
+            .OrderBy(path => path)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Archivos fuera de Services que construyen DTOs (new XxxDto(...)). " +
+            "Regla: los DTOs se arman en los services:\n" + string.Join("\n", violadores));
+    }
+
     private static bool IsInSharedFolder(string path)
     {
         string normalized = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
