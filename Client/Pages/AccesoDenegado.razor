@@ -1,0 +1,13 @@
+@page "/acceso-denegado"
+
+<PageTitle>Acceso denegado · Enigma</PageTitle>
+
+<section class="denegado">
+    <h1>No tenés permisos para esta sección</h1>
+    <p>Tu usuario no tiene asignada la sección <code>@_seccion</code> en la institución actual.</p>
+    <a href="/">Volver al inicio</a>
+</section>
+
+@code {
+    private string _seccion = "solicitada";
+}

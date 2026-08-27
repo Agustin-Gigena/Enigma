@@ -35,31 +35,6 @@ public class FlujoSesionTest
             new { Usuario = "admin", Contrasena = "admin123" });
     }
 
-    /// <summary>Firma un JWT de sesión con el secret fijo del fixture (T9 lo moverá
-    /// a helper propio): permite probar permisos sin pasar por el login real.</summary>
-    private static string ForjarTokenSesion(int usuarioId, int? institucionId, IEnumerable<string>? roles)
-    {
-        System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler handler = new();
-        List<System.Security.Claims.Claim> claims =
-        [
-            new("sub", usuarioId.ToString()),
-            new("nameid", usuarioId.ToString()),
-            new("name", "forjado"),
-            new("jti", Guid.NewGuid().ToString()),
-            new("tipo", "sesion"),
-        ];
-        if (institucionId is not null) claims.Add(new("institucion", institucionId.Value.ToString()));
-        if (roles is not null) claims.AddRange(roles.Select(r => new System.Security.Claims.Claim("role", r)));
-
-        Microsoft.IdentityModel.Tokens.SymmetricSecurityKey key =
-            new(System.Text.Encoding.UTF8.GetBytes(E2EWebFixture.JwtSecret));
-        return handler.WriteToken(new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
-            issuer: "Enigma", audience: "Enigma.Client", claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: new Microsoft.IdentityModel.Tokens.SigningCredentials(
-                key, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256)));
-    }
-
     private HttpClient ClienteConToken(string token)
     {
         HttpClientHandler handler = new() { CookieContainer = new() };
@@ -113,7 +88,7 @@ public class FlujoSesionTest
     [Test]
     public async Task EndpointDeSeccion_SinRol_Devuelve403()
     {
-        using HttpClient cliente = ClienteConToken(ForjarTokenSesion(1, 1, roles: []));
+        using HttpClient cliente = ClienteConToken(ForjadorTokens.Sesion(usuarioId: 1, institucionId: 1, roles: []));
         HttpResponseMessage respuesta = await cliente.GetAsync("administracion/usuarios");
         Assert.That((int)respuesta.StatusCode, Is.EqualTo(403));
     }

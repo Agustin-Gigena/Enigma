@@ -133,17 +133,19 @@ public class LoginFlowTest
     [Test]
     public async Task RutaProtegida_YaAutenticado_RedirigeHome()
     {
-        // Login primero
+        // Login + selección → sesión completa (admin tiene 2 instituciones).
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await _page.GetByLabel("Usuario").FillAsync("admin");
         await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
-        await _page.WaitForURLAsync("**/");
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10000 });
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
+        // URL EXACTA: el glob "**/" matchea cualquier URL y hacía pasar el test vacío.
+        string home = $"{E2EWebFixture.ClientUrl}/";
+        await _page.WaitForURLAsync(url => url == home, new() { Timeout = 10000 });
 
-        // Navegar directamente a selección de institución
-        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/seleccion-institucion");
-
-        // Debería redirect a Home (ya está autenticado, route guard redirige)
-        await _page.WaitForURLAsync("**/", new() { Timeout = 10000 });
+        // Ya autenticado con institución: /auth/login debe redirigir al Home.
+        await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
+        await _page.WaitForURLAsync(url => url == home, new() { Timeout = 10000 });
     }
 }

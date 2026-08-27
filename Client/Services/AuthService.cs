@@ -112,9 +112,16 @@ public class AuthService
     /// <summary>Elige la institución en el server (re-emite el JWT de sesión) y actualiza el espejo local.</summary>
     public async Task<bool> SeleccionarInstitucionAsync(InstitucionDto institucion)
     {
-        HttpResponseMessage respuesta = await _http.PostAsJsonAsync("auth/institucion",
-            new SeleccionInstitucionRequest(institucion.Id));
-        if (!respuesta.IsSuccessStatusCode)
+        try
+        {
+            HttpResponseMessage respuesta = await _http.PostAsJsonAsync("auth/institucion",
+                new SeleccionInstitucionRequest(institucion.Id));
+            if (!respuesta.IsSuccessStatusCode)
+            {
+                return false;
+            }
+        }
+        catch (HttpRequestException)
         {
             return false;
         }
