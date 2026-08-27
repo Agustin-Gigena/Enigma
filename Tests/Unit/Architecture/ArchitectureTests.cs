@@ -30,6 +30,45 @@ public class ArchitectureTests
             "Se encontraron archivos DTO fuera de Shared:\n" + string.Join("\n", violatingFiles));
     }
 
+    [Test]
+    public void SoloLosRepositoriesAccedenAlContextoYDbSets()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string serverRoot = Path.Combine(repoRoot, "Server");
+
+        // Regla arquitectónica: los services NUNCA acceden a EnigmaDbContext ni DbSets;
+        // todo acceso a datos vive en Repositories. Zonas permitidas: la capa de datos
+        // (contexto, factoría de diseño, migraciones, repositorios) y el bootstrap del
+        // host (Program.cs registra el DbContext y auto-migra en dev).
+        //
+        // EXENCIÓN TEMPORAL: Services/Seed/SeedingService.cs accede directo hasta que
+        // el plan de menús (Task 8) lo migre a repositories — quitar esta entrada entonces.
+        List<string> permitidos =
+        [
+            Path.Combine(serverRoot, "Data", "Repositories"),
+            Path.Combine(serverRoot, "Data", "EnigmaDbContext.cs"),
+            Path.Combine(serverRoot, "Data", "EnigmaDbContextFactory.cs"),
+            Path.Combine(serverRoot, "Migrations"),
+            Path.Combine(serverRoot, "Program.cs"),
+            Path.Combine(serverRoot, "Services", "Seed", "SeedingService.cs"),
+        ];
+
+        Regex patronAccesoContext = new(@"EnigmaDbContext|DbSet\s*<");
+        List<string> violadores = Directory.EnumerateFiles(serverRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !permitidos.Any(p =>
+                path.StartsWith(p, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(path, p, StringComparison.OrdinalIgnoreCase)))
+            .Where(path => patronAccesoContext.IsMatch(File.ReadAllText(path)))
+            .Select(path => Path.GetRelativePath(repoRoot, path))
+            .OrderBy(path => path)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Archivos fuera de la capa de datos que referencian EnigmaDbContext/DbSet. " +
+            "Regla: solo los Repositories acceden a la BD; los services consumen repositories:\n"
+            + string.Join("\n", violadores));
+    }
+
     private static bool IsInSharedFolder(string path)
     {
         string normalized = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
