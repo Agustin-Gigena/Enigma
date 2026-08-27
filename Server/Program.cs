@@ -25,6 +25,7 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UsuarioRepository>();
+builder.Services.AddScoped<MembresiaRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IMembresiaService, MembresiaService>();
 // Configure OpenAPI
