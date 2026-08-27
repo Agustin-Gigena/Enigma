@@ -35,6 +35,39 @@ public class FlujoSesionTest
             new { Usuario = "admin", Contrasena = "admin123" });
     }
 
+    /// <summary>Firma un JWT de sesión con el secret fijo del fixture (T9 lo moverá
+    /// a helper propio): permite probar permisos sin pasar por el login real.</summary>
+    private static string ForjarTokenSesion(int usuarioId, int? institucionId, IEnumerable<string>? roles)
+    {
+        System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler handler = new();
+        List<System.Security.Claims.Claim> claims =
+        [
+            new("sub", usuarioId.ToString()),
+            new("nameid", usuarioId.ToString()),
+            new("name", "forjado"),
+            new("jti", Guid.NewGuid().ToString()),
+            new("tipo", "sesion"),
+        ];
+        if (institucionId is not null) claims.Add(new("institucion", institucionId.Value.ToString()));
+        if (roles is not null) claims.AddRange(roles.Select(r => new System.Security.Claims.Claim("role", r)));
+
+        Microsoft.IdentityModel.Tokens.SymmetricSecurityKey key =
+            new(System.Text.Encoding.UTF8.GetBytes(E2EWebFixture.JwtSecret));
+        return handler.WriteToken(new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer: "Enigma", audience: "Enigma.Client", claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: new Microsoft.IdentityModel.Tokens.SigningCredentials(
+                key, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256)));
+    }
+
+    private HttpClient ClienteConToken(string token)
+    {
+        HttpClientHandler handler = new() { CookieContainer = new() };
+        HttpClient cliente = new(handler) { BaseAddress = new Uri(E2EWebFixture.ServerUrl) };
+        cliente.DefaultRequestHeaders.Add("Cookie", $"enigma_token={token}");
+        return cliente;
+    }
+
     [Test]
     public async Task Login_EmitePreAuth_MeRechazado()
     {
@@ -75,6 +108,32 @@ public class FlujoSesionTest
         HttpResponseMessage seleccion = await _client.PostAsJsonAsync("auth/institucion",
             new { InstitucionId = 999_999 });
         Assert.That((int)seleccion.StatusCode, Is.EqualTo(403));
+    }
+
+    [Test]
+    public async Task EndpointDeSeccion_SinRol_Devuelve403()
+    {
+        using HttpClient cliente = ClienteConToken(ForjarTokenSesion(1, 1, roles: []));
+        HttpResponseMessage respuesta = await cliente.GetAsync("administracion/usuarios");
+        Assert.That((int)respuesta.StatusCode, Is.EqualTo(403));
+    }
+
+    [Test]
+    public async Task EndpointDeSeccion_ConRolYLoginAdmin_Devuelve200()
+    {
+        await LoginAsync();
+        HttpResponseMessage seleccion = await _client.PostAsJsonAsync("auth/institucion", new { InstitucionId = 1 });
+        Assert.That((int)seleccion.StatusCode, Is.EqualTo(200), "El seed debe dar rol Administrador (con claims de sección) al admin.");
+        HttpResponseMessage respuesta = await _client.GetAsync("administracion/usuarios");
+        Assert.That(respuesta.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task EndpointDeSeccion_TokenPreAuth_Devuelve403()
+    {
+        await LoginAsync();
+        HttpResponseMessage respuesta = await _client.GetAsync("administracion/usuarios");
+        Assert.That((int)respuesta.StatusCode, Is.EqualTo(403), "El pre-auth no llega a endpoints de dominio.");
     }
 
     private sealed record InstitucionRef(int Id, string Nombre, string Tipo);

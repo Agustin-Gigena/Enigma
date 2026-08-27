@@ -2,8 +2,10 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Auth;
+using Enigma.Server.Data.Repositories.Administracion;
 using Enigma.Server.Data.Repositories.Auth;
 using Enigma.Server.Options;
+using Enigma.Server.Services.Administracion;
 using Enigma.Server.Services.Auth;
 using Enigma.Server.Services.Seed;
 using Enigma.Shared.Auth;
@@ -32,8 +34,10 @@ builder.Services.AddControllers(mvc =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<MembresiaRepository>();
+builder.Services.AddScoped<InstitucionRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IMembresiaService, MembresiaService>();
+builder.Services.AddScoped<IInstitucionService, InstitucionService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();

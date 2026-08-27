@@ -53,9 +53,14 @@ public class E2EWebFixture
         KillProcess(_clientProcess);
     }
 
+    /// <summary>Secret JWT fijo para el server E2E: permite a los tests firmar
+    /// (forjar) tokens válidos. Debe pasar la validación de JwtOptions (≥ 32 bytes,
+    /// sin patrones débiles) o el server no arranca.</summary>
+    public const string JwtSecret = "e2e-fijo-para-forjar-tokens-4f8b2c6d9e1a7350";
+
     private static Process StartDotnet(string project, int port)
     {
-        return Process.Start(new ProcessStartInfo
+        ProcessStartInfo info = new()
         {
             FileName = "dotnet",
             Arguments = $"run --project {project} --no-build --urls http://localhost:{port}",
@@ -64,7 +69,9 @@ public class E2EWebFixture
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
-        }) ?? throw new InvalidOperationException($"No se pudo iniciar dotnet run para {project}");
+        };
+        info.Environment["ENIGMA_JWT_SECRET"] = JwtSecret;
+        return Process.Start(info) ?? throw new InvalidOperationException($"No se pudo iniciar dotnet run para {project}");
     }
 
     private static async Task WaitForUrl(string url, TimeSpan timeout)
