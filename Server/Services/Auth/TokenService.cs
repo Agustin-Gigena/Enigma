@@ -16,9 +16,6 @@ public interface ITokenService
 
     /// <summary>Token de sesión (TTL 8 h): institución activa + una claim role por sección visible.</summary>
     (string Token, DateTime Expiracion) GenerarTokenSesion(Usuario usuario, int institucionId, IReadOnlyCollection<string> secciones);
-
-    // Obsoleto tras el cutover del AuthController (Task 6).
-    (string Token, DateTime Expiracion) GenerarAccessToken(Usuario usuario);
 }
 
 public sealed class TokenService : ITokenService
@@ -26,30 +23,6 @@ public sealed class TokenService : ITokenService
     private readonly JwtOptions _jwt;
 
     public TokenService(IOptions<JwtOptions> jwt) => _jwt = jwt.Value;
-
-    public (string Token, DateTime Expiracion) GenerarAccessToken(Usuario usuario)
-    {
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_jwt.Secret));
-        SigningCredentials credenciales = new(key, SecurityAlgorithms.HmacSha256);
-        DateTime expiracion = DateTime.UtcNow.AddHours(8);
-
-        List<Claim> claims = new()
-    {
-      new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-      new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-      new(ClaimTypes.Name, usuario.UserName ?? ""),
-      new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-    };
-
-        JwtSecurityToken token = new(
-            issuer: "Enigma",
-            audience: "Enigma.Client",
-            claims: claims,
-            expires: expiracion,
-            signingCredentials: credenciales);
-
-        return (new JwtSecurityTokenHandler().WriteToken(token), expiracion);
-    }
 
     public (string Token, DateTime Expiracion) GenerarTokenPreAutenticacion(Usuario usuario)
         => Generar(usuario, TimeSpan.FromMinutes(5), claimsExtra: null, institucionId: null, secciones: null);

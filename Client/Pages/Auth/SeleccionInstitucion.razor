@@ -1,9 +1,8 @@
 @page "/auth/seleccion-institucion"
 @layout AuthLayout
-@attribute [Authorize]
 @inject AuthService Auth
+@inject EnigmaAuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
-@using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Elegí tu institución · Enigma</PageTitle>
 
@@ -50,7 +49,6 @@
         }
     </main>
 </div>
-
 @code {
     private List<InstitucionDto> _instituciones = [];
     private bool _cargando = true;
@@ -58,6 +56,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Sin [Authorize]: la página vive en el limbo pre-autenticación (el /auth/me del
+        // provider aún da 403). Si ya hay sesión completa, no tiene sentido volver a elegir.
+        if (await AuthState.GetInstitucionActivaIdAsync() is not null)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
         try
         {
             _instituciones = await Auth.GetInstitucionesAsync();
@@ -78,8 +84,16 @@
 
     private async Task Seleccionar(InstitucionDto institucion)
     {
-        await Auth.SetInstitucionActivaAsync(institucion);
-        Navigation.NavigateTo("/");
+        _error = null;
+        bool ok = await Auth.SeleccionarInstitucionAsync(institucion);
+        if (ok)
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            _error = "No se pudo iniciar la sesión con esa institución. Intentá de nuevo.";
+        }
     }
 
     private async Task CerrarSesion()

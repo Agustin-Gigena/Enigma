@@ -20,7 +20,7 @@
                     @_institucion.Nombre
                 </span>
             }
-            <span class="app__usuario">@_usuario?.NombreUsuario</span>
+            <span class="app__usuario">@_sesion?.Usuario.NombreUsuario</span>
             <button class="app__salir" type="button" @onclick="CerrarSesion">Salir</button>
         </div>
     </header>
@@ -31,12 +31,12 @@
 </div>
 
 @code {
-    private UsuarioDto? _usuario;
+    private SesionDto? _sesion;
     private InstitucionDto? _institucion;
 
     protected override async Task OnInitializedAsync()
     {
-        _usuario = await Auth.GetUsuarioAsync();
+        _sesion = await Auth.GetSesionAsync();
         _institucion = await Auth.GetInstitucionActivaAsync();
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)

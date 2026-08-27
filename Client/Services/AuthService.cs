@@ -102,11 +102,39 @@ public class AuthService
         return [];
     }
 
+    /// <summary>Espejo local de la institución activa (el JWT vive en la cookie HttpOnly).</summary>
     public async Task<InstitucionDto?> GetInstitucionActivaAsync()
     {
         string json = await _js.InvokeAsync<string>("localStorage.getItem", InstitucionActivaKey);
         return string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<InstitucionDto>(json, Json);
     }
 
-    public async Task SetInstitucionActivaAsync(InstitucionDto institucion) => await _js.InvokeVoidAsync("localStorage.setItem", InstitucionActivaKey, JsonSerializer.Serialize(institucion, Json));
+    /// <summary>Elige la institución en el server (re-emite el JWT de sesión) y actualiza el espejo local.</summary>
+    public async Task<bool> SeleccionarInstitucionAsync(InstitucionDto institucion)
+    {
+        HttpResponseMessage respuesta = await _http.PostAsJsonAsync("auth/institucion",
+            new SeleccionInstitucionRequest(institucion.Id));
+        if (!respuesta.IsSuccessStatusCode)
+        {
+            return false;
+        }
+
+        await _js.InvokeVoidAsync("localStorage.setItem", InstitucionActivaKey,
+            JsonSerializer.Serialize(institucion, Json));
+        _authState.NotifyAuthStateChanged();
+        return true;
+    }
+
+    /// <summary>Sesión actual (usuario + institución activa + permisos) desde /auth/me.</summary>
+    public async Task<SesionDto?> GetSesionAsync()
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<SesionDto>("auth/me");
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
 }

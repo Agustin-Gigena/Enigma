@@ -46,10 +46,10 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
             HttpResponseMessage response = await _http.GetAsync("auth/me");
             if (response.IsSuccessStatusCode)
             {
-                UsuarioDto? usuario = await response.Content.ReadFromJsonAsync<UsuarioDto>();
-                if (usuario is not null)
+                SesionDto? sesion = await response.Content.ReadFromJsonAsync<SesionDto>();
+                if (sesion is not null)
                 {
-                    ClaimsPrincipal principal = CreatePrincipal(usuario);
+                    ClaimsPrincipal principal = CreatePrincipal(sesion);
                     _cachedState = new AuthenticationState(principal);
                     _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);
                     return _cachedState;
@@ -62,6 +62,14 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
 
         _cachedState = Anonymous();
         return _cachedState;
+    }
+
+    /// <summary>Id de institución activa según el token (null si aún no eligió).</summary>
+    public async Task<int?> GetInstitucionActivaIdAsync()
+    {
+        AuthenticationState estado = await GetAuthenticationStateAsync();
+        string? valor = estado.User.FindFirst("institucion")?.Value;
+        return int.TryParse(valor, out int id) ? id : null;
     }
 
     public void NotifyAuthStateChanged()
@@ -80,13 +88,18 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
 
     private static AuthenticationState Anonymous() => new(new ClaimsPrincipal(new ClaimsIdentity()));
 
-    private static ClaimsPrincipal CreatePrincipal(UsuarioDto usuario)
+    private static ClaimsPrincipal CreatePrincipal(SesionDto sesion)
     {
         List<Claim> claims =
         [
-            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+            new Claim(ClaimTypes.NameIdentifier, sesion.Usuario.Id.ToString()),
+            new Claim(ClaimTypes.Name, sesion.Usuario.NombreUsuario),
         ];
+        claims.AddRange(sesion.Permisos.Select(p => new Claim("permiso", p)));
+        if (sesion.InstitucionActivaId is int institucion)
+        {
+            claims.Add(new Claim("institucion", institucion.ToString()));
+        }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "cookie"));
     }

@@ -34,9 +34,9 @@ public class LoginFlowTest
     public async Task Login_Admin_RetornaTokenYRedirigeHome()
     {
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
-
-        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin");
-        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
+        // 60 s: es el primer test del suite en cargar el WASM (cold start del dev server).
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin", new() { Timeout = 60000 });
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123", new() { Timeout = 60000 });
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
 
         // Admin tiene 2 instituciones → pasa por la selección antes del Home.
@@ -103,46 +103,31 @@ public class LoginFlowTest
         // Admin tiene 2 instituciones → debería llegar a selección
         await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10000 });
 
-        // Click en la primera institución
-        ILocator tarjetas = _page.GetByRole(AriaRole.Button);
-        await tarjetas.First.ClickAsync();
+        // Click en la primera institución (tarjeta: el primer botón del DOM es "Salir").
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
 
         // Verificar redirect a Home
         await _page.WaitForURLAsync("**/");
     }
 
     [Test]
-    public async Task TokenExpirado_RedirigeLogin()
+    public async Task SesionInvalidada_RedirigeLogin()
     {
-        // Login primero
+        // Login + selección → sesión completa en Home.
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await _page.GetByLabel("Usuario").FillAsync("admin");
         await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
-        await _page.WaitForURLAsync("**/");
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10000 });
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
+        // Esperar el Home renderizado (no solo la URL): garantiza que el POST de
+        // selección terminó antes de borrar la cookie.
+        await _page.GetByText("Bienvenido, admin").WaitForAsync(new() { Timeout = 10000 });
 
-        // Inyectar token expirado en localStorage
-        string tokenExpirado = TokenExpirado();
-        await _page.EvaluateAsync($"localStorage.setItem('enigma_token', '{tokenExpirado}')");
-
-        // Refrescar → auth state lee token expirado → anónimo → redirect a login
+        // Sin la cookie no hay sesión: /auth/me da 401 → provider anónimo → redirect a login.
+        await _page.Context.ClearCookiesAsync();
         await _page.ReloadAsync();
-        await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 10000 });
-    }
-
-    private static string TokenExpirado()
-    {
-        // JWT manual con exp en el pasado (2020-01-01)
-        string header = Base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
-        string payload = Base64UrlEncode("{\"sub\":\"1\",\"nameid\":\"1\",\"unique_name\":\"admin\",\"exp\":1577836800}");
-        string signature = "firma-falsa";
-        return $"{header}.{payload}.{signature}";
-    }
-
-    private static string Base64UrlEncode(string json)
-    {
-        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json))
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 15000 });
     }
 
     [Test]

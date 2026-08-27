@@ -93,8 +93,7 @@ public class LoginTest
         Assert.That(cookieHeader, Does.Contain("httponly"), "La cookie del token debe ser HttpOnly.");
         Assert.That(cookieHeader, Does.Contain("secure"));
         Assert.That(cookieHeader, Does.Contain("samesite=none"));
-        Assert.That(cookieHeader, Does.Contain("path=/"));
-        Assert.That(cookieHeader, Does.Contain("max-age=28800"), "TTL de cookie = 8h (CookieMaxAgeSeconds).");
+        Assert.That(cookieHeader, Does.Contain("max-age=300"), "TTL de cookie pre-auth = 5 min (PreAuthCookieMaxAgeSeconds).");
     }
 
     [Test]
@@ -127,19 +126,31 @@ public class LoginTest
     }
 
     [Test]
-    public async Task Me_ConCookie_RetornaUsuario()
+    public async Task Me_ConCookie_DosFases_RetornaSesionTrasElegirInstitucion()
     {
-        // Login first
+        // Login primero: emite pre-auth, que no alcanza para /auth/me.
         HttpResponseMessage login = await _client.PostAsJsonAsync("/auth/login", new LoginRequest("admin", "admin123"));
         Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.OK));
 
-        // Request /auth/me — cookie is sent automatically
-        HttpResponseMessage me = await _client.GetAsync("/auth/me");
+        HttpResponseMessage preAuth = await _client.GetAsync("/auth/me");
+        Assert.That(preAuth.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden),
+            "El token pre-autenticación no debe acceder a /auth/me.");
 
+        // Elegir la primera institución → token de sesión → /auth/me espeja la sesión.
+        List<InstitucionDto>? instituciones =
+            await (await _client.GetAsync("/auth/instituciones")).Content.ReadFromJsonAsync<List<InstitucionDto>>();
+        Assert.That(instituciones, Is.Not.Empty);
+
+        HttpResponseMessage seleccion = await _client.PostAsJsonAsync(
+            "/auth/institucion", new SeleccionInstitucionRequest(instituciones![0].Id));
+        Assert.That(seleccion.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        HttpResponseMessage me = await _client.GetAsync("/auth/me");
         Assert.That(me.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-        UsuarioDto? usuario = await me.Content.ReadFromJsonAsync<UsuarioDto>();
-        Assert.That(usuario, Is.Not.Null);
-        Assert.That(usuario!.NombreUsuario, Is.EqualTo("admin"));
+        SesionDto? sesion = await me.Content.ReadFromJsonAsync<SesionDto>();
+        Assert.That(sesion, Is.Not.Null);
+        Assert.That(sesion!.Usuario.NombreUsuario, Is.EqualTo("admin"));
+        Assert.That(sesion.InstitucionActivaId, Is.EqualTo(instituciones[0].Id));
     }
 
     [Test]
@@ -197,9 +208,11 @@ public class LoginTest
     {
         TokenService tokenService = new(
             Microsoft.Extensions.Options.Options.Create(new JwtOptions { Secret = EnigmaWebFactory.JwtSecretParaTests }));
-        return tokenService.GenerarAccessToken(new Usuario { Id = 999_999, UserName = "fantasma" }).Token;
+        return tokenService.GenerarTokenSesion(
+            new Usuario { Id = 999_999, UserName = "fantasma" },
+            institucionId: 1,
+            secciones: ["Administracion.Usuarios"]).Token;
     }
-
     /// <summary>
     /// Las instituciones del admin sembradas por el seed de dev. El endpoint debe devolver
     /// exactamente las del usuario — sin duplicados ni instituciones ajenas — sin asumir

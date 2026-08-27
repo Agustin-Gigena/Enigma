@@ -290,7 +290,7 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 | `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete; audit via static `CurrentUserService` |
 | `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Base sync methods + soft-delete support |
 | `Server/Controllers/GenericController.cs` | Base controller | `[ApiController]`, `[Route("[controller]")]` |
-| `Server/Controllers/Auth/AuthController.cs` | Auth endpoints | `POST auth/login`, `GET auth/me`, `GET auth/instituciones` |
+| `Server/Controllers/Auth/AuthController.cs` | Auth endpoints (dos fases) | `POST auth/login` (cookie pre-auth 5 min), `POST auth/institucion` (sesión 8 h), `GET auth/me` → `SesionDto`, `GET auth/instituciones` |
 | `Server/Services/Auth/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
 | `Server/Services/Auth/UsuarioService.cs` | Auth business logic | `IUsuarioService` + `UsuarioService`: login vía Identity (SignInManager/UserManager) + consultas al `UsuarioRepository` |
 | `docker-compose.yml` | MySQL dev DB | Credentials: enigma/enigma_dev_password |

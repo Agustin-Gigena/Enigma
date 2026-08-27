@@ -143,8 +143,15 @@
             List<InstitucionDto> instituciones = resultado.Datos.Instituciones;
             if (instituciones.Count == 1)
             {
-                await Auth.SetInstitucionActivaAsync(instituciones[0]);
-                Navigation.NavigateTo("/");
+                bool ok = await Auth.SeleccionarInstitucionAsync(instituciones[0]);
+                if (ok)
+                {
+                    Navigation.NavigateTo("/");
+                }
+                else
+                {
+                    _error = "No se pudo iniciar la sesión con esa institución. Intentá de nuevo.";
+                }
             }
             else if (instituciones.Count > 1)
             {
