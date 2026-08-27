@@ -69,6 +69,26 @@ public class ArchitectureTests
             + string.Join("\n", violadores));
     }
 
+    [Test]
+    public void RepositoriesNoDevuelvenDtos()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string repositoriesRoot = Path.Combine(repoRoot, "Server", "Data", "Repositories");
+
+        // Regla arquitectónica: los repositories devuelven ENTIDADES, nunca DTOs;
+        // el mapeo entidad→DTO es responsabilidad de los services. El escaneo textual
+        // cubre tanto firmas (Task<List<XxxDto>>) como usings de Enigma.Shared.Dtos.
+        List<string> violadores = Directory.EnumerateFiles(repositoriesRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path => File.ReadAllText(path).Contains("Dto", StringComparison.Ordinal))
+            .Select(path => Path.GetRelativePath(repoRoot, path))
+            .OrderBy(path => path)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Repositories que mencionan DTOs. Regla: los repositories devuelven entidades; " +
+            "los services mapean a DTOs:\n" + string.Join("\n", violadores));
+    }
+
     private static bool IsInSharedFolder(string path)
     {
         string normalized = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
