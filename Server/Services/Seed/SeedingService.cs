@@ -21,7 +21,6 @@ public static class SeedingService
         EnigmaDbContext db = scope.ServiceProvider.GetRequiredService<EnigmaDbContext>();
 
         Usuario admin = await SeedLogin.SeedAsync(userManager, logger);
-        await db.Entry(admin).Collection(u => u.Instituciones).LoadAsync();
 
         await EnsureInstitucionConMembresiaAsync(db, admin, "Universidad Nacional del Plata", TipoInstitucion.Universidad);
         await EnsureInstitucionConMembresiaAsync(db, admin, "Colegio San Martín", TipoInstitucion.Secundaria);
@@ -37,11 +36,16 @@ public static class SeedingService
             institucion = new Institucion { Nombre = nombre, Tipo = tipo };
             institucion.SetCreadoPor(admin);
             db.Instituciones.Add(institucion);
+            await db.SaveChangesAsync(); // materializa el Id: la membresía referencia la FK real.
         }
 
-        if (admin.Instituciones.All(i => i.Nombre != nombre))
+        bool yaMiembro = await db.Membresias.AnyAsync(m =>
+            m.UsuarioId == admin.Id && m.InstitucionId == institucion.Id && !m.BorradoLogico);
+        if (!yaMiembro)
         {
-            admin.Instituciones.Add(institucion);
+            Membresia membresia = new() { UsuarioId = admin.Id, InstitucionId = institucion.Id };
+            membresia.SetCreadoPor(admin);
+            db.Membresias.Add(membresia);
         }
 
         await db.SaveChangesAsync();

@@ -19,5 +19,5 @@ public class Institucion : GenericEntity
     public string Nombre { get; set; } = null!;
     public TipoInstitucion Tipo { get; set; }
 
-    public List<Usuario> Usuarios { get; set; } = [];
+    public virtual List<Membresia> Membresias { get; set; } = [];
 }

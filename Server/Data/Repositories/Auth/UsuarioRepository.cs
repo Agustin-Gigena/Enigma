@@ -11,13 +11,13 @@ public class UsuarioRepository : GenericRepository<Usuario>
     }
 
     /// <summary>
-    /// Instituciones activas (no borradas lógicamente) a las que pertenece el usuario.
+    /// Instituciones activas (membresía e institución no borradas lógicamente) del usuario.
     /// </summary>
     public async Task<List<Institucion>> ObtenerInstitucionesAsync(int usuarioId, CancellationToken ct = default)
     {
-        return await Context.Usuarios
-            .Where(u => u.Id == usuarioId)
-            .SelectMany(u => u.Instituciones)
+        return await Context.Membresias
+            .Where(m => m.UsuarioId == usuarioId && !m.BorradoLogico)
+            .Select(m => m.Institucion)
             .Where(i => !i.BorradoLogico)
             .OrderBy(i => i.Nombre)
             .ToListAsync(ct);

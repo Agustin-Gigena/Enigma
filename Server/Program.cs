@@ -116,10 +116,12 @@ builder.Services.AddDbContext<EnigmaDbContext>(options =>
             errorNumbersToAdd: null
         )
     )
-);
+    // Lazy loading como convención del proyecto: proxies de Castle requieren
+    // navegaciones virtual en las entidades.
+    .UseLazyLoadingProxies());
 
 // ASP.NET Core Identity: usuarios, contraseñas con hash y bloqueo por intentos.
-builder.Services.AddIdentity<Usuario, IdentityRole<int>>(options =>
+builder.Services.AddIdentity<Usuario, Rol>(options =>
     {
         builder.Configuration.GetSection("Identity:Password").Bind(options.Password);
         options.Lockout.MaxFailedAccessAttempts = 5;

@@ -6,11 +6,11 @@ public abstract class GenericEntity
 {
     public int Id { get; set; }
     public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
-    public Usuario CreadoPor { get; set; } = null!;
+    public virtual Usuario CreadoPor { get; set; } = null!;
     public DateTime? ModificadoEn { get; set; } = null;
-    public Usuario? ModificadoPor { get; set; } = null;
+    public virtual Usuario? ModificadoPor { get; set; } = null;
     public DateTime? BorradoEn { get; set; } = null;
-    public Usuario? BorradoPor { get; set; } = null;
+    public virtual Usuario? BorradoPor { get; set; } = null;
     public bool BorradoLogico { get; set; } = false;
 
     public virtual void SetCreadoPor(Usuario? usuario = null)

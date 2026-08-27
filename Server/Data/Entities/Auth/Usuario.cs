@@ -1,4 +1,3 @@
-using Enigma.Server.Data.Entities.Administracion;
 using Microsoft.AspNetCore.Identity;
 
 namespace Enigma.Server.Data.Entities.Auth;
@@ -18,5 +17,5 @@ public class Usuario : IdentityUser<int>
     public DateTime? ModificadoEn { get; set; }
     public DateTime? BorradoEn { get; set; }
     public bool BorradoLogico { get; set; } = false;
-    public List<Institucion> Instituciones { get; set; } = [];
+    public virtual List<Membresia> Membresias { get; set; } = [];
 }
