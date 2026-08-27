@@ -2,6 +2,7 @@ using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Services.Auth;
+using Enigma.Shared.Auth;
 using Enigma.Test.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

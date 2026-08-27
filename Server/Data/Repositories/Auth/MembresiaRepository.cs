@@ -1,5 +1,5 @@
 using Enigma.Server.Data.Entities.Auth;
-using Enigma.Server.Services.Auth;
+using Enigma.Shared.Auth;
 using Enigma.Shared.Dtos;
 using Microsoft.EntityFrameworkCore;
 

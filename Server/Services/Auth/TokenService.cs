@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Options;
+using Enigma.Shared.Auth;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 

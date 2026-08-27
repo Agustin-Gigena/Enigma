@@ -1,4 +1,4 @@
-namespace Enigma.Server.Services.Auth;
+namespace Enigma.Shared.Auth;
 
 /// <summary>Nombres de claims custom de Enigma (JWT y role claims de Identity).</summary>
 public static class EnigmaClaims
