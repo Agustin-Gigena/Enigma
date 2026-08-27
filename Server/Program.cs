@@ -26,6 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IMembresiaService, MembresiaService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();

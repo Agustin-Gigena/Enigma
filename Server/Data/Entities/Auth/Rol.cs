@@ -9,6 +9,10 @@ namespace Enigma.Server.Data.Entities.Auth;
 /// </summary>
 public class Rol : IdentityRole<int>
 {
+    public Rol() { }
+
+    public Rol(string nombre) : base(nombre) { }
+
     public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
     public DateTime? ModificadoEn { get; set; }
     public DateTime? BorradoEn { get; set; }
