@@ -49,4 +49,37 @@ public class TokenServiceTest
         Assert.That(decoded.Claims.First(c => c.Type == ClaimTypes.Name).Value, Is.Empty,
             "UserName null debe serializarse como claim vacío, no romper el token.");
     }
+
+    [Test]
+    public void GenerarTokenPreAutenticacion_TTL5MinYClaimTipo()
+    {
+        TokenService sut = NewSut(new string('k', 40));
+        Usuario usuario = new() { Id = 7, UserName = "admin" };
+
+        (string token, DateTime expiracion) = sut.GenerarTokenPreAutenticacion(usuario);
+
+        Assert.That(expiracion, Is.GreaterThan(DateTime.UtcNow.AddMinutes(4.9)));
+        Assert.That(expiracion, Is.LessThan(DateTime.UtcNow.AddMinutes(5.1)));
+        JwtSecurityToken decoded = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        Assert.That(decoded.Claims.First(c => c.Type == "tipo").Value, Is.EqualTo("pre-autenticacion"));
+        Assert.That(decoded.Claims.Any(c => c.Type == "role"), Is.False, "El pre-auth no lleva roles.");
+    }
+
+    [Test]
+    public void GenerarTokenSesion_TTL8hConInstitucionYRoles()
+    {
+        TokenService sut = NewSut(new string('k', 40));
+        Usuario usuario = new() { Id = 7, UserName = "admin" };
+
+        (string token, DateTime expiracion) = sut.GenerarTokenSesion(
+            usuario, institucionId: 3, secciones: ["Administracion.Usuarios", "Administracion.Instituciones"]);
+
+        Assert.That(expiracion, Is.GreaterThan(DateTime.UtcNow.AddHours(7.9)));
+        JwtSecurityToken decoded = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        Assert.That(decoded.Claims.First(c => c.Type == "tipo").Value, Is.EqualTo("sesion"));
+        Assert.That(decoded.Claims.First(c => c.Type == "institucion").Value, Is.EqualTo("3"));
+        // ClaimTypes.Role se serializa como "role" (outbound claim type map).
+        List<string> roles = decoded.Claims.Where(c => c.Type == "role").Select(c => c.Value).ToList();
+        Assert.That(roles, Is.EquivalentTo(new[] { "Administracion.Usuarios", "Administracion.Instituciones" }));
+    }
 }

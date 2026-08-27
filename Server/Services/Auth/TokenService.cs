@@ -10,8 +10,14 @@ namespace Enigma.Server.Services.Auth;
 
 public interface ITokenService
 {
-    /// <summary>Genera el access JWT (issuer Enigma, audience Enigma.Client, TTL 8 h).</summary>
-    public (string Token, DateTime Expiracion) GenerarAccessToken(Usuario usuario);
+    /// <summary>Token pre-autenticación (TTL 5 min): solo sirve para elegir institución.</summary>
+    (string Token, DateTime Expiracion) GenerarTokenPreAutenticacion(Usuario usuario);
+
+    /// <summary>Token de sesión (TTL 8 h): institución activa + una claim role por sección visible.</summary>
+    (string Token, DateTime Expiracion) GenerarTokenSesion(Usuario usuario, int institucionId, IReadOnlyCollection<string> secciones);
+
+    // Obsoleto tras el cutover del AuthController (Task 6).
+    (string Token, DateTime Expiracion) GenerarAccessToken(Usuario usuario);
 }
 
 public sealed class TokenService : ITokenService
@@ -33,6 +39,53 @@ public sealed class TokenService : ITokenService
       new(ClaimTypes.Name, usuario.UserName ?? ""),
       new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
     };
+
+        JwtSecurityToken token = new(
+            issuer: "Enigma",
+            audience: "Enigma.Client",
+            claims: claims,
+            expires: expiracion,
+            signingCredentials: credenciales);
+
+        return (new JwtSecurityTokenHandler().WriteToken(token), expiracion);
+    }
+
+    public (string Token, DateTime Expiracion) GenerarTokenPreAutenticacion(Usuario usuario)
+        => Generar(usuario, TimeSpan.FromMinutes(5), claimsExtra: null, institucionId: null, secciones: null);
+
+    public (string Token, DateTime Expiracion) GenerarTokenSesion(Usuario usuario, int institucionId, IReadOnlyCollection<string> secciones)
+        => Generar(usuario, TimeSpan.FromHours(8), claimsExtra: null, institucionId, secciones);
+
+    private (string Token, DateTime Expiracion) Generar(
+        Usuario usuario, TimeSpan ttl, IEnumerable<Claim>? claimsExtra, int? institucionId, IReadOnlyCollection<string>? secciones)
+    {
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_jwt.Secret));
+        SigningCredentials credenciales = new(key, SecurityAlgorithms.HmacSha256);
+        DateTime expiracion = DateTime.UtcNow.Add(ttl);
+
+        string tipo = secciones is null ? EnigmaClaims.PreAutenticacion : EnigmaClaims.Sesion;
+        List<Claim> claims =
+        [
+            new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new(ClaimTypes.Name, usuario.UserName ?? ""),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(EnigmaClaims.Tipo, tipo),
+        ];
+        if (institucionId is not null)
+        {
+            claims.Add(new(EnigmaClaims.Institucion, institucionId.Value.ToString()));
+        }
+        if (secciones is not null)
+        {
+            // IdentityModel 8.x no acorta ClaimTypes.Role al serializar; se emite el nombre
+            // corto "role" (convención JWT/OIDC, mapeado a ClaimTypes.Role al validar).
+            claims.AddRange(secciones.Select(s => new Claim("role", s)));
+        }
+        if (claimsExtra is not null)
+        {
+            claims.AddRange(claimsExtra);
+        }
 
         JwtSecurityToken token = new(
             issuer: "Enigma",
