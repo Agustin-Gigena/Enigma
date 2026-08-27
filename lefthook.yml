@@ -3,11 +3,8 @@ pre-commit:
   parallel: true
   jobs:
     - name: validate
-      run: |
-        set -e
-        dotnet restore Enigma.slnx
-        dotnet build Enigma.slnx -c Release \
-          /p:TreatWarningsAsErrors=true
+      run: scripts/validate.sh
+
     - name: yaml-lint
       run: >-
         yamllint -c .yamllint --strict
@@ -20,11 +17,8 @@ pre-commit:
 pre-push:
   jobs:
     - name: validate
-      run: |
-        set -e
-        dotnet restore Enigma.slnx
-        dotnet build Enigma.slnx -c Release \
-          /p:TreatWarningsAsErrors=true
+      run: scripts/validate.sh
+
 
 commit-msg:
   jobs:
