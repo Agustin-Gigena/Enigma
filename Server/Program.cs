@@ -6,7 +6,9 @@ using Enigma.Server.Data.Repositories.Auth;
 using Enigma.Server.Options;
 using Enigma.Server.Services.Auth;
 using Enigma.Server.Services.Seed;
+using Enigma.Shared.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +24,11 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(mvc =>
+{
+    // Regla de namespace: autorización por sección de catálogo (ver SeccionControllerConvention).
+    mvc.Conventions.Add(new SeccionControllerConvention());
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<MembresiaRepository>();
@@ -180,7 +186,16 @@ builder.Services.AddAuthentication(options =>
             }
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // DefaultPolicy: [Authorize] exige sesión completa (el pre-auth de 5 min no alcanza).
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .RequireClaim(EnigmaClaims.Tipo, EnigmaClaims.Sesion)
+        .Build();
+    // Para los endpoints de elección de institución (aceptan pre-auth y sesión).
+    options.AddPolicy("PreAutenticacion", policy => policy.RequireAuthenticatedUser());
+});
 
 WebApplication app = builder.Build();
 
