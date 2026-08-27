@@ -1,5 +1,9 @@
+using System.Security.Claims;
+
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Auth;
+using Enigma.Shared.Auth;
+using Enigma.Shared.Modules;
 using Enigma.Server.Services.Seed;
 using Enigma.Test.Auth;
 using Microsoft.AspNetCore.Identity;
@@ -56,6 +60,37 @@ public class SeedingServiceTest
         await db.Entry(admin).Collection(u => u.Membresias).LoadAsync();
         Assert.That(admin.Membresias.Select(m => m.InstitucionId).Distinct().Count(), Is.EqualTo(2), "Las 2 instituciones deben quedar vinculadas al admin.");
         Assert.That(admin.Membresias.Count, Is.EqualTo(2), "Sin membresías duplicadas.");
+    }
+
+    [Test]
+    public async Task SeedAsync_CreaRolAdminConTodasLasSeccionesDelCatalogo()
+    {
+        await SeedingService.SeedAsync(_factory.Services, NullLogger.Instance);
+
+        RoleManager<Rol> roleManager =
+            _factory.Services.CreateScope().ServiceProvider.GetRequiredService<RoleManager<Rol>>();
+        Rol? admin = await roleManager.FindByNameAsync("Admin");
+        Assert.That(admin, Is.Not.Null, "Debe existir el rol Admin.");
+        IList<Claim> claims = await roleManager.GetClaimsAsync(admin!);
+        List<string> secciones = [.. claims.Where(c => c.Type == EnigmaClaims.Seccion).Select(c => c.Value)];
+        CatalogoModulos.Secciones.Select(s => s.Clave).ToList().ForEach(esperada =>
+            Assert.That(secciones, Does.Contain(esperada), $"El Admin debe incluir {esperada}."));
+    }
+
+    [Test]
+    public async Task SeedAsync_MembresiasDelAdminTienenRolAdmin()
+    {
+        await SeedingService.SeedAsync(_factory.Services, NullLogger.Instance);
+        EnigmaDbContext db = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<EnigmaDbContext>();
+
+        Usuario adminUser = (await db.Users.FirstAsync(u => u.UserName == "admin"))!;
+        List<Membresia> membresias = await db.Membresias
+            .Include(m => m.Roles)
+            .Where(m => m.UsuarioId == adminUser.Id)
+            .ToListAsync();
+        Assert.That(membresias, Is.Not.Empty);
+        Assert.That(membresias, Has.All.Matches<Membresia>(m =>
+            m.Roles.Any(r => r.Rol.Name == "Admin")));
     }
 }
 

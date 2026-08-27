@@ -40,9 +40,6 @@ public class ArchitectureTests
         // todo acceso a datos vive en Repositories. Zonas permitidas: la capa de datos
         // (contexto, factoría de diseño, migraciones, repositorios) y el bootstrap del
         // host (Program.cs registra el DbContext y auto-migra en dev).
-        //
-        // EXENCIÓN TEMPORAL: Services/Seed/SeedingService.cs accede directo hasta que
-        // el plan de menús (Task 8) lo migre a repositories — quitar esta entrada entonces.
         List<string> permitidos =
         [
             Path.Combine(serverRoot, "Data", "Repositories"),
@@ -50,7 +47,6 @@ public class ArchitectureTests
             Path.Combine(serverRoot, "Data", "EnigmaDbContextFactory.cs"),
             Path.Combine(serverRoot, "Migrations"),
             Path.Combine(serverRoot, "Program.cs"),
-            Path.Combine(serverRoot, "Services", "Seed", "SeedingService.cs"),
         ];
 
         Regex patronAccesoContext = new(@"EnigmaDbContext|DbSet\s*<");

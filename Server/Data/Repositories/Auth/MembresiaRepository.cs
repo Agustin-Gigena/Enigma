@@ -19,6 +19,31 @@ public class MembresiaRepository : GenericRepository<Membresia>
         Context.Membresias.FirstOrDefaultAsync(m =>
             m.UsuarioId == usuarioId && m.InstitucionId == institucionId && !m.BorradoLogico, ct);
 
+    /// <summary>Membresías activas del usuario con sus roles cargados (entidades: el service mapea a DTOs).</summary>
+    public Task<List<Membresia>> ObtenerPorUsuarioAsync(int usuarioId, CancellationToken ct = default) =>
+        Context.Membresias
+            .Include(m => m.Roles)
+            .Where(m => m.UsuarioId == usuarioId && !m.BorradoLogico)
+            .ToListAsync(ct);
+
+    public async Task AgregarAsync(Membresia membresia, CancellationToken ct = default)
+    {
+        Context.Membresias.Add(membresia);
+        await Context.SaveChangesAsync(ct); // materializa el Id para el vínculo con el rol.
+    }
+
+    /// <summary>Vincula el rol a la membresía si todavía no lo tiene. Idempotente.</summary>
+    public async Task AsignarRolAsync(int membresiaId, int rolId, CancellationToken ct = default)
+    {
+        bool yaAsignado = await Context.Set<MembresiaRol>()
+            .AnyAsync(mr => mr.MembresiaId == membresiaId && mr.RolId == rolId, ct);
+        if (!yaAsignado)
+        {
+            Context.Set<MembresiaRol>().Add(new() { MembresiaId = membresiaId, RolId = rolId });
+            await Context.SaveChangesAsync(ct);
+        }
+    }
+
     public async Task<List<string>> ObtenerSeccionesAsync(int usuarioId, int institucionId, CancellationToken ct = default)
     {
         return await Context.Set<MembresiaRol>()
