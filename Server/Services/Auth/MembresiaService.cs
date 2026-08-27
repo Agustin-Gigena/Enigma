@@ -36,8 +36,15 @@ public class MembresiaService : IMembresiaService
     public Task<List<Rol>> ObtenerRolesAsync(CancellationToken ct = default) =>
         _membresias.ObtenerRolesAsync(ct);
 
-    public Task<List<UsuarioInstitucionDto>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default) =>
-        _membresias.ObtenerUsuariosDeInstitucionAsync(institucionId, ct);
+    /// <summary>Mapea entidades a DTOs (regla: los repositories devuelven entidades);
+    /// las navegaciones Usuario/Roles se cargan por lazy loading.</summary>
+    public async Task<List<UsuarioInstitucionDto>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default)
+    {
+        List<Membresia> membresias = await _membresias.ObtenerUsuariosDeInstitucionAsync(institucionId, ct);
+        return membresias.Select(m => new UsuarioInstitucionDto(
+            new UsuarioDto(m.UsuarioId, m.Usuario.UserName ?? "", m.Usuario.Email),
+            m.Roles.Select(r => r.Rol.Name!).ToList())).ToList();
+    }
 
     public Task<bool> ActualizarRolesAsync(int institucionId, int usuarioId, List<string> nombresRoles, CancellationToken ct = default) =>
         _membresias.ActualizarRolesAsync(institucionId, usuarioId, nombresRoles, ct);

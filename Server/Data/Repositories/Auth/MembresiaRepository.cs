@@ -1,6 +1,5 @@
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Shared.Auth;
-using Enigma.Shared.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace Enigma.Server.Data.Repositories.Auth;
@@ -38,14 +37,13 @@ public class MembresiaRepository : GenericRepository<Membresia>
     public async Task<List<Rol>> ObtenerRolesAsync(CancellationToken ct = default) =>
         await Context.Roles.Where(r => !r.BorradoLogico).OrderBy(r => r.Name).ToListAsync(ct);
 
-    public async Task<List<UsuarioInstitucionDto>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default)
+    /// <summary>Membresías activas de una institución (usuario no borrado incluido),
+    /// ordenadas por nombre de usuario. Devuelve entidades: el service mapea a DTOs.</summary>
+    public async Task<List<Membresia>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default)
     {
         return await Context.Membresias
             .Where(m => m.InstitucionId == institucionId && !m.BorradoLogico && !m.Usuario.BorradoLogico)
             .OrderBy(m => m.Usuario.UserName)
-            .Select(m => new UsuarioInstitucionDto(
-                new UsuarioDto(m.UsuarioId, m.Usuario.UserName ?? "", m.Usuario.Email),
-                m.Roles.Select(r => r.Rol.Name!).ToList()))
             .ToListAsync(ct);
     }
 
