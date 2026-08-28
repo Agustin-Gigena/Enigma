@@ -1,10 +1,9 @@
 using System.Security.Claims;
-
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Auth;
+using Enigma.Server.Services.Seed;
 using Enigma.Shared.Auth;
 using Enigma.Shared.Modules;
-using Enigma.Server.Services.Seed;
 using Enigma.Test.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

@@ -6,7 +6,7 @@ namespace Enigma.Server.Services.Administracion;
 
 public interface IInstitucionService
 {
-    Task<List<InstitucionDto>> ObtenerActivasAsync(CancellationToken ct = default);
+    public Task<List<InstitucionDto>> ObtenerActivasAsync(CancellationToken ct = default);
 }
 
 /// <summary>Catálogo de instituciones activas (sin BD: delega en el repository y

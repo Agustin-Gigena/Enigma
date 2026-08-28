@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Options;
 using Enigma.Server.Services.Auth;

@@ -1,6 +1,5 @@
 using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

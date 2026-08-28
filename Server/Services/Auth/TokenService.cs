@@ -12,10 +12,10 @@ namespace Enigma.Server.Services.Auth;
 public interface ITokenService
 {
     /// <summary>Token pre-autenticación (TTL 5 min): solo sirve para elegir institución.</summary>
-    (string Token, DateTime Expiracion) GenerarTokenPreAutenticacion(Usuario usuario);
+    public (string Token, DateTime Expiracion) GenerarTokenPreAutenticacion(Usuario usuario);
 
     /// <summary>Token de sesión (TTL 8 h): institución activa + una claim role por sección visible.</summary>
-    (string Token, DateTime Expiracion) GenerarTokenSesion(Usuario usuario, int institucionId, IReadOnlyCollection<string> secciones);
+    public (string Token, DateTime Expiracion) GenerarTokenSesion(Usuario usuario, int institucionId, IReadOnlyCollection<string> secciones);
 }
 
 public sealed class TokenService : ITokenService

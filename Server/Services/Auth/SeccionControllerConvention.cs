@@ -1,7 +1,6 @@
 using Enigma.Shared.Auth;
 using Enigma.Shared.Modules;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
 

@@ -6,11 +6,11 @@ namespace Enigma.Server.Services.Auth;
 
 public interface IMembresiaService
 {
-    Task<Membresia?> ObtenerMembresiaAsync(int usuarioId, int institucionId, CancellationToken ct = default);
-    Task<List<string>> ObtenerSeccionesAsync(int usuarioId, int institucionId, CancellationToken ct = default);
-    Task<List<Rol>> ObtenerRolesAsync(CancellationToken ct = default);
-    Task<List<UsuarioInstitucionDto>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default);
-    Task<bool> ActualizarRolesAsync(int institucionId, int usuarioId, List<string> nombresRoles, CancellationToken ct = default);
+    public Task<Membresia?> ObtenerMembresiaAsync(int usuarioId, int institucionId, CancellationToken ct = default);
+    public Task<List<string>> ObtenerSeccionesAsync(int usuarioId, int institucionId, CancellationToken ct = default);
+    public Task<List<Rol>> ObtenerRolesAsync(CancellationToken ct = default);
+    public Task<List<UsuarioInstitucionDto>> ObtenerUsuariosDeInstitucionAsync(int institucionId, CancellationToken ct = default);
+    public Task<bool> ActualizarRolesAsync(int institucionId, int usuarioId, List<string> nombresRoles, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -22,10 +22,7 @@ public class MembresiaService : IMembresiaService
 {
     private readonly MembresiaRepository _membresias;
 
-    public MembresiaService(MembresiaRepository membresias)
-    {
-        _membresias = membresias;
-    }
+    public MembresiaService(MembresiaRepository membresias) => _membresias = membresias;
 
     public Task<Membresia?> ObtenerMembresiaAsync(int usuarioId, int institucionId, CancellationToken ct = default) =>
         _membresias.ObtenerMembresiaAsync(usuarioId, institucionId, ct);

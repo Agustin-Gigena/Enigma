@@ -3,7 +3,6 @@ using Enigma.Server.Data.Entities.Administracion;
 using Enigma.Server.Data.Entities.Auth;
 using Enigma.Server.Services.Auth;
 using Enigma.Shared.Auth;
-using Enigma.Test.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +27,7 @@ public class MembresiaServiceTest
 
         EnigmaDbContext db = Db();
         Usuario admin = (await db.Users.FirstAsync(u => u.UserName == "admin"))!;
-        var (usuario, institucion, rol) = await SembrarAsync(db, admin);
+        (Usuario? usuario, Institucion? institucion, Rol? rol) = await SembrarAsync(db, admin);
         await db.SaveChangesAsync();
     }
 
