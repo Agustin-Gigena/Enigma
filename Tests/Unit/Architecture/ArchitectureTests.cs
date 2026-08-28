@@ -85,6 +85,27 @@ public class ArchitectureTests
             "los services mapean a DTOs:\n" + string.Join("\n", violadores));
     }
 
+    [Test]
+    public void PaginasDeSeccion_EstanRegistradasEnCatalogo()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string paginas = Path.Combine(repoRoot, "Client", "Pages");
+        List<string> rutas = Directory.EnumerateFiles(paginas, "*.razor", SearchOption.AllDirectories)
+            .SelectMany(RutasDePagina)
+            .ToList();
+
+        List<string> registradas = [.. Enigma.Shared.Modules.CatalogoModulos.Secciones.Select(s => s.Ruta)];
+
+        List<string> sinRegistrar = rutas.Where(r => !registradas.Contains(r)).ToList();
+        Assert.That(sinRegistrar, Is.Empty,
+            "Hay páginas con @page bajo /administracion (u otro módulo) fuera del catálogo:\n"
+            + string.Join("\n", sinRegistrar));
+
+        List<string> sinPagina = registradas.Where(r => !rutas.Contains(r)).ToList();
+        Assert.That(sinPagina, Is.Empty,
+            "Secciones del catálogo sin página razor:\n" + string.Join("\n", sinPagina));
+    }
+
     private static bool IsInSharedFolder(string path)
     {
         string normalized = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
@@ -107,6 +128,23 @@ public class ArchitectureTests
         // ni usos de tipos DTO (InstitucionDto, etc.), que es lo esperado fuera de Shared,
         // ni el propio texto de este test.
         return Regex.IsMatch(content, @"(?:class|record|struct)\s+\w*Dto\w*", RegexOptions.IgnoreCase);
+    }
+
+    private static IEnumerable<string> RutasDePagina(string archivo)
+    {
+        // Solo rutas @page de primer nivel de módulo (ej. /administracion/...):
+        // las páginas de auth/raíz no son secciones.
+        foreach (string linea in File.ReadAllLines(archivo))
+        {
+            if (linea.TrimStart().StartsWith("@page", StringComparison.Ordinal))
+            {
+                string ruta = linea.Split('"')[1];
+                if (ruta.Count(c => c == '/') >= 2 && !ruta.StartsWith("/auth/", StringComparison.Ordinal))
+                {
+                    yield return ruta;
+                }
+            }
+        }
     }
 
     private static string FindRepositoryRoot(string startDirectory)

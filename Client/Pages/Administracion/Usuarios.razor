@@ -1,0 +1,139 @@
+@page "/administracion/usuarios"
+@inject HttpClient Http
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<PageTitle>Usuarios · Enigma</PageTitle>
+
+<h1>Usuarios de la institución</h1>
+
+@if (_cargando)
+{
+    <p>Cargando…</p>
+}
+else if (_error is not null)
+{
+    <p role="alert">@_error</p>
+}
+else
+{
+    <table class="tabla-admin">
+        <thead><tr><th>Usuario</th><th>Roles</th><th></th></tr></thead>
+        <tbody>
+        @foreach (UsuarioInstitucionDto usuario in _usuarios)
+        {
+            <tr>
+                <td>@usuario.Usuario.NombreUsuario</td>
+                <td>
+                    @foreach (RolDto rol in _roles)
+                    {
+                        <label>
+                            <input type="checkbox" name="@rol.Nombre"
+                                   checked="@(usuario.Roles.Contains(rol.Nombre))"
+                                   @onchange="e => Toggle(usuario, rol.Nombre, e.Value)" />
+                            @rol.Nombre
+                        </label>
+                    }
+                </td>
+                <td>
+                    <button type="button" @onclick="() => Guardar(usuario)" disabled="@_guardando">Guardar</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    @if (_mensaje is not null)
+    {
+        <p role="status">@_mensaje</p>
+    }
+}
+
+@code {
+    private List<UsuarioInstitucionDto> _usuarios = [];
+    private List<RolDto> _roles = [];
+    private readonly Dictionary<int, HashSet<string>> _cambios = [];
+    private bool _cargando = true;
+    private bool _guardando;
+    private string? _error;
+    private string? _mensaje;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _usuarios = await Http.GetFromJsonAsync<List<UsuarioInstitucionDto>>("administracion/usuarios") ?? [];
+            _roles = await Http.GetFromJsonAsync<List<RolDto>>("administracion/usuarios/roles") ?? [];
+        }
+        catch (Exception)
+        {
+            _error = "No se pudieron cargar los usuarios.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void Toggle(UsuarioInstitucionDto usuario, string rol, object? valor)
+    {
+        HashSet<string> set = _cambios.TryGetValue(usuario.Usuario.Id, out HashSet<string>? existente)
+            ? existente
+            : _cambios[usuario.Usuario.Id] = [.. usuario.Roles];
+        if (valor is true)
+        {
+            set.Add(rol);
+        }
+        else
+        {
+            set.Remove(rol);
+        }
+    }
+
+    private async Task Guardar(UsuarioInstitucionDto usuario)
+    {
+        _guardando = true;
+        _mensaje = null;
+        try
+        {
+            List<string> roles = _cambios.TryGetValue(usuario.Usuario.Id, out HashSet<string>? set)
+                ? [.. set]
+                : usuario.Roles;
+            HttpResponseMessage respuesta = await Http.PutAsJsonAsync(
+                $"administracion/usuarios/{usuario.Usuario.Id}/roles", new ActualizarRolesRequest(roles));
+            if (!respuesta.IsSuccessStatusCode)
+            {
+                _error = "No se pudieron guardar los roles.";
+                return;
+            }
+
+            _mensaje = "Roles actualizados.";
+            bool soloAdiciones = usuario.Roles.All(roles.Contains);
+            usuario.Roles.Clear();
+            usuario.Roles.AddRange(roles);
+
+            // Si el editado es el usuario actual y solo ganó accesos (no perdió ninguno),
+            // refrescar su propia sesión (token + menú con permisos nuevos). Si perdió
+            // accesos NO se re-emite: el token vigente mantiene los permisos hasta la
+            // próxima validación — re-emitir al vacío lo dejaría sin sección en el acto,
+            // sin siquiera poder restaurar su propio error desde esta página.
+            SesionDto? sesion = await Auth.GetSesionAsync();
+            if (sesion is not null && sesion.Usuario.Id == usuario.Usuario.Id && soloAdiciones)
+            {
+                InstitucionDto? activa = await Auth.GetInstitucionActivaAsync();
+                if (activa is not null)
+                {
+                    // Re-emitir la sesión dispara el cascade de AuthenticationState, que
+                    // desmonta y recrea esta página (el mensaje inline se pierde con la
+                    // instancia). Recarga determinista: el shell recalcula menú/permisos
+                    // y la página vuelve con el estado persistido.
+                    await Auth.SeleccionarInstitucionAsync(activa);
+                    Navigation.NavigateTo("/administracion/usuarios", forceLoad: true);
+                }
+            }
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+}

@@ -1,0 +1,49 @@
+@page "/administracion/instituciones"
+@inject HttpClient Http
+
+<PageTitle>Instituciones · Enigma</PageTitle>
+
+<h1>Instituciones</h1>
+
+@if (_cargando)
+{
+    <p>Cargando…</p>
+}
+else if (_error is not null)
+{
+    <p role="alert">@_error</p>
+}
+else
+{
+    <table class="tabla-admin">
+        <thead><tr><th>Nombre</th><th>Tipo</th></tr></thead>
+        <tbody>
+        @foreach (InstitucionDto institucion in _instituciones)
+        {
+            <tr><td>@institucion.Nombre</td><td>@institucion.Tipo</td></tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<InstitucionDto> _instituciones = [];
+    private bool _cargando = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _instituciones = await Http.GetFromJsonAsync<List<InstitucionDto>>("administracion/instituciones") ?? [];
+        }
+        catch (Exception)
+        {
+            _error = "No se pudieron cargar las instituciones.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+}
