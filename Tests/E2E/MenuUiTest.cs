@@ -74,11 +74,17 @@ public class MenuUiTest
     public async Task SelectorInstitucion_CambiaYRecalcula()
     {
         await EntrarComoAdminAsync();
+        // La primera tarjeta (orden alfabético) es "Colegio San Martín" → queda
+        // activa tras EntrarComoAdminAsync y el dropdown la excluye (spec). El
+        // cambio real es hacia la otra institución del seed.
         await _page.Locator(".app-institucion-menu summary").ClickAsync();
-        await _page.GetByRole(AriaRole.Button, new() { Name = "Colegio San Martín" }).ClickAsync();
-        await _page.WaitForURLAsync("**/", new() { Timeout = 10_000 });
-        await _page.Locator(".app-institucion-menu summary").WaitForAsync(new() { Timeout = 10_000 });
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Universidad Nacional del Plata" }).ClickAsync();
+        // La URL no cambia (forceLoad a "/"): esperar el contenido recalculado.
+        // 45 s: cubre el arranque completo del WASM tras la recarga forzada.
+        await _page.Locator(".app-institucion-menu summary")
+            .Filter(new() { HasTextString = "Universidad Nacional del Plata" })
+            .WaitForAsync(new() { Timeout = 45_000 });
         Assert.That(await _page.Locator(".app-institucion-menu summary").InnerTextAsync(),
-            Does.Contain("Colegio San Martín"));
+            Does.Contain("Universidad Nacional del Plata"));
     }
 }

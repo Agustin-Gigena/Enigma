@@ -110,11 +110,6 @@
     color: var(--enigma-accent);
 }
 
-.app__acciones ::deep .app-institucion-menu button[aria-current] {
-    color: var(--enigma-accent);
-    font-weight: 700;
-}
-
 .app__main {
     flex: 1;
     display: flex;

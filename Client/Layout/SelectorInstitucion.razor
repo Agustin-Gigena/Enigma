@@ -13,12 +13,10 @@
             @Activa?.Nombre
         </summary>
         <ul>
-            @foreach (InstitucionDto institucion in _instituciones)
+            @foreach (InstitucionDto institucion in _instituciones.Where(i => Activa is null || i.Id != Activa.Id))
             {
                 <li>
-                    <button type="button"
-                            aria-current="@(EsActiva(institucion) ? "true" : null)"
-                            @onclick="() => Cambiar(institucion)">
+                    <button type="button" @onclick="() => Cambiar(institucion)">
                         @institucion.Nombre
                     </button>
                 </li>
@@ -33,9 +31,6 @@
 
     protected override async Task OnInitializedAsync() =>
         _instituciones = await Auth.GetInstitucionesAsync();
-
-    private bool EsActiva(InstitucionDto institucion) =>
-        Activa is not null && Activa.Id == institucion.Id;
 
     private async Task Cambiar(InstitucionDto institucion)
     {
