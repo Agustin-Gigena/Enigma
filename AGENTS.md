@@ -295,6 +295,7 @@ public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = defaul
 | `Server/Services/Auth/UsuarioService.cs` | Auth business logic | `IUsuarioService` + `UsuarioService`: login vía Identity (SignInManager/UserManager) + consultas al `UsuarioRepository` |
 | `docker-compose.yml` | MySQL dev DB | Credentials: enigma/enigma_dev_password |
 | `Server/appsettings.json` | Configuration | Environment variable interpolation |
+| `Shared/Modules/CatalogoModulos.cs` | Catálogo de módulos/secciones | Fuente del menú y la autorización; clave `Modulo.Seccion` = permiso = ruta |
 
 ---
 
@@ -429,3 +430,18 @@ dotnet test --collect:"XPlat Code Coverage"
 9. **Bootstrap Version**: Bootstrap 5 (full dist) shipped in `wwwroot/lib/bootstrap/`. Comment in `index.html` notes deprecation plan for v6.
 
 10. **No Production Container**: No Dockerfile for app containers — only MySQL dev database via docker-compose.yml. Production deployment undefined.
+
+11. **Sistema de menús/permisos**: el menú y la autorización por sección nacen de
+    `Shared/Modules/CatalogoModulos.cs` (clave `Modulo.Seccion` = permiso = ruta). Reglas:
+    (a) toda página de sección se registra en el catálogo — el guard de `App.razor`
+    (`OnNavigateAsync`) la protege sola; (b) todo controller bajo
+    `Enigma.Server.Controllers.<Dominio>` se autoriza solo por la convención
+    (`SeccionControllerConvention`, fail-fast si falta en el catálogo); (c) los permisos
+    viajan como claims del JWT en dos fases (pre-auth 5 min → sesión 8 h al elegir
+    institución, `POST /auth/institucion`); (d) roles por institución: membresía
+    (`Membresia`) + `MembresiaRol`, secciones como role claims de Identity sobre `Rol`.
+    (e) **lazy loading permanente**: navegaciones `virtual` +
+    `UseLazyLoadingProxies()` (`Microsoft.EntityFrameworkCore.Proxies`) — toda entidad
+    nueva del Server lo respeta; acceder directo a navegaciones antes que `Include`.
+    (f) **services sin BD**: ningún service toca `EnigmaDbContext`/`DbSet<>`; todo
+    acceso a datos en `Data/Repositories/<Dominio>/` (lo vigila un architecture test).
