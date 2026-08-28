@@ -1,0 +1,69 @@
+/* Barra de módulos: dropdowns por módulo. El flex deja el sobrante real para
+   que EnigmaMenu mida overflow contra el espacio disponible (no contra el ancho
+   del contenido). En móvil se acota para forzar el desborde a "Más +". */
+.app-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1 1 0%;
+}
+
+.app-nav details {
+    position: relative;
+}
+
+.app-nav summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--enigma-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--enigma-ink-2);
+    white-space: nowrap;
+}
+
+.app-nav summary::-webkit-details-marker {
+    display: none;
+}
+
+.app-nav summary:hover {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+.app-nav ul {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    z-index: 30;
+    min-width: 12rem;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.app-nav li a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--enigma-radius);
+    color: var(--enigma-ink);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.app-nav li a:hover {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+}
+
+@media (max-width: 640px) {
+    .app-nav {
+        max-width: 7rem;
+    }
+}

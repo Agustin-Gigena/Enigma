@@ -81,10 +81,14 @@ public class LoginFlowTest
         await _page.GetByLabel("Usuario").FillAsync("admin");
         await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
-        await _page.WaitForURLAsync("**/");
+        // Admin tiene 2 instituciones: hay que elegir una para llegar al Home
+        // (sin esto el flujo queda en la selección y el menú de cuenta no existe).
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10_000 });
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
 
-        // Click "Salir"
-        await _page.GetByRole(AriaRole.Button, new() { Name = "Salir" }).ClickAsync();
+        // Menú de cuenta → "Cerrar sesión" (T10 reemplazó el botón "Salir" de la barra).
+        await _page.Locator(".app-cuenta summary").ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión" }).ClickAsync();
         await _page.WaitForURLAsync("**/auth/login");
 
         string? token = await _page.EvaluateAsync<string>("localStorage.getItem('enigma_token')");
@@ -125,9 +129,11 @@ public class LoginFlowTest
         await _page.GetByText("Bienvenido, admin").WaitForAsync(new() { Timeout = 10000 });
 
         // Sin la cookie no hay sesión: /auth/me da 401 → provider anónimo → redirect a login.
+        // 45 s: tras el reload el redirect sale del guard tras un arranque completo
+        // del WASM (5-30 s en el devcontainer con build Debug + dotnet run).
         await _page.Context.ClearCookiesAsync();
         await _page.ReloadAsync();
-        await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 15000 });
+        await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 45_000 });
     }
 
     [Test]
@@ -145,7 +151,8 @@ public class LoginFlowTest
         await _page.WaitForURLAsync(url => url == home, new() { Timeout = 10000 });
 
         // Ya autenticado con institución: /auth/login debe redirigir al Home.
+        // 45 s: el redirect fuerza recarga completa → nuevo arranque del WASM.
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
-        await _page.WaitForURLAsync(url => url == home, new() { Timeout = 10000 });
+        await _page.WaitForURLAsync(url => url == home, new() { Timeout = 45_000 });
     }
 }

@@ -1,0 +1,29 @@
+@* Icono de cuenta extensible (hoy: Cerrar sesión). *@
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<div class="app-cuenta">
+    <span class="app__usuario">@NombreUsuario</span>
+    <details class="app-cuenta__menu">
+        <summary aria-label="Menú de cuenta">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        </summary>
+        <ul>
+            <li><button type="button" @onclick="CerrarSesion">Cerrar sesión</button></li>
+            @* Ítems futuros: perfil, preferencias… *@
+        </ul>
+    </details>
+</div>
+
+@code {
+    [Parameter] public string? NombreUsuario { get; set; }
+
+    private async Task CerrarSesion()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/auth/login");
+    }
+}

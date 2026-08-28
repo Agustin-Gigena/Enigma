@@ -24,17 +24,16 @@
     gap: 1rem;
 }
 
-.app__institucion {
-    display: inline-flex;
+/* Menú de cuenta e institución: dropdowns renderizados por componentes hijos,
+   por eso ::deep (atraviesa el aislamiento CSS de Blazor). Mismo patrón
+   visual que NavMenu (summary + ul absolutamente posicionado). */
+.app__acciones ::deep .app-cuenta {
+    display: flex;
     align-items: center;
-    gap: 0.45rem;
-    color: var(--enigma-ink-2);
-    font-size: 0.9rem;
-    font-weight: 600;
-    white-space: nowrap;
+    gap: 0.6rem;
 }
 
-.app__usuario {
+.app__acciones ::deep .app__usuario {
     color: var(--enigma-ink);
     font-size: 0.9rem;
     font-weight: 600;
@@ -43,28 +42,77 @@
     white-space: nowrap;
 }
 
-.app__salir {
-    font: inherit;
+.app__acciones ::deep .app-cuenta__menu,
+.app__acciones ::deep .app-institucion-menu details {
+    position: relative;
+}
+
+.app__acciones ::deep .app-cuenta summary,
+.app__acciones ::deep .app-institucion-menu summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--enigma-radius);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--enigma-ink-2);
-    background: transparent;
-    border: 1px solid var(--enigma-border);
-    border-radius: var(--enigma-radius);
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: color 180ms var(--enigma-ease), border-color 180ms var(--enigma-ease), background 180ms var(--enigma-ease);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
-.app__salir:hover {
+.app__acciones ::deep .app-cuenta summary::-webkit-details-marker,
+.app__acciones ::deep .app-institucion-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.app__acciones ::deep .app-cuenta summary:hover,
+.app__acciones ::deep .app-institucion-menu summary:hover {
     color: var(--enigma-accent);
-    border-color: var(--enigma-accent);
     background: var(--enigma-accent-soft);
 }
 
-.app__salir:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 2px;
+.app__acciones ::deep .app-cuenta__menu ul,
+.app__acciones ::deep .app-institucion-menu ul {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 30;
+    min-width: 12rem;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.app__acciones ::deep .app-cuenta button,
+.app__acciones ::deep .app-institucion-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--enigma-ink);
+    background: transparent;
+    border: none;
+    border-radius: var(--enigma-radius);
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+}
+
+.app__acciones ::deep .app-cuenta button:hover,
+.app__acciones ::deep .app-institucion-menu button:hover {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+}
+
+.app__acciones ::deep .app-institucion-menu button[aria-current] {
+    color: var(--enigma-accent);
+    font-weight: 700;
 }
 
 .app__main {
@@ -78,11 +126,11 @@
         padding: 0.6rem 1rem;
     }
 
-    .app__institucion {
+    .app__acciones ::deep .app-institucion-menu {
         display: none;
     }
 
-    .app__usuario {
+    .app__acciones ::deep .app__usuario {
         padding-left: 0.75rem;
     }
 }

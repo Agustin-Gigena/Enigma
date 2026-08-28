@@ -1,0 +1,47 @@
+@* Cambio de institución activa: re-emite la sesión y recarga (la recarga
+   completa re-valida sesión y permisos contra el guard, patrón de T9). *@
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<div class="app-institucion-menu">
+    <details>
+        <summary title="Cambiar institución">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 21V8l9-5 9 5v13" />
+                <path d="M9 21v-6h6v6" />
+            </svg>
+            @Activa?.Nombre
+        </summary>
+        <ul>
+            @foreach (InstitucionDto institucion in _instituciones)
+            {
+                <li>
+                    <button type="button"
+                            aria-current="@(EsActiva(institucion) ? "true" : null)"
+                            @onclick="() => Cambiar(institucion)">
+                        @institucion.Nombre
+                    </button>
+                </li>
+            }
+        </ul>
+    </details>
+</div>
+
+@code {
+    [Parameter] public InstitucionDto? Activa { get; set; }
+    private List<InstitucionDto> _instituciones = [];
+
+    protected override async Task OnInitializedAsync() =>
+        _instituciones = await Auth.GetInstitucionesAsync();
+
+    private bool EsActiva(InstitucionDto institucion) =>
+        Activa is not null && Activa.Id == institucion.Id;
+
+    private async Task Cambiar(InstitucionDto institucion)
+    {
+        if (await Auth.SeleccionarInstitucionAsync(institucion))
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+}

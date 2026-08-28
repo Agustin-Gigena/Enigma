@@ -73,7 +73,10 @@ public class GuardRutasTest
             // Invalidar cache del provider para que re-valide contra /auth/me.
             await page.ReloadAsync();
             await page.GotoAsync($"{E2EWebFixture.ClientUrl}/administracion/instituciones");
-            await page.WaitForURLAsync("**/acceso-denegado", new() { Timeout = 10_000 });
+            // El redirect sale de OnNavigateAsync tras el arranque completo del WASM,
+            // que en el devcontainer tarda entre ~5 y ~30 s (build Debug + dotnet run):
+            // el presupuesto corto hacía el test flaky (falló también en HEAD sin T10).
+            await page.WaitForURLAsync("**/acceso-denegado", new() { Timeout = 45_000 });
             Assert.That(page.Url, Does.Contain("acceso-denegado"));
         }
         finally

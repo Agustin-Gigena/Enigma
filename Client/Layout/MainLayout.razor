@@ -1,6 +1,5 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
-@inject NavigationManager Navigation
 @inject IJSRuntime JS
 <div class="app">
     <header class="app__bar">
@@ -9,19 +8,14 @@
             <span class="enigma-brand__name">Enigma</span>
         </a>
 
+        <NavMenu />
+
         <div class="app__acciones">
             @if (_institucion is not null)
             {
-                <span class="app__institucion" title="@_institucion.Tipo">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 21V8l9-5 9 5v13" />
-                        <path d="M9 21v-6h6v6" />
-                    </svg>
-                    @_institucion.Nombre
-                </span>
+                <SelectorInstitucion Activa="_institucion" />
             }
-            <span class="app__usuario">@_sesion?.Usuario.NombreUsuario</span>
-            <button class="app__salir" type="button" @onclick="CerrarSesion">Salir</button>
+            <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario" />
         </div>
     </header>
 
@@ -45,12 +39,6 @@
         {
             await JS.InvokeVoidAsync("EnigmaMotion.init");
         }
-    }
-
-    private async Task CerrarSesion()
-    {
-        await Auth.LogoutAsync();
-        Navigation.NavigateTo("/auth/login");
     }
 
 }

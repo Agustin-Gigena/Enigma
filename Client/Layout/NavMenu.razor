@@ -1,0 +1,51 @@
+@* Barra de módulos: dropdowns nativos <details> por módulo + overflow "Más +". *@
+@inject AuthenticationStateProvider AuthState
+@using Enigma.Shared.Modules
+
+<nav class="app-nav" id="app-nav">
+    @foreach (ModuloDef modulo in _modulosVisibles)
+    {
+        <details class="app-nav__modulo" data-modulo="@modulo.Clave">
+            <summary>@modulo.Etiqueta</summary>
+            <ul>
+                @foreach (SeccionDef seccion in SeccionesDe(modulo))
+                {
+                    <li data-modulo="@modulo.Clave"><a href="@seccion.Ruta">@seccion.Etiqueta</a></li>
+                }
+            </ul>
+        </details>
+    }
+    <details class="app-nav__modulo app-nav__mas" hidden>
+        <summary aria-label="Más opciones">Más +</summary>
+        <ul></ul>
+    </details>
+</nav>
+
+@code {
+    private List<ModuloDef> _modulosVisibles = [];
+    private HashSet<string> _permisos = [];
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState estado = await AuthState.GetAuthenticationStateAsync();
+        _permisos = [.. estado.User.FindAll("permiso").Select(c => c.Value)];
+        _modulosVisibles = [.. CatalogoModulos.Modulos
+            .Where(m => CatalogoModulos.Secciones.Any(s => s.ModuloClave == m.Clave && _permisos.Contains(s.Clave)))
+            .OrderBy(m => m.Orden)];
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("EnigmaMenu.init", "app-nav");
+        }
+    }
+
+    private IEnumerable<SeccionDef> SeccionesDe(ModuloDef modulo) =>
+        CatalogoModulos.Secciones
+            .Where(s => s.ModuloClave == modulo.Clave && _permisos.Contains(s.Clave))
+            .OrderBy(s => s.Orden);
+}
