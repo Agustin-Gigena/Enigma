@@ -1,8 +1,82 @@
-// Overflow "Más +": cuando un módulo no entra en el ancho disponible, sus
-// secciones (<li>) se vuelcan al menú "Más +". ResizeObserver recalcula al
-// cambiar el ancho; MutationObserver, al mutar el DOM (re-render de Blazor).
+// EnigmaMenu: comportamiento de los dropdowns de la barra (details[data-menu])
+// + overflow "Más +" del navegador de módulos.
+//
+// - Apertura/cierre animados (180ms, var(--enigma-ease) via CSS keyframes).
+// - Cierre al hacer click en cualquier ítem (link/botón) del menú.
+// - Cierre por click fuera, por Escape, y apertura exclusiva (acordeón).
+// - Delegación en document: sobrevive los re-renders de Blazor sin re-bindear.
 window.EnigmaMenu = {
+    _globalListo: false,
+
     init: (id) => {
+        // Comportamiento global de dropdowns: una sola vez.
+        if (!window.EnigmaMenu._globalListo) {
+            window.EnigmaMenu._globalListo = true;
+            document.addEventListener("click", (e) => {
+                const summary = e.target.closest("details[data-menu] > summary");
+                if (summary) {
+                    e.preventDefault();
+                    const details = summary.parentElement;
+                    if (details.open) {
+                        window.EnigmaMenu._cerrar(details);
+                    } else {
+                        for (const abierto of document.querySelectorAll("details[data-menu][open]")) {
+                            window.EnigmaMenu._cerrar(abierto, { sinAnimacion: true });
+                        }
+                        details.open = true; // la animación de apertura la pone el CSS
+                    }
+                    return;
+                }
+
+                const item = e.target.closest("details[data-menu] a, details[data-menu] button");
+                if (item) {
+                    // El click navega/actúa; el menú que lo contiene se cierra.
+                    window.EnigmaMenu._cerrar(item.closest("details[data-menu]"), { sinAnimacion: true });
+                    return;
+                }
+
+                // Click fuera de cualquier menú: cerrar todos.
+                if (!e.target.closest("details[data-menu]")) {
+                    for (const abierto of document.querySelectorAll("details[data-menu][open]")) {
+                        window.EnigmaMenu._cerrar(abierto, { sinAnimacion: true });
+                    }
+                }
+            });
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key !== "Escape") return;
+                for (const abierto of document.querySelectorAll("details[data-menu][open]")) {
+                    window.EnigmaMenu._cerrar(abierto, { sinAnimacion: true });
+                    abierto.querySelector("summary")?.focus();
+                }
+            });
+        }
+
+        if (id) window.EnigmaMenu._initOverflow(id);
+    },
+
+    // Cierre animado: la lista juega la animación inversa y luego se retira open.
+    _cerrar: (details, { sinAnimacion = false } = {}) => {
+        if (!details || !details.open) return;
+        const lista = details.querySelector("ul");
+        if (sinAnimacion || !lista || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            details.open = false;
+            lista?.classList.remove("menu__lista--cerrando");
+            return;
+        }
+        lista.classList.add("menu__lista--cerrando");
+        const retirar = () => {
+            details.open = false;
+            lista.classList.remove("menu__lista--cerrando");
+        };
+        lista.addEventListener("animationend", retirar, { once: true });
+        setTimeout(retirar, 220); // fallback si la animación no corre
+    },
+
+    // Overflow "Más +": cuando un módulo no entra en el ancho disponible, sus
+    // secciones (<li>) se vuelcan al menú "Más +". ResizeObserver recalcula al
+    // cambiar el ancho; MutationObserver, al mutar el DOM (re-render de Blazor).
+    _initOverflow: (id) => {
         const nav = document.getElementById(id);
         if (!nav || nav.dataset.menuInit) return;
         nav.dataset.menuInit = "1";
@@ -30,12 +104,12 @@ window.EnigmaMenu = {
             mas.hidden = masList.children.length === 0;
         };
 
-        new ResizeObserver(recalcular).observe(nav);
-        // Sin el disconnect, recalcular observaría sus propios moves de <li>
-        // (childList) y entraría en un ciclo infinito de mutación → observer.
-        const mo = new MutationObserver(() => {
-            mo.disconnect();
+        const ro = new ResizeObserver(recalcular);
+        ro.observe(nav);
+        const mo = new MutationObserver((mutaciones, obs) => {
+            obs.disconnect();
             recalcular();
+            ro.observe(nav);
             mo.observe(nav, { childList: true, subtree: true });
         });
         mo.observe(nav, { childList: true, subtree: true });

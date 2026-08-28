@@ -372,7 +372,298 @@ code {
     text-align: start;
 }
 
-/* Tablas de las páginas de Administración (instituciones, usuarios). */
-.tabla-admin { width: 100%; max-width: 60rem; border-collapse: collapse; }
-.tabla-admin th, .tabla-admin td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--enigma-border); }
-.tabla-admin th { color: var(--enigma-ink-2); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+/* ─── Sistema de dropdowns de la barra (EnigmaMenu) ───────────────────────
+   Vocabulario compartido por NavMenu, MenuCuenta y SelectorInstitucion:
+   mismo trigger, misma lista, mismo motion (180ms, curva propia). El
+   comportamiento vive en js/enigma-menu.js (data-menu). */
+details[data-menu] {
+    position: relative;
+}
+
+details[data-menu] > summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--enigma-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--enigma-ink-2);
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease),
+                border-color 180ms var(--enigma-ease);
+}
+
+details[data-menu] > summary::-webkit-details-marker {
+    display: none;
+}
+
+details[data-menu] > summary:hover {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+details[data-menu][open] > summary {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+    border-color: var(--enigma-border);
+}
+
+details[data-menu] > summary:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+.menu__chevron {
+    color: var(--enigma-ink-3);
+    transition: transform 180ms var(--enigma-ease), color 180ms var(--enigma-ease);
+}
+
+details[data-menu][open] > summary .menu__chevron,
+details[data-menu] > summary:hover .menu__chevron {
+    color: var(--enigma-accent);
+}
+
+details[data-menu][open] > summary .menu__chevron {
+    transform: rotate(180deg);
+}
+
+.menu__lista {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    left: 0;
+    z-index: 40;
+    min-width: 13rem;
+    margin: 0;
+    padding: 0.4rem;
+    list-style: none;
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    box-shadow: var(--enigma-shadow);
+    animation: menu-abrir 180ms var(--enigma-ease) both;
+}
+
+.menu__lista--cerrando {
+    animation: menu-cerrar 150ms var(--enigma-ease) both;
+    pointer-events: none;
+}
+
+details[data-menu] .menu__lista--derecha,
+details[data-menu]:has(.menu__lista--derecha) .menu__lista {
+    left: auto;
+    right: 0;
+}
+
+.menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 0;
+    border-radius: calc(var(--enigma-radius) - 3px);
+    background: transparent;
+    color: var(--enigma-ink);
+    text-decoration: none;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 180ms var(--enigma-ease), color 180ms var(--enigma-ease);
+}
+
+.menu__item:hover {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+}
+
+.menu__item:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: -2px;
+}
+
+.menu__item--activa {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+    font-weight: 650;
+}
+
+.menu__separador {
+    height: 1px;
+    margin: 0.4rem 0.3rem;
+    background: var(--enigma-border);
+    border: 0;
+}
+
+@keyframes menu-abrir {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.985);
+        filter: blur(2px);
+    }
+}
+
+@keyframes menu-cerrar {
+    to {
+        opacity: 0;
+        transform: translateY(-4px);
+        filter: blur(1px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu__lista,
+    .menu__lista--cerrando,
+    .menu__chevron {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* ─── Páginas de módulo (Administración) ────────────────────────────────── */
+.pagina {
+    width: min(100% - 2 * clamp(1.25rem, 4vw, 2.5rem), 64rem);
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 2.5rem) 0 3rem;
+}
+
+.pagina__titulo {
+    margin: 0 0 0.35rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--enigma-ink);
+}
+
+.pagina__lead {
+    margin: 0 0 1.75rem;
+    color: var(--enigma-ink-2);
+    font-size: 0.95rem;
+}
+
+.pagina__superficie {
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    box-shadow: var(--enigma-shadow);
+    overflow-x: auto;
+}
+
+.tabla-admin {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.tabla-admin th,
+.tabla-admin td {
+    text-align: left;
+    padding: 0.7rem 1rem;
+}
+
+.tabla-admin thead th {
+    color: var(--enigma-ink-3);
+    font-size: 0.72rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    border-bottom: 1px solid var(--enigma-border);
+    white-space: nowrap;
+}
+
+.tabla-admin tbody tr {
+    transition: background-color 180ms var(--enigma-ease);
+}
+
+.tabla-admin tbody tr:hover {
+    background: var(--enigma-accent-soft);
+}
+
+.tabla-admin tbody td {
+    border-bottom: 1px solid var(--enigma-border);
+    color: var(--enigma-ink);
+}
+
+.tabla-admin tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.tabla-admin input[type="checkbox"] {
+    accent-color: var(--enigma-accent);
+    width: 1rem;
+    height: 1rem;
+}
+
+.tabla-admin .rol-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-right: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: var(--enigma-ink-2);
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.tabla-admin .rol-check:hover {
+    color: var(--enigma-ink);
+}
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--enigma-radius);
+    border: 1px solid var(--enigma-border);
+    background: transparent;
+    color: var(--enigma-ink-2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 180ms var(--enigma-ease), border-color 180ms var(--enigma-ease),
+                background-color 180ms var(--enigma-ease);
+}
+
+.boton:hover {
+    color: var(--enigma-accent);
+    border-color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+.boton:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+.boton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.estado {
+    margin-top: 1rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--enigma-radius);
+    font-size: 0.9rem;
+    width: fit-content;
+}
+
+.estado--exito {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+    border: 1px solid var(--enigma-border);
+}
+
+.estado--error {
+    background: var(--enigma-error-soft);
+    color: var(--enigma-error);
+    border: 1px solid color-mix(in srgb, var(--enigma-error) 35%, transparent);
+}

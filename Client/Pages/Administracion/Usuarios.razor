@@ -5,48 +5,55 @@
 
 <PageTitle>Usuarios · Enigma</PageTitle>
 
-<h1>Usuarios de la institución</h1>
+<section class="pagina">
+    <h1 class="pagina__titulo">Usuarios</h1>
+    <p class="pagina__lead">Miembros de la institución activa y sus roles.</p>
 
-@if (_cargando)
-{
-    <p>Cargando…</p>
-}
-else if (_error is not null)
-{
-    <p role="alert">@_error</p>
-}
-else
-{
-    <table class="tabla-admin">
-        <thead><tr><th>Usuario</th><th>Roles</th><th></th></tr></thead>
-        <tbody>
-        @foreach (UsuarioInstitucionDto usuario in _usuarios)
-        {
-            <tr>
-                <td>@usuario.Usuario.NombreUsuario</td>
-                <td>
-                    @foreach (RolDto rol in _roles)
-                    {
-                        <label>
-                            <input type="checkbox" name="@rol.Nombre"
-                                   checked="@(usuario.Roles.Contains(rol.Nombre))"
-                                   @onchange="e => Toggle(usuario, rol.Nombre, e.Value)" />
-                            @rol.Nombre
-                        </label>
-                    }
-                </td>
-                <td>
-                    <button type="button" @onclick="() => Guardar(usuario)" disabled="@_guardando">Guardar</button>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    @if (_mensaje is not null)
+    @if (_cargando)
     {
-        <p role="status">@_mensaje</p>
+        <p class="estado estado--exito" role="status">Cargando usuarios…</p>
     }
-}
+    else if (_error is not null)
+    {
+        <p class="estado estado--error" role="alert">@_error</p>
+    }
+    else
+    {
+        <div class="pagina__superficie">
+            <table class="tabla-admin">
+                <thead>
+                    <tr><th>Usuario</th><th>Roles</th><th></th></tr>
+                </thead>
+                <tbody>
+                @foreach (UsuarioInstitucionDto usuario in _usuarios)
+                {
+                    <tr>
+                        <td>@usuario.Usuario.NombreUsuario</td>
+                        <td>
+                            @foreach (RolDto rol in _roles)
+                            {
+                                <label class="rol-check">
+                                    <input type="checkbox" name="@rol.Nombre"
+                                           checked="@(usuario.Roles.Contains(rol.Nombre))"
+                                           @onchange="e => Toggle(usuario, rol.Nombre, e.Value)" />
+                                    @rol.Nombre
+                                </label>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" class="boton" @onclick="() => Guardar(usuario)" disabled="@_guardando">Guardar</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (_mensaje is not null)
+        {
+            <p class="estado estado--exito" role="status">@_mensaje</p>
+        }
+    }
+</section>
 
 @code {
     private List<UsuarioInstitucionDto> _usuarios = [];

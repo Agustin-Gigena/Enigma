@@ -1,19 +1,23 @@
-@* Icono de cuenta extensible (hoy: Cerrar sesión). *@
+@* Icono de cuenta extensible (hoy: Cerrar sesión). Dropdown estándar del
+   sistema: data-menu + .menu__lista + .menu__item (app.css + EnigmaMenu). *@
 @inject AuthService Auth
 @inject NavigationManager Navigation
 
 <div class="app-cuenta">
-    <span class="app__usuario">@NombreUsuario</span>
-    <details class="app-cuenta__menu">
+    <span class="app-cuenta__nombre">@NombreUsuario</span>
+    <details class="app-cuenta__menu" data-menu>
         <summary aria-label="Menú de cuenta">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="app-cuenta__icono" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
             </svg>
+            <svg class="menu__chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+            </svg>
         </summary>
-        <ul>
-            <li><button type="button" @onclick="CerrarSesion">Cerrar sesión</button></li>
-            @* Ítems futuros: perfil, preferencias… *@
+        <ul class="menu__lista menu__lista--derecha">
+            <li><button type="button" class="menu__item" @onclick="CerrarSesion">Cerrar sesión</button></li>
+            @* Ítems futuros: perfil, preferencias… (separador: <li><hr class="menu__separador" /></li>) *@
         </ul>
     </details>
 </div>

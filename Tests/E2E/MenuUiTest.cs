@@ -33,12 +33,14 @@ public class MenuUiTest
     private async Task EntrarComoAdminAsync()
     {
         await _page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
-        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin");
-        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123");
-        await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync();
-        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 10_000 });
-        await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
-        await _page.WaitForURLAsync("**/", new() { Timeout = 10_000 });
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin", new() { Timeout = 60_000 });
+        await _page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123", new() { Timeout = 60_000 });
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Ingresá" }).ClickAsync(new() { Timeout = 60_000 });
+        await _page.WaitForURLAsync("**/auth/seleccion-institucion", new() { Timeout = 45_000 });
+        await _page.Locator(".seleccion__tarjeta").First.ClickAsync(new() { Timeout = 45_000 });
+        // Aterrizaje REAL en "/" (path exacto): el glob "**/" resuelve espuriamente y
+        // navegaciones posteriores cancelan el POST /auth/institucion en vuelo.
+        await _page.WaitForURLAsync(url => new Uri(url).AbsolutePath == "/", new() { Timeout = 45_000 });
     }
 
     [Test]

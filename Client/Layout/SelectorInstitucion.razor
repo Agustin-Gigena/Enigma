@@ -4,19 +4,22 @@
 @inject NavigationManager Navigation
 
 <div class="app-institucion-menu">
-    <details>
+    <details data-menu>
         <summary title="Cambiar institución">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 21V8l9-5 9 5v13" />
                 <path d="M9 21v-6h6v6" />
             </svg>
-            @Activa?.Nombre
+            <span class="app-institucion-menu__nombre">@Activa?.Nombre</span>
+            <svg class="menu__chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+            </svg>
         </summary>
-        <ul>
+        <ul class="menu__lista menu__lista--derecha">
             @foreach (InstitucionDto institucion in _instituciones.Where(i => Activa is null || i.Id != Activa.Id))
             {
                 <li>
-                    <button type="button" @onclick="() => Cambiar(institucion)">
+                    <button type="button" class="menu__item" @onclick="() => Cambiar(institucion)">
                         @institucion.Nombre
                     </button>
                 </li>

@@ -3,28 +3,38 @@
 
 <PageTitle>Instituciones · Enigma</PageTitle>
 
-<h1>Instituciones</h1>
+<section class="pagina">
+    <h1 class="pagina__titulo">Instituciones</h1>
+    <p class="pagina__lead">Instituciones activas de este despliegue.</p>
 
-@if (_cargando)
-{
-    <p>Cargando…</p>
-}
-else if (_error is not null)
-{
-    <p role="alert">@_error</p>
-}
-else
-{
-    <table class="tabla-admin">
-        <thead><tr><th>Nombre</th><th>Tipo</th></tr></thead>
-        <tbody>
-        @foreach (InstitucionDto institucion in _instituciones)
-        {
-            <tr><td>@institucion.Nombre</td><td>@institucion.Tipo</td></tr>
-        }
-        </tbody>
-    </table>
-}
+    @if (_cargando)
+    {
+        <p class="estado estado--exito" role="status">Cargando instituciones…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="estado estado--error" role="alert">@_error</p>
+    }
+    else
+    {
+        <div class="pagina__superficie">
+            <table class="tabla-admin">
+                <thead>
+                    <tr><th>Nombre</th><th>Tipo</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (InstitucionDto institucion in _instituciones)
+                    {
+                        <tr>
+                            <td>@institucion.Nombre</td>
+                            <td>@institucion.Tipo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
 
 @code {
     private List<InstitucionDto> _instituciones = [];

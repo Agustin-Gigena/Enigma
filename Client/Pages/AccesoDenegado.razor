@@ -2,12 +2,54 @@
 
 <PageTitle>Acceso denegado · Enigma</PageTitle>
 
-<section class="denegado">
-    <h1>No tenés permisos para esta sección</h1>
-    <p>Tu usuario no tiene asignada la sección <code>@_seccion</code> en la institución actual.</p>
-    <a href="/">Volver al inicio</a>
+<section class="pagina denegado">
+    <div class="denegado__tarjeta">
+        <span class="denegado__glifo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M5.6 5.6l12.8 12.8" />
+            </svg>
+        </span>
+        <h1 class="pagina__titulo">No tenés permisos para esta sección</h1>
+        <p class="pagina__lead">Tu usuario no tiene asignada esta sección en la institución actual. Si creés que es un error, contactá al administrador de tu institución.</p>
+        <a class="boton" href="/">Volver al inicio</a>
+    </div>
 </section>
 
-@code {
-    private string _seccion = "solicitada";
-}
+<style>
+    .denegado {
+        display: flex;
+        justify-content: center;
+        padding-top: clamp(3rem, 10vh, 6rem);
+    }
+
+    .denegado__tarjeta {
+        max-width: 26rem;
+        text-align: center;
+        background: var(--enigma-surface);
+        border: 1px solid var(--enigma-border);
+        border-radius: var(--enigma-radius);
+        box-shadow: var(--enigma-shadow);
+        padding: 2.25rem 2rem;
+    }
+
+    .denegado__glifo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        margin-bottom: 1.1rem;
+        color: var(--enigma-accent);
+        background: var(--enigma-accent-soft);
+    }
+
+    .denegado__tarjeta .pagina__titulo {
+        font-size: 1.3rem;
+    }
+
+    .denegado__tarjeta .pagina__lead {
+        margin-bottom: 1.5rem;
+    }
+</style>

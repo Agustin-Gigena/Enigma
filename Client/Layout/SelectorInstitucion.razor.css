@@ -1,0 +1,19 @@
+/* Selector de institución: trigger textual con glifo y chevron. El
+   vocabulario de dropdown es global (app.css .menu__*). */
+.app-institucion-menu__nombre {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+    .app-institucion-menu__nombre {
+        max-width: 9rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-institucion-menu__nombre {
+        display: none;
+    }
+}

@@ -1,23 +1,39 @@
-@* Barra de módulos: dropdowns nativos <details> por módulo + overflow "Más +". *@
+@* Barra de módulos: dropdowns por módulo + overflow "Más +".
+   Comportamiento (apertura/cierre/click-afuera/Escape) lo maneja EnigmaMenu
+   vía data-menu; el estado activo lo resuelve NavLink. *@
 @inject AuthenticationStateProvider AuthState
 @using Enigma.Shared.Modules
 
 <nav class="app-nav" id="app-nav">
     @foreach (ModuloDef modulo in _modulosVisibles)
     {
-        <details class="app-nav__modulo" data-modulo="@modulo.Clave">
-            <summary>@modulo.Etiqueta</summary>
-            <ul>
+        <details class="app-nav__modulo" data-menu data-modulo="@modulo.Clave">
+            <summary>
+                <span>@modulo.Etiqueta</span>
+                <svg class="menu__chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            </summary>
+            <ul class="menu__lista">
                 @foreach (SeccionDef seccion in SeccionesDe(modulo))
                 {
-                    <li data-modulo="@modulo.Clave"><a href="@seccion.Ruta">@seccion.Etiqueta</a></li>
+                    <li data-modulo="@modulo.Clave">
+                        <NavLink class="menu__item" href="@seccion.Ruta" ActiveClass="menu__item--activa">
+                            @seccion.Etiqueta
+                        </NavLink>
+                    </li>
                 }
             </ul>
         </details>
     }
-    <details class="app-nav__modulo app-nav__mas" hidden>
-        <summary aria-label="Más opciones">Más +</summary>
-        <ul></ul>
+    <details class="app-nav__modulo app-nav__mas" data-menu hidden>
+        <summary aria-label="Más opciones">
+            <span>Más +</span>
+            <svg class="menu__chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+            </svg>
+        </summary>
+        <ul class="menu__lista"></ul>
     </details>
 </nav>
 

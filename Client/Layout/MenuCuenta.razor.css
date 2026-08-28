@@ -1,0 +1,51 @@
+/* Menú de cuenta: nombre + botón de icono redondo. El vocabulario de
+   dropdown (trigger/lista/animaciones) es global (app.css .menu__*). */
+.app-cuenta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.app-cuenta__nombre {
+    color: var(--enigma-ink);
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.app-cuenta__menu > summary {
+    padding: 0;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--enigma-ink-2);
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+}
+
+.app-cuenta__menu > summary:hover,
+.app-cuenta__menu[open] > summary {
+    color: var(--enigma-accent);
+    border-color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+/* En el trigger redondo el chevron sobra: el giro del icono ya comunica estado. */
+.app-cuenta__menu > summary .menu__chevron {
+    display: none;
+}
+
+.app-cuenta__icono {
+    transition: transform 180ms var(--enigma-ease);
+}
+
+.app-cuenta__menu[open] > summary .app-cuenta__icono {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 640px) {
+    .app-cuenta__nombre {
+        display: none;
+    }
+}
