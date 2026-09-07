@@ -1,5 +1,6 @@
 @page "/administracion/instituciones"
 @inject HttpClient Http
+@inject CancelacionNavegacion Nav
 
 <PageTitle>Instituciones · Enigma</PageTitle>
 
@@ -41,19 +42,12 @@
     private bool _cargando = true;
     private string? _error;
 
+    // Cancelación/red: HttpSeguro devuelve null (sin lanzar) — el componente
+    // desmontado ya no renderiza; el montado traduce null a error de carga.
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            _instituciones = await Http.GetFromJsonAsync<List<InstitucionDto>>("administracion/instituciones") ?? [];
-        }
-        catch (Exception)
-        {
-            _error = "No se pudieron cargar las instituciones.";
-        }
-        finally
-        {
-            _cargando = false;
-        }
+        _instituciones = await Http.GetSeguroAsync<List<InstitucionDto>>("administracion/instituciones", Nav.Token) ?? [];
+        _error = _instituciones.Count == 0 ? "No se pudieron cargar las instituciones." : null;
+        _cargando = false;
     }
 }

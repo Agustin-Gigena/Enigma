@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Web
 <div class="app">
     <header class="app__bar">
         <a class="enigma-brand" href="/">
@@ -20,7 +22,23 @@
     </header>
 
     <main class="app__main">
-        @Body
+        @* Red general de errores: cualquier excepción no manejada de las páginas
+           muestra el mensaje amable en lugar de romper el shell. @key por URI:
+           cada navegación arranca con el boundary limpio. *@
+        <ErrorBoundary @key="Navigation.Uri">
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent Context="error">
+                <section class="pagina">
+                    <div class="estado estado--error" role="alert">
+                        <p style="margin:0 0 0.4rem"><strong>Algo se rompió inesperadamente.</strong></p>
+                        <p style="margin:0 0 0.4rem">El error ya quedó registrado. Probá de nuevo o volvé al inicio.</p>
+                        <a class="boton" href="/" style="margin-top:0.5rem">Volver al inicio</a>
+                    </div>
+                </section>
+            </ErrorContent>
+        </ErrorBoundary>
     </main>
 </div>
 

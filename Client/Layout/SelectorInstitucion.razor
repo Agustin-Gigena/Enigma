@@ -2,6 +2,7 @@
    completa re-valida sesión y permisos contra el guard, patrón de T9). *@
 @inject AuthService Auth
 @inject NavigationManager Navigation
+@inject CancelacionNavegacion Nav
 
 <div class="app-institucion-menu">
     <details data-menu>
@@ -33,11 +34,11 @@
     private List<InstitucionDto> _instituciones = [];
 
     protected override async Task OnInitializedAsync() =>
-        _instituciones = await Auth.GetInstitucionesAsync();
+        _instituciones = await Auth.GetInstitucionesAsync(Nav.Token) ?? [];
 
     private async Task Cambiar(InstitucionDto institucion)
     {
-        if (await Auth.SeleccionarInstitucionAsync(institucion))
+        if (await Auth.SeleccionarInstitucionAsync(institucion, Nav.Token))
         {
             Navigation.NavigateTo("/", forceLoad: true);
         }

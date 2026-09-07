@@ -78,7 +78,7 @@ public class AuthService
         return string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<UsuarioDto>(json, Json);
     }
 
-    public async Task<List<InstitucionDto>> GetInstitucionesAsync()
+    public async Task<List<InstitucionDto>> GetInstitucionesAsync(CancellationToken ct = default)
     {
         string json = await _js.InvokeAsync<string>("localStorage.getItem", InstitucionesKey);
         if (!string.IsNullOrEmpty(json))
@@ -88,13 +88,17 @@ public class AuthService
 
         try
         {
-            HttpResponseMessage response = await _http.GetAsync("auth/instituciones");
+            HttpResponseMessage response = await _http.GetAsync("auth/instituciones", ct);
             if (response.IsSuccessStatusCode)
             {
-                List<InstitucionDto> instituciones = await response.Content.ReadFromJsonAsync<List<InstitucionDto>>(Json) ?? [];
+                List<InstitucionDto> instituciones = await response.Content.ReadFromJsonAsync<List<InstitucionDto>>(Json, ct) ?? [];
                 await _js.InvokeVoidAsync("localStorage.setItem", InstitucionesKey, JsonSerializer.Serialize(instituciones, Json));
                 return instituciones;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw; // el llamador se está desmontando: que la cancelación siga su curso
         }
         catch (HttpRequestException)
         {
@@ -110,16 +114,20 @@ public class AuthService
     }
 
     /// <summary>Elige la institución en el server (re-emite el JWT de sesión) y actualiza el espejo local.</summary>
-    public async Task<bool> SeleccionarInstitucionAsync(InstitucionDto institucion)
+    public async Task<bool> SeleccionarInstitucionAsync(InstitucionDto institucion, CancellationToken ct = default)
     {
         try
         {
             HttpResponseMessage respuesta = await _http.PostAsJsonAsync("auth/institucion",
-                new SeleccionInstitucionRequest(institucion.Id));
+                new SeleccionInstitucionRequest(institucion.Id), ct);
             if (!respuesta.IsSuccessStatusCode)
             {
                 return false;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw; // el llamador se está desmontando: que la cancelación siga su curso
         }
         catch (HttpRequestException)
         {
@@ -133,11 +141,15 @@ public class AuthService
     }
 
     /// <summary>Sesión actual (usuario + institución activa + permisos) desde /auth/me.</summary>
-    public async Task<SesionDto?> GetSesionAsync()
+    public async Task<SesionDto?> GetSesionAsync(CancellationToken ct = default)
     {
         try
         {
-            return await _http.GetFromJsonAsync<SesionDto>("auth/me");
+            return await _http.GetFromJsonAsync<SesionDto>("auth/me", ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw; // el llamador se está desmontando: que la cancelación siga su curso
         }
         catch (HttpRequestException)
         {

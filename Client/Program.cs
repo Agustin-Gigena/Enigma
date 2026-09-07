@@ -17,6 +17,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>(
     sp => sp.GetRequiredService<EnigmaAuthenticationStateProvider>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<CancelacionNavegacion>();
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
 {

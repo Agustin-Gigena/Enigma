@@ -56,11 +56,17 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
                 }
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Request abortado (teardown/navegación): sin sesión conocida, mismo
+            // tratamiento que un fallo de red — estado anónimo cacheado.
+        }
         catch (HttpRequestException)
         {
         }
 
         _cachedState = Anonymous();
+        _cacheExpiry = DateTime.UtcNow.Add(CacheDuration); // sin esto, cada query re-dispara /auth/me
         return _cachedState;
     }
 
