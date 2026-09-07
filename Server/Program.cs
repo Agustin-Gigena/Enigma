@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Enigma.Server.Data;
 using Enigma.Server.Data.Entities.Auth;
+using Enigma.Server.Middleware;
 using Enigma.Server.Data.Repositories.Administracion;
 using Enigma.Server.Data.Repositories.Auth;
 using Enigma.Server.Options;
@@ -31,7 +32,11 @@ builder.Services.AddControllers(mvc =>
     // Regla de namespace: autorización por sección de catálogo (ver SeccionControllerConvention).
     mvc.Conventions.Add(new SeccionControllerConvention());
 });
-builder.Services.AddHttpContextAccessor();
+
+// Manejo GLOBAL de excepciones: un IExceptionHandler para toda la API (cancelación
+// de requests abortados, 500 JSON para lo demás). Los endpoints no atrapan nada.
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<MembresiaRepository>();
 builder.Services.AddScoped<InstitucionRepository>();
@@ -211,6 +216,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseSecurityHeaders();
+
+// Primero en el pipeline: atrapa todo lo que reviente cualquier capa de abajo.
+app.UseExceptionHandler();
 
 if (app.Environment.IsProduction())
 {
