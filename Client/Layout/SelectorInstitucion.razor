@@ -40,7 +40,9 @@
     {
         if (await Auth.SeleccionarInstitucionAsync(institucion, Nav.Token))
         {
-            Navigation.NavigateTo("/", forceLoad: true);
+            // Navegación SPA: la sesión se re-emite (NotifyAuthStateChanged) y el
+            // menú/layout recalculan por suscripción — sin recargar la app.
+            Navigation.NavigateTo("/");
         }
     }
 }

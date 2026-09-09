@@ -3,7 +3,7 @@
 @inject AuthService Auth
 @inject NavigationManager Navigation
 @inject CancelacionNavegacion Nav
-
+@inject Gsap Animaciones
 <PageTitle>Usuarios · Enigma</PageTitle>
 
 <section class="pagina">
@@ -100,21 +100,21 @@
                 : usuario.Roles;
             HttpResponseMessage? respuesta = await Http.PutSeguroAsync(
                 $"administracion/usuarios/{usuario.Usuario.Id}/roles", new ActualizarRolesRequest(roles), Nav.Token);
-            if (respuesta is null)
-            {
-                _error = "No se pudieron guardar los roles.";
-                return;
-            }
-            if (!respuesta.IsSuccessStatusCode)
+            if (respuesta is null || !respuesta.IsSuccessStatusCode)
             {
                 _error = "No se pudieron guardar los roles.";
                 return;
             }
 
+
             _mensaje = "Roles actualizados.";
             bool soloAdiciones = usuario.Roles.All(roles.Contains);
             usuario.Roles.Clear();
             usuario.Roles.AddRange(roles);
+
+            // Feedback de la fila guardada (GSAP vía servicio — sin JS directo).
+            await Animaciones.PulsoAsync($".tabla-admin tbody tr:nth-child({_usuarios.IndexOf(usuario) + 1})");
+
 
             // Si el editado es el usuario actual y solo ganó accesos (no perdió ninguno),
             // refrescar su propia sesión (token + menú con permisos nuevos). Si perdió
@@ -132,13 +132,27 @@
                     // instancia). Recarga determinista: el shell recalcula menú/permisos
                     // y la página vuelve con el estado persistido.
                     await Auth.SeleccionarInstitucionAsync(activa, Nav.Token);
-                    Navigation.NavigateTo("/administracion/usuarios", forceLoad: true);
+                    // SPA: la página se re-monta por el cascade del cambio de auth
+                    // state; el menú recalcula por suscripción. Sin recarga completa.
+                    Navigation.NavigateTo("/administracion/usuarios");
                 }
             }
         }
         finally
         {
             _guardando = false;
+        }
+    }
+
+    private bool _filasAnimadas;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Entrada escalonada de filas (GSAP vía servicio — sin JS directo), una vez.
+        if (!_filasAnimadas && _usuarios.Count > 0)
+        {
+            _filasAnimadas = true;
+            await Animaciones.EntradaEscalonadaAsync(".tabla-admin tbody tr");
         }
     }
 }

@@ -444,13 +444,10 @@ details[data-menu][open] > summary .menu__chevron {
     border: 1px solid var(--enigma-border);
     border-radius: var(--enigma-radius);
     box-shadow: var(--enigma-shadow);
-    animation: menu-abrir 180ms var(--enigma-ease) both;
+    /* Apertura/cierre animados por GSAP (EnigmaGsap), no por CSS. */
 }
 
-.menu__lista--cerrando {
-    animation: menu-cerrar 150ms var(--enigma-ease) both;
-    pointer-events: none;
-}
+/* El cierre animado lo maneja EnigmaGsap (menuCerrar). */
 
 details[data-menu] .menu__lista--derecha,
 details[data-menu]:has(.menu__lista--derecha) .menu__lista {
@@ -499,30 +496,8 @@ details[data-menu]:has(.menu__lista--derecha) .menu__lista {
     border: 0;
 }
 
-@keyframes menu-abrir {
-    from {
-        opacity: 0;
-        transform: translateY(-6px) scale(0.985);
-        filter: blur(2px);
-    }
-}
-
-@keyframes menu-cerrar {
-    to {
-        opacity: 0;
-        transform: translateY(-4px);
-        filter: blur(1px);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .menu__lista,
-    .menu__lista--cerrando,
-    .menu__chevron {
-        animation: none;
-        transition: none;
-    }
-}
+/* Las animaciones de menús las posee GSAP (EnigmaGsap): sin keyframes CSS.
+   prefers-reduced-motion también lo respeta el adaptador (duración ~0). */
 
 /* ─── Páginas de módulo (Administración) ────────────────────────────────── */
 .pagina {

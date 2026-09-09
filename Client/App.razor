@@ -13,7 +13,7 @@
             <FocusOnNavigate RouteData="routeData" Selector="h1" />
         </Found>
         <NotFound>
-            <PageTitle>No encontrada</PageTitle>
+            <PageTitle>No encontrada · Enigma</PageTitle>
             <LayoutView Layout="typeof(Layout.MainLayout)">
                 <p role="alert">Lo sentimos, no encontramos esa página.</p>
             </LayoutView>
@@ -84,12 +84,14 @@
         }
     }
 
-    /// <summary>Redirect desde OnNavigateAsync: NavigationContext no expone RedirectTo
-    /// en esta versión de Blazor; el patrón soportado es NavigateTo con recarga forzada.</summary>
+    /// <summary>Redirect SPA desde OnNavigateAsync: NavigationContext no expone
+    /// RedirectTo en esta versión de Blazor; NavigateTo sin forceLoad cancela la
+    /// navegación actual y re-arranca el ciclo para el destino (el guard corre de
+    /// nuevo para la ruta nueva, que corta temprano). Sin recarga completa: la
+    /// animación de arranque del WASM queda solo para la carga inicial.</summary>
     private void Redirigir(NavigationContext contexto, string destino)
     {
-        // Abortar la navegación vetada antes de forzar la nueva.
         contexto.CancellationToken.ThrowIfCancellationRequested();
-        Navigation.NavigateTo(destino, forceLoad: true);
+        Navigation.NavigateTo(destino);
     }
 }

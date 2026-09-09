@@ -1,8 +1,11 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
+@inject AuthenticationStateProvider AuthState
+@inject Gsap Animaciones
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Web
+@implements IDisposable
 <div class="app">
     <header class="app__bar">
         <a class="enigma-brand" href="/">
@@ -27,7 +30,9 @@
            cada navegación arranca con el boundary limpio. *@
         <ErrorBoundary @key="Navigation.Uri">
             <ChildContent>
-                @Body
+                <div class="app__vista">
+                    @Body
+                </div>
             </ChildContent>
             <ErrorContent Context="error">
                 <section class="pagina">
@@ -48,15 +53,50 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Reactivo a la re-emisión de sesión (elección/cambio de institución, roles):
+        // sin recargar la app, el shell muestra institución y usuario vigentes.
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        await RecargarAsync();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
+    {
+        try
+        {
+            await RecargarAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // Desmontándose: sin consecuencias.
+        }
+    }
+
+    private async Task RecargarAsync()
+    {
         _sesion = await Auth.GetSesionAsync();
         _institucion = await Auth.GetInstitucionActivaAsync();
     }
+
+    private string? _vistaAnimada;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             await JS.InvokeVoidAsync("EnigmaMotion.init");
         }
+
+        // Transición de vista al navegar (GSAP vía el servicio C# — sin JS directo).
+        if (_vistaAnimada != Navigation.Uri)
+        {
+            _vistaAnimada = Navigation.Uri;
+            await Animaciones.VistaEntradaAsync(".app__vista");
+        }
     }
 
+    public void Dispose()
+    {
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
 }

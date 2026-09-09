@@ -1,8 +1,11 @@
 @* Barra de módulos: dropdowns por módulo + overflow "Más +".
    Comportamiento (apertura/cierre/click-afuera/Escape) lo maneja EnigmaMenu
-   vía data-menu; el estado activo lo resuelve NavLink. *@
+   vía data-menu; el estado activo lo resuelve NavLink. Suscripto a los cambios
+   de AuthenticationState: al re-emitir sesión (cambio de institución, roles)
+   el menú recalcula sin recargar la app. *@
 @inject AuthenticationStateProvider AuthState
 @using Enigma.Shared.Modules
+@implements IDisposable
 
 <nav class="app-nav" id="app-nav">
     @foreach (ModuloDef modulo in _modulosVisibles)
@@ -45,11 +48,33 @@
 
     protected override async Task OnInitializedAsync()
     {
-        AuthenticationState estado = await AuthState.GetAuthenticationStateAsync();
-        _permisos = [.. estado.User.FindAll("permiso").Select(c => c.Value)];
+        // Recalcular cuando la sesión se re-emite (elección/cambio de institución,
+        // roles propios actualizados): el menú vive de los claims vigentes.
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        await RecalcularAsync((await AuthState.GetAuthenticationStateAsync()).User);
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
+    {
+        try
+        {
+            AuthenticationState estado = await tarea;
+            await RecalcularAsync(estado.User);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // El componente puede estar desmontándose: sin consecuencias.
+        }
+    }
+
+    private Task RecalcularAsync(System.Security.Claims.ClaimsPrincipal usuario)
+    {
+        _permisos = [.. usuario.FindAll("permiso").Select(c => c.Value)];
         _modulosVisibles = [.. CatalogoModulos.Modulos
             .Where(m => CatalogoModulos.Secciones.Any(s => s.ModuloClave == m.Clave && _permisos.Contains(s.Clave)))
             .OrderBy(m => m.Orden)];
+        return Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -64,4 +89,9 @@
         CatalogoModulos.Secciones
             .Where(s => s.ModuloClave == modulo.Clave && _permisos.Contains(s.Clave))
             .OrderBy(s => s.Orden);
+
+    public void Dispose()
+    {
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
 }

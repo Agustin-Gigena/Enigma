@@ -18,6 +18,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>(
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<CancelacionNavegacion>();
+builder.Services.AddScoped<Gsap>();
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
 {

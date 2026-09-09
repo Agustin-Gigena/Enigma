@@ -1,5 +1,6 @@
 @page "/administracion/instituciones"
 @inject HttpClient Http
+@inject Gsap Animaciones
 @inject CancelacionNavegacion Nav
 
 <PageTitle>Instituciones · Enigma</PageTitle>
@@ -37,6 +38,7 @@
     }
 </section>
 
+
 @code {
     private List<InstitucionDto> _instituciones = [];
     private bool _cargando = true;
@@ -48,4 +50,16 @@
         _error = _instituciones.Count == 0 ? "No se pudieron cargar las instituciones." : null;
         _cargando = false;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Entrada escalonada de filas (GSAP vía servicio — sin JS directo), una vez.
+        if (!_animadas && _instituciones.Count > 0)
+        {
+            _animadas = true;
+            await Animaciones.EntradaEscalonadaAsync(".tabla-admin tbody tr");
+        }
+    }
+
+    private bool _animadas;
 }
