@@ -104,12 +104,24 @@ window.EnigmaMenu = {
             mas.hidden = masList.children.length === 0;
         };
 
-        const ro = new ResizeObserver(recalcular);
+        // Coalescer los recálculos en el próximo frame: recalcular MUEVE <li> por el
+        // DOM, y hacerlo en el mismo tick del click sobre un link del menú cancela la
+        // activación del anchor (la navegación se pierde). rAF queda fuera del tick.
+        let pendiente = false;
+        const agendar = () => {
+            if (pendiente) return;
+            pendiente = true;
+            requestAnimationFrame(() => {
+                pendiente = false;
+                recalcular();
+            });
+        };
+
+        const ro = new ResizeObserver(agendar);
         ro.observe(nav);
         const mo = new MutationObserver((mutaciones, obs) => {
             obs.disconnect();
-            recalcular();
-            ro.observe(nav);
+            agendar();
             mo.observe(nav, { childList: true, subtree: true });
         });
         mo.observe(nav, { childList: true, subtree: true });

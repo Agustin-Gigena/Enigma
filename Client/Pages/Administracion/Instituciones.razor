@@ -42,8 +42,6 @@
     private bool _cargando = true;
     private string? _error;
 
-    // Cancelación/red: HttpSeguro devuelve null (sin lanzar) — el componente
-    // desmontado ya no renderiza; el montado traduce null a error de carga.
     protected override async Task OnInitializedAsync()
     {
         _instituciones = await Http.GetSeguroAsync<List<InstitucionDto>>("administracion/instituciones", Nav.Token) ?? [];
