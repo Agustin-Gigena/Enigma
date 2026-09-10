@@ -1,9 +1,6 @@
 #!/bin/bash
-# validate.sh - Build del proyecto de tests y ejecución de los tests de arquitectura
+# validate.sh - Build de la solución. Los analizadores EGX (Analyzers/Enigma.Analyzers)
+# validan arquitectura y convenciones dentro del compilador en cada build.
 set -euo pipefail
 
-TEST_PROJECT="Tests/Enigma.Test.csproj"
-
-dotnet build "$TEST_PROJECT"
-
-dotnet test "$TEST_PROJECT" --no-build --filter "FullyQualifiedName~Enigma.Test.Architecture"
+dotnet build Enigma.slnx --nologo

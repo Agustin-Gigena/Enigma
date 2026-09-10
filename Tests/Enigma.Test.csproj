@@ -31,4 +31,9 @@
     <ProjectReference Include="../Shared/Enigma.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Analyzers\Enigma.Analyzers\Enigma.Analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
 </Project>

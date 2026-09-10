@@ -17,4 +17,15 @@
 	  <ProjectReference Include="..\Shared\Enigma.Shared.csproj" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Analyzers\Enigma.Analyzers\Enigma.Analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Fuente del catálogo y páginas razor: los lee el analizador EGX016. -->
+  <ItemGroup>
+    <AdditionalFiles Include="..\Shared\Modules\CatalogoModulos.cs" />
+    <AdditionalFiles Include="Pages\**\*.razor" />
+  </ItemGroup>
+
 </Project>

@@ -9,6 +9,7 @@ public class PaginasAdministracionTest
     private IPlaywright _playwright = null!;
     private IBrowser _browser = null!;
     private IPage _page = null!;
+    private IBrowserContext _context = null!;
 
     [OneTimeSetUp]
     public async Task Setup()
@@ -18,10 +19,18 @@ public class PaginasAdministracionTest
     }
 
     [SetUp]
-    public async Task NewPage() => _page = await _browser.NewPageAsync();
+    public async Task NewPage()
+    {
+        // Contexto aislado: sin cookies/localStorage del test anterior.
+        _context = await _browser.NewContextAsync();
+        _page = await _context.NewPageAsync();
+    }
 
     [TearDown]
-    public async Task ClosePage() => await _page.CloseAsync();
+    public async Task ClosePage()
+    {
+        await _context.CloseAsync();
+    }
 
     [OneTimeTearDown]
     public async Task Teardown()

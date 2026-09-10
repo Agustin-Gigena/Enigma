@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Analyzers/">
+    <Project Path="Analyzers/Enigma.Analyzers/Enigma.Analyzers.csproj" />
+  </Folder>
   <Folder Name="/Client/">
     <Project Path="Client/Enigma.Client.csproj" />
   </Folder>

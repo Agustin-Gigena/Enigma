@@ -3,9 +3,8 @@ pre-commit:
   jobs:
     - name: architecture
       run: >-
-        dotnet test Tests/Enigma.Test.csproj
-        --filter "FullyQualifiedName~ArchitectureTests"
-        --nologo
+        dotnet build Server/Enigma.Server.csproj --nologo &&
+        dotnet build Client/Enigma.Client.csproj --nologo
 
 pre-push:
   jobs:

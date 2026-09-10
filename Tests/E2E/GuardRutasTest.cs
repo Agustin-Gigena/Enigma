@@ -26,7 +26,8 @@ public class GuardRutasTest
 
     private async Task<IPage> PaginaAdminAutenticadaAsync()
     {
-        IPage page = await _browser.NewPageAsync();
+        IBrowserContext contexto = await _browser.NewContextAsync();
+        IPage page = await contexto.NewPageAsync();
         await page.GotoAsync($"{E2EWebFixture.ClientUrl}/auth/login");
         await page.GetByRole(AriaRole.Textbox, new() { Name = "Usuario" }).FillAsync("admin", new() { Timeout = 60_000 });
         await page.GetByRole(AriaRole.Textbox, new() { Name = "Contraseña" }).FillAsync("admin123", new() { Timeout = 60_000 });

@@ -9,6 +9,7 @@ public class MenuUiTest
     private IPlaywright _playwright = null!;
     private IBrowser _browser = null!;
     private IPage _page = null!;
+    private IBrowserContext _context = null!;
 
     [OneTimeSetUp]
     public async Task Setup()
@@ -18,11 +19,19 @@ public class MenuUiTest
     }
 
     [SetUp]
-    public async Task NewPage() => _page = await _browser.NewPageAsync();
+    public async Task NewPage()
+    {
+        // Contexto aislado por test: sin cookies ni localStorage de test anterior
+        // (un login previo dejaba sesión y el guard redirigía el login en vivo).
+        _context = await _browser.NewContextAsync();
+        _page = await _context.NewPageAsync();
+    }
 
     [TearDown]
-    public async Task ClosePage() => await _page.CloseAsync();
-
+    public async Task ClosePage()
+    {
+        await _page.Context.CloseAsync();
+    }
     [OneTimeTearDown]
     public async Task Teardown()
     {
@@ -63,8 +72,11 @@ public class MenuUiTest
 
         int cargasCompletas = await _page.EvaluateAsync<int>(
             "() => performance.getEntriesByType('navigation').length");
+        string docs = await _page.EvaluateAsync<string>(
+            "() => performance.getEntriesByType('navigation').map(n => n.name).join(' | ')");
+        Console.WriteLine($"[navs] documentos: {docs}");
         Assert.That(cargasCompletas, Is.EqualTo(1),
-            "Todo el flujo debe ser SPA: una sola carga de página, sin re-boot del WASM.");
+            "Todo el flujo debe ser SPA: una sola carga de página, sin re-boot del WASM. Docs: " + docs);
     }
 
     [Test]

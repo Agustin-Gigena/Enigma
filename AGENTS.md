@@ -444,4 +444,5 @@ dotnet test --collect:"XPlat Code Coverage"
     `UseLazyLoadingProxies()` (`Microsoft.EntityFrameworkCore.Proxies`) — toda entidad
     nueva del Server lo respeta; acceder directo a navegaciones antes que `Include`.
     (f) **services sin BD**: ningún service toca `EnigmaDbContext`/`DbSet<>`; todo
-    acceso a datos en `Data/Repositories/<Dominio>/` (lo vigila un architecture test).
+    acceso a datos en `Data/Repositories/<Dominio>/` (lo vigilan los analizadores EGX de
+    `Analyzers/Enigma.Analyzers`, que corren dentro del compilador y fallan el build).
