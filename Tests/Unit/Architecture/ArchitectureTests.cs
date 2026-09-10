@@ -302,11 +302,14 @@ public class ArchitectureTests
     public void Nombres_MetodosAsincronosConSufijoAsync()
     {
         // Convención de nombres (MS, sección async/await): los métodos async terminan
-        // con el sufijo Async.
+        // con el sufijo Async. EXCEPCIÓN: las acciones de controladores MVC — el
+        // nombre de la acción define la ruta y ASP.NET Core no usa el sufijo ahí
+        // (convención de ASP.NET Core, ej. Account/Manage actions sin Async).
         string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
         Regex patron = new(@"^\s*(?:public|private|protected|internal)\s+(?:static\s+)?async\s+[\w<>\[\],.? ]+?\s+([A-Za-z_]\w*)\s*\(");
 
         List<string> violadores = FuentesDeProduccion(repoRoot)
+            .Where(f => !f.Ruta.Contains($"{Path.DirectorySeparatorChar}Controllers{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
             .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
             .Select(x => (x.Ruta, x.indice, Nombre: patron.Match(x.linea) is Match m && m.Success ? m.Groups[1].Value : null))
             .Where(x => x.Nombre is not null && !x.Nombre.EndsWith("Async", StringComparison.Ordinal))
