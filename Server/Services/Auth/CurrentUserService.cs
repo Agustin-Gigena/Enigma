@@ -65,21 +65,3 @@ public class CurrentUserService : ICurrentUserService
     ClaimsPrincipal? ICurrentUserService.GetClaimsPrincipal() => GetClaimsPrincipal();
 }
 
-internal sealed class CurrentUserScope
-{
-    public CurrentUserScope(IHttpContextAccessor accessor, Func<int, Usuario?> resolver)
-    {
-        Accessor = accessor;
-        Resolver = resolver;
-    }
-
-    public IHttpContextAccessor Accessor;
-    public Func<int, Usuario?> Resolver;
-
-    /// <summary>
-    /// Cache por request de la entidad Usuario. Null hasta que la primera llamada
-    /// autenticada a GetCurrentUser() lo asigne; se reutiliza la misma instancia
-    /// de Lazy (y por tanto la misma Usuario) durante todo el request.
-    /// </summary>
-    public Lazy<Usuario?>? CurrentUser;
-}

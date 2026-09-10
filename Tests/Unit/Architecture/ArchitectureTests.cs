@@ -86,6 +86,73 @@ public class ArchitectureTests
     }
 
     [Test]
+    public void UnSoloTipoPorArchivo()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string[] raices = [Path.Combine(repoRoot, "Server"), Path.Combine(repoRoot, "Client")];
+
+        // Regla arquitectónica: 1 tipo por archivo — máx 1 clase, máx 1 interfaz,
+        // máx 1 record, y los records JAMÁS mezclados con clases o interfaces
+        // (un record de resultado vive en su propio archivo). Los tipos anidados
+        // dentro de otro cuentan como parte del dueño del archivo, no por separado.
+        // Alcance: código de producción (Server + Client); quedan fuera Migrations
+        // (generado), bin/obj y Shared (AuthDtos.cs agrupa los DTOs a propósito).
+        List<string> violadores = raices
+            .SelectMany(raiz => Directory.EnumerateFiles(raiz, "*.cs", SearchOption.AllDirectories))
+            .Where(path => !EsArchivoGenerado(path))
+            .Select(path => (Ruta: path, Conteos: ContarTiposTopLevel(File.ReadAllText(path))))
+            .Where(x => x.Conteos.Clases > 1
+                     || x.Conteos.Interfaces > 1
+                     || x.Conteos.Records > 1
+                     || (x.Conteos.Records >= 1 && x.Conteos.Clases + x.Conteos.Interfaces >= 1))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)} " +
+                         $"(clases: {x.Conteos.Clases}, interfaces: {x.Conteos.Interfaces}, records: {x.Conteos.Records})")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Archivos con más de un tipo (o records mezclados con clases/interfaces). " +
+            "Regla: 1 tipo por archivo:\n" + string.Join("\n", violadores));
+    }
+
+    private static bool EsArchivoGenerado(string path) =>
+        path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+        || path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+        || path.Contains($"{Path.DirectorySeparatorChar}Migrations{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase);
+
+    private static (int Clases, int Interfaces, int Records) ContarTiposTopLevel(string codigo)
+    {
+        // Cuenta declaraciones class/interface/record en profundidad 0 de llaves
+        // (los archivos usan namespace con punto y coma, así que los tipos de nivel
+        // superior quedan a profundidad 0; lo anidado —métodos, tipos internos— a ≥1).
+        // Antes: se descartan comentarios, strings y cláusulas `where X : class`
+        // (la restricción genérica contiene la palabra "class" a profundidad 0).
+        string limpio = QuitarComentariosYStrings(codigo);
+        limpio = Regex.Replace(limpio, @"\bwhere\s+\w+\s*:\s*[^{;]*", "where");
+        int clases = 0, interfaces = 0, records = 0, profundidad = 0;
+        foreach (Match m in Regex.Matches(limpio, @"\b(?:class|interface|record)\b|\{|\}"))
+        {
+            switch (m.Value)
+            {
+                case "{": profundidad++; break;
+                case "}": profundidad--; break;
+                case "class" when profundidad == 0: clases++; break;
+                case "interface" when profundidad == 0: interfaces++; break;
+                case "record" when profundidad == 0: records++; break;
+            }
+        }
+        return (clases, interfaces, records);
+    }
+
+    private static string QuitarComentariosYStrings(string codigo)
+    {
+        codigo = Regex.Replace(codigo, @"//[^\n]*", "");                       // comentario de línea
+        codigo = Regex.Replace(codigo, @"/\*[\s\S]*?\*/", "");                 // comentario de bloque
+        codigo = Regex.Replace(codigo, "@?\"(?:[^\"\\\\]|\\\\.)*\"", "\"\"");  // literales de cadena
+        return codigo;
+    }
+
+    [Test]
     public void PaginasDeSeccion_EstanRegistradasEnCatalogo()
     {
         string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
