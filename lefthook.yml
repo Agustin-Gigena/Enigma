@@ -1,18 +1,11 @@
 ---
 pre-commit:
-  parallel: true
   jobs:
-    - name: validate
-      run: scripts/validate.sh
-
-    - name: yaml-lint
+    - name: architecture
       run: >-
-        yamllint -c .yamllint --strict
-        $(find . -type f
-        \( -name '*.yml' -o -name '*.yaml' \)
-        -not -path '*/.git/*'
-        -not -path '*/bin/*'
-        -not -path '*/obj/*')
+        dotnet test Tests/Enigma.Test.csproj
+        --filter "FullyQualifiedName~ArchitectureTests"
+        --nologo
 
 pre-push:
   jobs:
