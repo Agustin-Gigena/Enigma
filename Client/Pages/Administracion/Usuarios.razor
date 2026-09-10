@@ -2,47 +2,92 @@
 @inject HttpClient Http
 @inject AuthService Auth
 @inject NavigationManager Navigation
-@inject CancelacionNavegacion Nav
 @inject Gsap Animaciones
+@inject CancelacionNavegacion Nav
+@using Enigma.Client.Shared
+
 <PageTitle>Usuarios · Enigma</PageTitle>
 
 <section class="pagina">
-    <h1 class="pagina__titulo">Usuarios</h1>
-    <p class="pagina__lead">Miembros de la institución activa y sus roles.</p>
+    <div class="pagina__toolbar">
+        <div>
+            <h1 class="pagina__titulo">Usuarios</h1>
+            <p class="pagina__lead">Miembros de la institución activa y sus roles.</p>
+        </div>
+        <button type="button" class="boton boton--primario" @onclick="AbrirAlta">+ Agregar usuario</button>
+    </div>
 
     @if (_cargando)
     {
-        <p class="estado estado--exito" role="status">Cargando usuarios…</p>
+        <div class="pagina__superficie">
+            <table class="tabla-admin" aria-hidden="true">
+                <thead><tr><th>Usuario</th><th>Roles</th><th></th></tr></thead>
+                <tbody>
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <tr><td><div class="skeleton" style="width:45%"></div></td><td><div class="skeleton" style="width:60%"></div></td><td></td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
     else if (_error is not null)
     {
         <p class="estado estado--error" role="alert">@_error</p>
     }
+    else if (_usuarios.Count == 0)
+    {
+        <div class="pagina__superficie">
+            <div class="vacio">
+                <p class="vacio__titulo">Nadie en esta institución todavía</p>
+                <p>Agregá el primer usuario y asignale roles para que acceda a las secciones.</p>
+                <button type="button" class="boton boton--primario" @onclick="AbrirAlta">+ Agregar usuario</button>
+            </div>
+        </div>
+    }
     else
     {
         <div class="pagina__superficie">
             <table class="tabla-admin">
-                <thead>
-                    <tr><th>Usuario</th><th>Roles</th><th></th></tr>
-                </thead>
+                <thead><tr><th>Usuario</th><th>Roles</th><th class="tabla-admin__acciones"></th></tr></thead>
                 <tbody>
                 @foreach (UsuarioInstitucionDto usuario in _usuarios)
                 {
                     <tr>
-                        <td>@usuario.Usuario.NombreUsuario</td>
                         <td>
-                            @foreach (RolDto rol in _roles)
-                            {
-                                <label class="rol-check">
-                                    <input type="checkbox" name="@rol.Nombre"
-                                           checked="@(usuario.Roles.Contains(rol.Nombre))"
-                                           @onchange="e => Toggle(usuario, rol.Nombre, e.Value)" />
-                                    @rol.Nombre
-                                </label>
-                            }
+                            <div class="usuario-celda">
+                                <span class="usuario-celda__nombre">@usuario.Usuario.NombreUsuario</span>
+                                @if (!string.IsNullOrEmpty(usuario.Usuario.Correo))
+                                {
+                                    <span class="usuario-celda__correo">@usuario.Usuario.Correo</span>
+                                }
+                            </div>
                         </td>
                         <td>
-                            <button type="button" class="boton" @onclick="() => Guardar(usuario)" disabled="@_guardando">Guardar</button>
+                            <div class="chips">
+                                @foreach (string rol in usuario.Roles)
+                                {
+                                    <span class="chip chip--activa">@rol</span>
+                                }
+                                @if (usuario.Roles.Count == 0)
+                                {
+                                    <span class="chips__vacio">Sin roles</span>
+                                }
+                            </div>
+                        </td>
+                        <td class="tabla-admin__acciones">
+                            <button type="button" class="boton-icono" title="Editar roles" aria-label="Editar roles de @usuario.Usuario.NombreUsuario" @onclick="() => AbrirRoles(usuario)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.4l-4.8 2.5.9-5.4L4.2 7.7l5.4-.8Z" />
+                                </svg>
+                            </button>
+                            <button type="button" class="boton-icono boton-icono--peligro" title="Quitar de la institución" aria-label="Quitar a @usuario.Usuario.NombreUsuario" @onclick="() => ConfirmarQuitar(usuario)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                 }
@@ -56,16 +101,86 @@
     }
 </section>
 
+<Dialogo @ref="_dialogo" Titulo="@_tituloDialogo" OnCerrado="AlCerrarDialogo">
+    @if (_modo == ModoDialogo.Roles)
+    {
+        <p class="pagina__lead" style="margin:0 0 0.9rem">Roles de <strong>@_editando?.Usuario.NombreUsuario</strong> en esta institución.</p>
+        <ChipRoles Roles="_roles" @bind-Seleccionados="_rolesEdicion" />
+        @if (_errorDialogo is not null)
+        {
+            <p class="estado estado--error" role="alert" style="margin:1rem 0 0">@_errorDialogo</p>
+        }
+        <div class="dialogo__acciones">
+            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
+            <button type="button" class="boton boton--primario" disabled="@_guardando" @onclick="GuardarRolesAsync">Guardar</button>
+        </div>
+    }
+    else if (_modo == ModoDialogo.Alta)
+    {
+        <div class="dialogo__campos">
+            <label class="campo">
+                <span class="campo__etiqueta">Usuario</span>
+                <input class="campo__entrada" @bind="_altaUsuario" placeholder="nombre de usuario" autocomplete="off" />
+            </label>
+            <label class="campo">
+                <span class="campo__etiqueta">Correo (opcional)</span>
+                <input class="campo__entrada" type="email" @bind="_altaCorreo" placeholder="correo@institucion.edu" autocomplete="off" />
+            </label>
+            <label class="campo">
+                <span class="campo__etiqueta">Contraseña inicial</span>
+                <input class="campo__entrada" type="password" @bind="_altaContrasena" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+            </label>
+            <div class="campo">
+                <span class="campo__etiqueta">Roles</span>
+                <ChipRoles Roles="_roles" @bind-Seleccionados="_altaRoles" />
+            </div>
+            @if (_errorDialogo is not null)
+            {
+                <p class="estado estado--error" role="alert" style="margin:0">@_errorDialogo</p>
+            }
+        </div>
+        <div class="dialogo__acciones">
+            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
+            <button type="button" class="boton boton--primario" disabled="@_guardando" @onclick="DarDeAltaAsync">Crear usuario</button>
+        </div>
+    }
+    else if (_modo == ModoDialogo.Quitar)
+    {
+        <p style="margin:0 0 0.2rem">¿Quitar a <strong>@_editando?.Usuario.NombreUsuario</strong> de esta institución?</p>
+        <p class="pagina__lead" style="margin:0">Pierde el acceso a sus secciones acá; sus otras instituciones no se tocan. Es un borrado lógico auditable.</p>
+        <div class="dialogo__acciones">
+            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
+            <button type="button" class="boton boton--primario" style="background:var(--enigma-error);border-color:var(--enigma-error)" disabled="@_guardando" @onclick="QuitarAsync">Quitar</button>
+        </div>
+    }
+</Dialogo>
+
 @code {
+    private enum ModoDialogo { Ninguno, Roles, Alta, Quitar }
+
     private List<UsuarioInstitucionDto> _usuarios = [];
     private List<RolDto> _roles = [];
-    private readonly Dictionary<int, HashSet<string>> _cambios = [];
     private bool _cargando = true;
-    private bool _guardando;
     private string? _error;
     private string? _mensaje;
 
-    // Cancelación/red: HttpSeguro devuelve null (sin lanzar).
+    private Dialogo _dialogo = default!;
+    private ModoDialogo _modo;
+    private UsuarioInstitucionDto? _editando;
+    private string _tituloDialogo = "";
+    private string? _errorDialogo;
+    private bool _guardando;
+    private bool _filasAnimadas;
+
+    // Roles
+    private List<string> _rolesEdicion = [];
+
+    // Alta
+    private string _altaUsuario = "";
+    private string _altaCorreo = "";
+    private string _altaContrasena = "";
+    private List<string> _altaRoles = [];
+
     protected override async Task OnInitializedAsync()
     {
         _usuarios = await Http.GetSeguroAsync<List<UsuarioInstitucionDto>>("administracion/usuarios", Nav.Token) ?? [];
@@ -74,66 +189,91 @@
         _cargando = false;
     }
 
-    private void Toggle(UsuarioInstitucionDto usuario, string rol, object? valor)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        HashSet<string> set = _cambios.TryGetValue(usuario.Usuario.Id, out HashSet<string>? existente)
-            ? existente
-            : _cambios[usuario.Usuario.Id] = [.. usuario.Roles];
-        if (valor is true)
+        if (!_filasAnimadas && _usuarios.Count > 0)
         {
-            set.Add(rol);
-        }
-        else
-        {
-            set.Remove(rol);
+            _filasAnimadas = true;
+            await Animaciones.EntradaEscalonadaAsync(".tabla-admin tbody tr");
         }
     }
 
-    private async Task Guardar(UsuarioInstitucionDto usuario)
+    private async Task RecargarAsync()
+    {
+        _usuarios = await Http.GetSeguroAsync<List<UsuarioInstitucionDto>>("administracion/usuarios", Nav.Token) ?? [];
+    }
+
+    private Task AbrirRoles(UsuarioInstitucionDto usuario)
+    {
+        _modo = ModoDialogo.Roles;
+        _editando = usuario;
+        _rolesEdicion = [.. usuario.Roles];
+        _errorDialogo = null;
+        _tituloDialogo = "Editar roles";
+        return _dialogo.AbrirAsync();
+    }
+
+    private Task AbrirAlta()
+    {
+        _modo = ModoDialogo.Alta;
+        _editando = null;
+        _altaUsuario = "";
+        _altaCorreo = "";
+        _altaContrasena = "";
+        _altaRoles = [];
+        _errorDialogo = null;
+        _tituloDialogo = "Agregar usuario";
+        return _dialogo.AbrirAsync();
+    }
+
+    private Task ConfirmarQuitar(UsuarioInstitucionDto usuario)
+    {
+        _modo = ModoDialogo.Quitar;
+        _editando = usuario;
+        _errorDialogo = null;
+        _tituloDialogo = "Quitar de la institución";
+        return _dialogo.AbrirAsync();
+    }
+
+    private void AlCerrarDialogo()
+    {
+        _modo = ModoDialogo.Ninguno;
+        _editando = null;
+        _errorDialogo = null;
+    }
+
+    private async Task GuardarRolesAsync()
     {
         _guardando = true;
-        _mensaje = null;
+        _errorDialogo = null;
         try
         {
-            List<string> roles = _cambios.TryGetValue(usuario.Usuario.Id, out HashSet<string>? set)
-                ? [.. set]
-                : usuario.Roles;
             HttpResponseMessage? respuesta = await Http.PutSeguroAsync(
-                $"administracion/usuarios/{usuario.Usuario.Id}/roles", new ActualizarRolesRequest(roles), Nav.Token);
+                $"administracion/usuarios/{_editando!.Usuario.Id}/roles",
+                new ActualizarRolesRequest(_rolesEdicion), Nav.Token);
             if (respuesta is null || !respuesta.IsSuccessStatusCode)
             {
-                _error = "No se pudieron guardar los roles.";
+                _errorDialogo = "No se pudieron guardar los roles.";
                 return;
             }
 
+            bool soloAdiciones = _editando.Roles.All(_rolesEdicion.Contains);
+            int usuarioId = _editando.Usuario.Id;
 
+            await _dialogo.CerrarAsync();
+            await RecargarAsync();
             _mensaje = "Roles actualizados.";
-            bool soloAdiciones = usuario.Roles.All(roles.Contains);
-            usuario.Roles.Clear();
-            usuario.Roles.AddRange(roles);
+            _filasAnimadas = false;
 
-            // Feedback de la fila guardada (GSAP vía servicio — sin JS directo).
-            await Animaciones.PulsoAsync($".tabla-admin tbody tr:nth-child({_usuarios.IndexOf(usuario) + 1})");
-
-
-            // Si el editado es el usuario actual y solo ganó accesos (no perdió ninguno),
-            // refrescar su propia sesión (token + menú con permisos nuevos). Si perdió
-            // accesos NO se re-emite: el token vigente mantiene los permisos hasta la
-            // próxima validación — re-emitir al vacío lo dejaría sin sección en el acto,
-            // sin siquiera poder restaurar su propio error desde esta página.
+            // Autorefresco solo si te editaste a vos mismo y SOLO ganaste permisos:
+            // re-emitir tras perderlos te dejaría fuera de esta página en el acto.
             SesionDto? sesion = await Auth.GetSesionAsync(Nav.Token);
-            if (sesion is not null && sesion.Usuario.Id == usuario.Usuario.Id && soloAdiciones)
+            if (sesion is not null && sesion.Usuario.Id == usuarioId && soloAdiciones)
             {
                 InstitucionDto? activa = await Auth.GetInstitucionActivaAsync();
                 if (activa is not null)
                 {
-                    // Re-emitir la sesión dispara el cascade de AuthenticationState, que
-                    // desmonta y recrea esta página (el mensaje inline se pierde con la
-                    // instancia). Recarga determinista: el shell recalcula menú/permisos
-                    // y la página vuelve con el estado persistido.
                     await Auth.SeleccionarInstitucionAsync(activa, Nav.Token);
-                    // SPA: la página se re-monta por el cascade del cambio de auth
-                    // state; el menú recalcula por suscripción. Sin recarga completa.
                     Navigation.NavigateTo("/administracion/usuarios");
                 }
             }
@@ -144,15 +284,56 @@
         }
     }
 
-    private bool _filasAnimadas;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private async Task DarDeAltaAsync()
     {
-        // Entrada escalonada de filas (GSAP vía servicio — sin JS directo), una vez.
-        if (!_filasAnimadas && _usuarios.Count > 0)
+        _guardando = true;
+        _errorDialogo = null;
+        try
         {
-            _filasAnimadas = true;
-            await Animaciones.EntradaEscalonadaAsync(".tabla-admin tbody tr");
+            HttpResponseMessage? respuesta = await Http.PostSeguroAsync(
+                "administracion/usuarios",
+                new AltaUsuarioRequest(_altaUsuario.Trim(), string.IsNullOrWhiteSpace(_altaCorreo) ? null : _altaCorreo.Trim(), _altaContrasena, _altaRoles),
+                Nav.Token);
+            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+            {
+                _errorDialogo = await HttpSeguro.LeerErrorAsync(respuesta) ?? "No se pudo crear el usuario.";
+                return;
+            }
+
+            await _dialogo.CerrarAsync();
+            await RecargarAsync();
+            _mensaje = "Usuario agregado a la institución.";
+            _filasAnimadas = false;
+        }
+        finally
+        {
+            _guardando = false;
         }
     }
+
+    private async Task QuitarAsync()
+    {
+        _guardando = true;
+        _errorDialogo = null;
+        try
+        {
+            HttpResponseMessage? respuesta = await Http.DeleteAsync(
+                $"administracion/usuarios/{_editando!.Usuario.Id}", Nav.Token);
+            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+            {
+                _errorDialogo = "No se pudo quitar al usuario.";
+                return;
+            }
+
+            await _dialogo.CerrarAsync();
+            await RecargarAsync();
+            _mensaje = "Usuario quitado de la institución.";
+            _filasAnimadas = false;
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
 }

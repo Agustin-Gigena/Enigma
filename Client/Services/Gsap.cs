@@ -21,4 +21,12 @@ public sealed class Gsap(IJSRuntime js)
     /// <summary>Resaltar un elemento como feedback de acción (guardado, selección).</summary>
     public ValueTask PulsoAsync(string selector) =>
         js.InvokeVoidAsync("EnigmaGsap.pulso", selector);
+
+    /// <summary>Apertura de diálogo (overlay + tarjeta).</summary>
+    public ValueTask DialogoAbrirAsync(string overlay, string tarjeta) =>
+        js.InvokeVoidAsync("EnigmaGsap.dialogoAbrir", overlay, tarjeta);
+
+    /// <summary>Cierre de diálogo; completa cuando la animación terminó.</summary>
+    public Task DialogoCerrarAsync(string overlay, string tarjeta) =>
+        js.InvokeAsync<object>("EnigmaGsap.dialogoCerrar", overlay, tarjeta).AsTask();
 }

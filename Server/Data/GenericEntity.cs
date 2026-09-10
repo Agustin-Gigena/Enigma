@@ -15,7 +15,7 @@ public abstract class GenericEntity
 
     public virtual void SetCreadoPor(Usuario? usuario = null)
     {
-        if (usuario == null)
+        if (usuario is null)
         {
             usuario = CurrentUserService.GetCurrentUser();
         }
@@ -25,7 +25,7 @@ public abstract class GenericEntity
 
     public virtual void SetModificadoPor(Usuario? usuario = null)
     {
-        if (usuario == null)
+        if (usuario is null)
         {
             usuario = CurrentUserService.GetCurrentUser();
         }
@@ -35,7 +35,7 @@ public abstract class GenericEntity
 
     public virtual void SetBorradoLogico(bool borradoLogico, Usuario? usuario = null)
     {
-        if (usuario == null)
+        if (usuario is null)
         {
             usuario = CurrentUserService.GetCurrentUser();
         }

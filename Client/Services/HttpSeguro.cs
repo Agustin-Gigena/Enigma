@@ -64,4 +64,41 @@ public static class HttpSeguro
             return null;
         }
     }
+
+    /// <summary>DELETE; null si se canceló o falló la red.</summary>
+    public static async Task<HttpResponseMessage?> DeleteSeguroAsync(this HttpClient http, string url, CancellationToken ct = default)
+    {
+        try
+        {
+            return await http.DeleteAsync(url, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Lee el {"mensaje": …} de un error de la API; null si no hay cuerpo legible.</summary>
+    public static async Task<string?> LeerErrorAsync(HttpResponseMessage? respuesta)
+    {
+        if (respuesta is null)
+        {
+            return null;
+        }
+        try
+        {
+            JsonError? doc = await respuesta.Content.ReadFromJsonAsync<JsonError>();
+            return doc?.Mensaje;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record JsonError(string? Mensaje);
 }

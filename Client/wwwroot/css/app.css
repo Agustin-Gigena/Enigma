@@ -642,3 +642,295 @@ details[data-menu]:has(.menu__lista--derecha) .menu__lista {
     color: var(--enigma-error);
     border: 1px solid color-mix(in srgb, var(--enigma-error) 35%, transparent);
 }
+/* ─── Toolbar de páginas ──────────────────────────────────────────────── */
+.pagina__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+}
+
+.pagina__toolbar .pagina__lead {
+    margin: 0;
+}
+
+/* ─── Botón de acción primaria (crear) ────────────────────────────────── */
+.boton--primario {
+    background: var(--enigma-accent);
+    border-color: var(--enigma-accent);
+    color: #fff;
+}
+
+.boton--primario:hover {
+    background: var(--enigma-accent-hover);
+    border-color: var(--enigma-accent-hover);
+    color: #fff;
+}
+
+/* ─── Botones de icono (acciones de fila) ─────────────────────────────── */
+.boton-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: calc(var(--enigma-radius) - 3px);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--enigma-ink-3);
+    cursor: pointer;
+    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease),
+                border-color 180ms var(--enigma-ease);
+}
+
+.boton-icono:hover {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+.boton-icono:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+.boton-icono--peligro:hover {
+    color: var(--enigma-error);
+    background: var(--enigma-error-soft);
+}
+
+/* ─── Chips de roles ──────────────────────────────────────────────────── */
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--enigma-border);
+    background: var(--enigma-surface);
+    color: var(--enigma-ink-2);
+    cursor: pointer;
+    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease),
+                border-color 180ms var(--enigma-ease);
+}
+
+.chip:hover {
+    color: var(--enigma-accent);
+    border-color: var(--enigma-accent);
+}
+
+.chip:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+.chip--activa {
+    background: var(--enigma-accent-soft);
+    border-color: var(--enigma-accent);
+    color: var(--enigma-accent);
+}
+
+.chip--activa::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.chips__vacio {
+    color: var(--enigma-ink-3);
+    font-size: 0.85rem;
+}
+
+/* Chips estáticos (solo lectura, en tabla) */
+.tabla-admin .chip {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ─── Diálogo / modal ─────────────────────────────────────────────────── */
+.dialogo {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+}
+
+.dialogo__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(14, 55, 54, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+.dialogo__tarjeta {
+    position: relative;
+    width: min(100%, 26rem);
+    max-height: min(88vh, 44rem);
+    overflow-y: auto;
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: calc(var(--enigma-radius) + 2px);
+    box-shadow: var(--enigma-shadow);
+    padding: 1.5rem 1.6rem 1.6rem;
+}
+
+.dialogo__encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.dialogo__titulo {
+    margin: 0;
+    font-family: var(--enigma-font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--enigma-ink);
+}
+
+.dialogo__cerrar {
+    font: inherit;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--enigma-border);
+    background: transparent;
+    color: var(--enigma-ink-2);
+    cursor: pointer;
+    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease);
+}
+
+.dialogo__cerrar:hover {
+    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft);
+}
+
+.dialogo__campos {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.dialogo__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+}
+
+/* ─── Campos de formulario (diálogos) ─────────────────────────────────── */
+.campo {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.campo__etiqueta {
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--enigma-ink-2);
+}
+
+.campo__entrada,
+.campo__select {
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--enigma-ink);
+    background: var(--enigma-surface);
+    border: 1px solid var(--enigma-border);
+    border-radius: var(--enigma-radius);
+    padding: 0.6rem 0.8rem;
+    transition: border-color 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease);
+}
+
+.campo__entrada:focus-visible,
+.campo__select:focus-visible {
+    outline: none;
+    border-color: var(--enigma-accent);
+    box-shadow: 0 0 0 3px var(--enigma-accent-soft);
+}
+
+/* ─── Skeleton de carga (filas) ───────────────────────────────────────── */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--enigma-accent-soft);
+    border-radius: calc(var(--enigma-radius) - 3px);
+    height: 0.95rem;
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    animation: skeleton-brillo 1.4s infinite;
+}
+
+@keyframes skeleton-brillo {
+    to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after { animation: none; }
+}
+
+/* ─── Estado vacío ────────────────────────────────────────────────────── */
+.vacio {
+    display: grid;
+    place-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1rem;
+    color: var(--enigma-ink-3);
+    text-align: center;
+}
+
+.vacio__titulo {
+    font-family: var(--enigma-font-display);
+    font-weight: 650;
+    color: var(--enigma-ink-2);
+}
+
+/* ─── Celda de usuario (nombre + correo) ──────────────────────────────── */
+.usuario-celda {
+    display: grid;
+    gap: 0.1rem;
+}
+
+.usuario-celda__nombre {
+    font-weight: 600;
+    color: var(--enigma-ink);
+}
+
+.usuario-celda__correo {
+    font-size: 0.8rem;
+    color: var(--enigma-ink-3);
+}
+
+/* Columna de acciones: derecha y sin ancho extra */
+.tabla-admin__acciones {
+    text-align: right;
+    white-space: nowrap;
+    width: 1%;
+}

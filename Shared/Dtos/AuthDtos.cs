@@ -25,3 +25,9 @@ public record UsuarioInstitucionDto(UsuarioDto Usuario, List<string> Roles);
 public record SeleccionInstitucionRequest(int InstitucionId);
 /// <summary>Cuerpo de PUT administracion/usuarios/{id}/roles.</summary>
 public record ActualizarRolesRequest(List<string> Roles);
+
+/// <summary>Cuerpo de POST/PUT administracion/instituciones (crear y editar).</summary>
+public record InstitucionRequest(string Nombre, string Tipo);
+
+/// <summary>Cuerpo de POST administracion/usuarios (alta en la institución activa).</summary>
+public record AltaUsuarioRequest(string NombreUsuario, string? Correo, string Contrasena, List<string> Roles);

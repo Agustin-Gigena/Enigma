@@ -1,0 +1,53 @@
+@* Modal base del sistema: overlay + tarjeta, animado por GSAP (via servicio —
+   sin JS directo). El contenido va en ChildContent. Cierre por click en el
+   overlay y botón X. *@
+@inject Gsap Animaciones
+@using Microsoft.AspNetCore.Components.Web
+
+@if (_visible)
+{
+    <div class="dialogo" @onclick="CerrarPorOverlay" role="presentation">
+        <div class="dialogo__overlay" aria-hidden="true"></div>
+        <section class="dialogo__tarjeta" role="dialog" aria-modal="true" aria-labelledby="dialogo-titulo" @onclick:stopPropagation>
+            <header class="dialogo__encabezado">
+                <h2 id="dialogo-titulo" class="dialogo__titulo">@Titulo</h2>
+                <button type="button" class="dialogo__cerrar" aria-label="Cerrar" @onclick="() => CerrarAsync()">✕</button>
+            </header>
+            @ChildContent
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Titulo { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnCerrado { get; set; }
+
+    private bool _visible;
+    private bool _animandoCierre;
+
+    /// <summary>Abre el diálogo (idempotente: re-abrir con otros datos reanima).</summary>
+    public async Task AbrirAsync()
+    {
+        _animandoCierre = false;
+        _visible = true;
+        await Task.Yield(); // deja pintar el DOM antes de animar
+        await Animaciones.DialogoAbrirAsync(".dialogo", ".dialogo__tarjeta");
+    }
+
+    /// <summary>Cierra con animación; al terminar notifica OnCerrado.</summary>
+    public async Task CerrarAsync()
+    {
+        if (!_visible || _animandoCierre)
+        {
+            return;
+        }
+        _animandoCierre = true;
+        await Animaciones.DialogoCerrarAsync(".dialogo", ".dialogo__tarjeta");
+        _visible = false;
+        _animandoCierre = false;
+        await OnCerrado.InvokeAsync();
+    }
+
+    private Task CerrarPorOverlay() => CerrarAsync();
+}

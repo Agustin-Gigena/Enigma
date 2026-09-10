@@ -43,6 +43,7 @@ builder.Services.AddScoped<InstitucionRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IMembresiaService, MembresiaService>();
 builder.Services.AddScoped<IInstitucionService, InstitucionService>();
+builder.Services.AddScoped<IUsuariosAdministracionService, UsuariosAdministracionService>();
 // Configure OpenAPI
 
 builder.Services.AddOpenApi();

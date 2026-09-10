@@ -8,7 +8,7 @@ public abstract class GenericRepository<T> where T : class
     public virtual T? GetById(int id, bool borradoLogico = false)
     {
         T? entity = Context.Set<T>().Find(id);
-        if (entity == null || (entity is GenericEntity genEntity && genEntity.BorradoLogico && !borradoLogico))
+        if (entity is null || (entity is GenericEntity genEntity && genEntity.BorradoLogico && !borradoLogico))
         {
             return null;
         }
@@ -18,7 +18,7 @@ public abstract class GenericRepository<T> where T : class
     public bool SetBorradoLogico(int id, bool borradoLogico)
     {
         T? entity = Context.Set<T>().Find(id);
-        if (entity == null)
+        if (entity is null)
         {
             return false;
         }

@@ -44,6 +44,30 @@ public class MenuUiTest
     }
 
     [Test]
+    public async Task Navegacion_SinRecargasCompletas_DeLoginAModulos()
+    {
+        // Regresión del bug de doble navegación: el guard y los cambios de sección
+        // usaban forceLoad → recarga completa → animación de arranque del WASM una y
+        // otra vez. Todo el flujo login → selección → menú → sección → cambio de
+        // institución debe vivir en UNA sola carga de página (SPA).
+        await EntrarComoAdminAsync();
+
+        await _page.Locator(".app-nav details summary").First.ClickAsync(new() { Timeout = 45_000 });
+        await _page.GetByRole(AriaRole.Link, new() { Name = "Instituciones" }).ClickAsync(new() { Timeout = 45_000 });
+        await _page.WaitForURLAsync("**/administracion/instituciones", new() { Timeout = 45_000 });
+        await _page.Locator(".tabla-admin tbody tr").First.WaitForAsync(new() { Timeout = 45_000 });
+
+        await _page.Locator(".app-institucion-menu summary").ClickAsync(new() { Timeout = 45_000 });
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Universidad Nacional del Plata" }).ClickAsync(new() { Timeout = 45_000 });
+        await _page.WaitForURLAsync(url => new Uri(url).AbsolutePath == "/", new() { Timeout = 45_000 });
+
+        int cargasCompletas = await _page.EvaluateAsync<int>(
+            "() => performance.getEntriesByType('navigation').length");
+        Assert.That(cargasCompletas, Is.EqualTo(1),
+            "Todo el flujo debe ser SPA: una sola carga de página, sin re-boot del WASM.");
+    }
+
+    [Test]
     public async Task Barra_MuestraModuloConSeccionesParaAdmin()
     {
         await EntrarComoAdminAsync();

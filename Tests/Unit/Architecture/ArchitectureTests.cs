@@ -152,6 +152,254 @@ public class ArchitectureTests
         return codigo;
     }
 
+    // ─── Convenciones de estilo de código (learn.microsoft.com/dotnet/csharp/
+    //     fundamentals/coding-style/coding-conventions) ─────────────────────────
+    // Chequeos textuales línea a línea sobre el código de producción
+    // (Server + Client + Shared, sin bin/obj/Migrations), con comentarios y
+    // literales de cadena eliminados para evitar falsos positivos.
+
+    private static string[] RaicesDeProduccion(string repoRoot) =>
+    [
+        Path.Combine(repoRoot, "Server"),
+        Path.Combine(repoRoot, "Client"),
+        Path.Combine(repoRoot, "Shared"),
+    ];
+
+    private static IEnumerable<(string Ruta, string[] LineasLimpias)> FuentesDeProduccion(string repoRoot)
+    {
+        foreach (string raiz in RaicesDeProduccion(repoRoot))
+        {
+            foreach (string ruta in Directory.EnumerateFiles(raiz, "*.cs", SearchOption.AllDirectories))
+            {
+                if (EsArchivoGenerado(ruta))
+                {
+                    continue;
+                }
+                yield return (ruta, QuitarComentariosYStrings(File.ReadAllText(ruta)).Split('\n'));
+            }
+        }
+    }
+
+    [Test]
+    public void Layout_IndentacionConEspaciosSinTabulaciones()
+    {
+        // Convención de layout (MS): indentar con espacios, no tabuladores.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        List<string> violadores = RaicesDeProduccion(repoRoot)
+            .SelectMany(raiz => Directory.EnumerateFiles(raiz, "*.cs", SearchOption.AllDirectories))
+            .Where(path => !EsArchivoGenerado(path))
+            .Where(path => File.ReadAllLines(path).Any(linea => linea.Contains('\t')))
+            .Select(path => Path.GetRelativePath(repoRoot, path))
+            .OrderBy(path => path)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Archivos con tabuladores. Regla de layout: indentar con 4 espacios:\n"
+            + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Layout_LlavesEnLineaPropia()
+    {
+        // Convención de layout (MS): la llave de apertura va en su propia línea
+        // (estilo Allman) para bloques de control y miembros. Se admite el cuerpo
+        // de una sola línea cuando abre y cierra en la misma (ej. `public Rol() { }`).
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex control = new(@"^\s*(?:else if|if|for|foreach|while|switch|catch|lock|using)\b.*\)\s*\{\s*$");
+        Regex miembro = new(@"^\s*(?:public|private|protected|internal)\b.*\)\s*\{\s*$");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Where(x => control.IsMatch(x.linea) || miembro.IsMatch(x.linea))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} {x.linea.Trim()}")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Bloques con llave de apertura en la misma línea. Regla de layout: la llave va en su propia línea:\n"
+            + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Layout_UsingsFueraDelNamespace()
+    {
+        // Convención (MS): las directivas using van fuera del namespace. Con
+        // namespaces file-scoped (`namespace X;`) es imposible violarlo; este test
+        // custodia que no reaparezcan namespaces con llaves + usings adentro.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .Select(f => (f.Ruta, Codigo: string.Join('\n', f.LineasLimpias)))
+            .Where(x => Regex.IsMatch(x.Codigo, @"namespace\s+[\w.]+\s*\{[^{}]*\busing\s"))
+            .Select(x => Path.GetRelativePath(repoRoot, x.Ruta))
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Namespaces con llaves que contienen usings. Regla: usings fuera del namespace (file-scoped):\n"
+            + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Nombres_InterfazConPrefijoI()
+    {
+        // Convención de nombres (MS): las interfaces comienzan con I mayúscula.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"\binterface\s+([A-Za-z_]\w*)");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => patron.Matches(string.Join('\n', f.LineasLimpias))
+                .Cast<Match>().Select(m => (f.Ruta, Nombre: m.Groups[1].Value)))
+            .Where(x => !x.Nombre.StartsWith('I'))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}: interfaz '{x.Nombre}' sin prefijo I")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Interfaces sin prefijo I:\n" + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Nombres_TiposEnPascalCase()
+    {
+        // Convención de nombres (MS): clases, records y structs en PascalCase.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"\b(class|record|struct)\s+([A-Za-z_]\w*)");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => patron.Matches(string.Join('\n', f.LineasLimpias))
+                .Cast<Match>().Select(m => (f.Ruta, Tipo: m.Groups[1].Value, Nombre: m.Groups[2].Value)))
+            .Where(x => !char.IsUpper(x.Nombre[0]))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}: {x.Tipo} '{x.Nombre}' no está en PascalCase")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Tipos fuera de PascalCase:\n" + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Nombres_MetodosEnPascalCase()
+    {
+        // Convención de nombres (MS): métodos (públicos y privados) en PascalCase.
+        // Solo declaraciones con modificador explícito: las funciones locales van
+        // sin él y quedan fuera del alcance de este chequeo textual.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"^\s*(?:public|private|protected|internal)\s+(?:(?:static|async|override|virtual|sealed|new|partial|extern)\s+)*[\w<>\[\],.? ]+?\s+([A-Za-z_]\w*)\s*\(");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Select(x => (x.Ruta, x.indice, Nombre: patron.Match(x.linea) is Match m && m.Success ? m.Groups[1].Value : null))
+            .Where(x => x.Nombre is not null && !char.IsUpper(x.Nombre[0]))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} método '{x.Nombre}' no está en PascalCase")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Métodos fuera de PascalCase:\n" + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Nombres_MetodosAsincronosConSufijoAsync()
+    {
+        // Convención de nombres (MS, sección async/await): los métodos async terminan
+        // con el sufijo Async.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"^\s*(?:public|private|protected|internal)\s+(?:static\s+)?async\s+[\w<>\[\],.? ]+?\s+([A-Za-z_]\w*)\s*\(");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Select(x => (x.Ruta, x.indice, Nombre: patron.Match(x.linea) is Match m && m.Success ? m.Groups[1].Value : null))
+            .Where(x => x.Nombre is not null && !x.Nombre.EndsWith("Async", StringComparison.Ordinal))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} método async '{x.Nombre}' sin sufijo Async")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Métodos async sin sufijo Async:\n" + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Nombres_CamposPrivadosDeInstanciaConPrefijoGuionBajo()
+    {
+        // Convención de nombres (.NET): los campos de instancia privados usan
+        // _camelCase. Los static readonly y const pueden ir en PascalCase
+        // (convención adoptada por el proyecto), por eso quedan fuera del chequeo.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Where(x => x.linea.Contains("private", StringComparison.Ordinal)
+                     && !x.linea.Contains(" static ", StringComparison.Ordinal)
+                     && !x.linea.Contains("const ", StringComparison.Ordinal)
+                     && !x.linea.Contains('(')
+                     && !Regex.IsMatch(x.linea, @"\b(class|interface|record|struct|delegate|event)\b"))
+            .Select(x => (x.Ruta, x.indice, Nombre: Regex.Match(x.linea, @"private\s+(?:(?:readonly|volatile)\s+)*(?:[\w<>\[\],.?]+\s+)?([A-Za-z_]\w*)\s*(?:=[^;]*)?;\s*$") is Match m && m.Success ? m.Groups[1].Value : null))
+            .Where(x => x.Nombre is not null && !x.Nombre.StartsWith('_'))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} campo '{x.Nombre}' sin prefijo _")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Campos privados de instancia sin prefijo _:\n" + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Lenguaje_InterpolacionEnVezDeStringFormat()
+    {
+        // Convención de lenguaje (MS): para cadenas cortas, interpolación en lugar
+        // de string.Format.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .Where(f => f.LineasLimpias.Any(l => l.Contains("string.Format(", StringComparison.Ordinal)))
+            .Select(f => Path.GetRelativePath(repoRoot, f.Ruta))
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Usos de string.Format. Regla: interpolación de cadenas ($\"...\"):\n"
+            + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Lenguaje_SinThisExplicito()
+    {
+        // Convención de lenguaje (MS): evitar `this.` salvo que sea necesario para
+        // desambiguar. El modificador de métodos de extensión (`this string s`) no
+        // usa punto y queda fuera del patrón.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"\bthis\.");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Where(x => patron.IsMatch(x.linea))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} {x.linea.Trim()}")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Usos explícitos de this. Regla: omitir el calificador salvo ambigüedad:\n"
+            + string.Join("\n", violadores));
+    }
+
+    [Test]
+    public void Lenguaje_IsNotNullEnVezDeComparacionConNull()
+    {
+        // Convención de lenguaje (MS): usar los operadores is / is not para probar
+        // null, en lugar de comparaciones de igualdad.
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        Regex patron = new(@"!=\s*null|==\s*null");
+
+        List<string> violadores = FuentesDeProduccion(repoRoot)
+            .SelectMany(f => f.LineasLimpias.Select((linea, indice) => (f.Ruta, linea, indice)))
+            .Where(x => patron.IsMatch(x.linea))
+            .Select(x => $"{Path.GetRelativePath(repoRoot, x.Ruta)}:{x.indice + 1} {x.linea.Trim()}")
+            .OrderBy(x => x)
+            .ToList();
+
+        Assert.That(violadores, Is.Empty,
+            "Comparaciones de null con ==/!=. Regla: usar is / is not null:\n"
+            + string.Join("\n", violadores));
+    }
     [Test]
     public void PaginasDeSeccion_EstanRegistradasEnCatalogo()
     {

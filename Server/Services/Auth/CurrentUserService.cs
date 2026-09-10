@@ -29,13 +29,13 @@ public class CurrentUserService : ICurrentUserService
         Usuario? usuario = null;
 
         CurrentUserScope? scope = _current.Value;
-        if (scope != null)
+        if (scope is not null)
         {
             ClaimsPrincipal? principal = scope.Accessor.HttpContext?.User;
             if (principal?.Identity?.IsAuthenticated == true)
             {
                 Claim? userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                if (userIdClaim is not null && int.TryParse(userIdClaim.Value, out int userId))
                 {
                     scope.CurrentUser ??= new Lazy<Usuario?>(() => scope.Resolver(userId));
                     usuario = scope.CurrentUser.Value;
@@ -43,7 +43,7 @@ public class CurrentUserService : ICurrentUserService
             }
         }
 
-        if (usuario == null && IsAuthRequired())
+        if (usuario is null && IsAuthRequired())
         {
             throw new UnauthorizedAccessException("El usuario no está autenticado.");
         }

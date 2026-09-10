@@ -26,6 +26,11 @@ public class MembresiaRepository : GenericRepository<Membresia>
             .Where(m => m.UsuarioId == usuarioId && !m.BorradoLogico)
             .ToListAsync(ct);
 
+    public Task<Membresia?> ObtenerPorIdAsync(int membresiaId, CancellationToken ct = default) =>
+        Context.Membresias.FirstOrDefaultAsync(m => m.Id == membresiaId, ct);
+
+    public Task GuardarAsync(CancellationToken ct = default) => Context.SaveChangesAsync(ct);
+
     public async Task AgregarAsync(Membresia membresia, CancellationToken ct = default)
     {
         Context.Membresias.Add(membresia);

@@ -15,12 +15,19 @@ public class InstitucionRepository(EnigmaDbContext context)
             .OrderBy(i => i.Nombre)
             .ToListAsync(ct);
 
-    public Task<Institucion?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default) =>
-        context.Instituciones.FirstOrDefaultAsync(i => i.Nombre == nombre, ct);
+    public Task<Institucion?> ObtenerPorIdAsync(int id, bool incluirBorradas = false, CancellationToken ct = default) =>
+        context.Instituciones.FirstOrDefaultAsync(i => i.Id == id && (incluirBorradas || !i.BorradoLogico), ct);
 
-    public async Task AgregarAsync(Institucion institucion, CancellationToken ct = default)
+    public Task<Institucion?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default) =>
+        context.Instituciones.FirstOrDefaultAsync(i => i.Nombre == nombre && !i.BorradoLogico, ct);
+
+    public async Task<int> AgregarAsync(Institucion institucion, CancellationToken ct = default)
     {
         context.Instituciones.Add(institucion);
         await context.SaveChangesAsync(ct); // materializa el Id: la membresía referencia la FK real.
+        return institucion.Id;
     }
+
+    public Task GuardarAsync(CancellationToken ct = default) => context.SaveChangesAsync(ct);
 }
+

@@ -2,47 +2,137 @@
 @inject HttpClient Http
 @inject Gsap Animaciones
 @inject CancelacionNavegacion Nav
+@using Enigma.Client.Shared
 
 <PageTitle>Instituciones · Enigma</PageTitle>
 
 <section class="pagina">
-    <h1 class="pagina__titulo">Instituciones</h1>
-    <p class="pagina__lead">Instituciones activas de este despliegue.</p>
+    <div class="pagina__toolbar">
+        <div>
+            <h1 class="pagina__titulo">Instituciones</h1>
+            <p class="pagina__lead">Instituciones activas de este despliegue.</p>
+        </div>
+        <button type="button" class="boton boton--primario" @onclick="AbrirNueva">+ Nueva institución</button>
+    </div>
 
     @if (_cargando)
     {
-        <p class="estado estado--exito" role="status">Cargando instituciones…</p>
+        <div class="pagina__superficie">
+            <table class="tabla-admin" aria-hidden="true">
+                <thead><tr><th>Nombre</th><th>Tipo</th><th></th></tr></thead>
+                <tbody>
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <tr><td><div class="skeleton" style="width:55%"></div></td><td><div class="skeleton" style="width:35%"></div></td><td></td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
     else if (_error is not null)
     {
         <p class="estado estado--error" role="alert">@_error</p>
     }
+    else if (_instituciones.Count == 0)
+    {
+        <div class="pagina__superficie">
+            <div class="vacio">
+                <p class="vacio__titulo">Todavía no hay instituciones</p>
+                <p>Creá la primera para empezar a organizar usuarios y secciones.</p>
+                <button type="button" class="boton boton--primario" @onclick="AbrirNueva">+ Nueva institución</button>
+            </div>
+        </div>
+    }
     else
     {
         <div class="pagina__superficie">
             <table class="tabla-admin">
-                <thead>
-                    <tr><th>Nombre</th><th>Tipo</th></tr>
-                </thead>
+                <thead><tr><th>Nombre</th><th>Tipo</th><th class="tabla-admin__acciones"></th></tr></thead>
                 <tbody>
                     @foreach (InstitucionDto institucion in _instituciones)
                     {
                         <tr>
                             <td>@institucion.Nombre</td>
                             <td>@institucion.Tipo</td>
+                            <td class="tabla-admin__acciones">
+                                <button type="button" class="boton-icono" title="Editar" aria-label="Editar @institucion.Nombre" @onclick="() => AbrirEdicion(institucion)">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                    </svg>
+                                </button>
+                                <button type="button" class="boton-icono boton-icono--peligro" title="Eliminar" aria-label="Eliminar @institucion.Nombre" @onclick="() => ConfirmarEliminar(institucion)">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+        @if (_mensaje is not null)
+        {
+            <p class="estado estado--exito" role="status">@_mensaje</p>
+        }
     }
 </section>
 
+<Dialogo @ref="_dialogo" Titulo="@_tituloDialogo" OnCerrado="() => _editando = null">
+    @if (_confirmandoBorrado)
+    {
+        <p style="margin:0 0 0.2rem">¿Eliminar <strong>@_editando?.Nombre</strong>?</p>
+        <p class="pagina__lead" style="margin:0">Es un borrado lógico: deja de aparecer en todo el sistema, pero el historial auditado se conserva.</p>
+        <div class="dialogo__acciones">
+            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
+            <button type="button" class="boton boton--primario" style="background:var(--enigma-error);border-color:var(--enigma-error)" disabled="@_guardando" @onclick="EliminarAsync">Eliminar</button>
+        </div>
+    }
+    else
+    {
+        <div class="dialogo__campos">
+            <label class="campo">
+                <span class="campo__etiqueta">Nombre</span>
+                <input class="campo__entrada" @bind="_nombre" placeholder="Nombre de la institución" autocomplete="off" />
+            </label>
+            <label class="campo">
+                <span class="campo__etiqueta">Tipo</span>
+                <select class="campo__select" @bind="_tipo">
+                    <option value="Universidad">Universidad</option>
+                    <option value="Secundaria">Secundaria</option>
+                    <option value="Primaria">Primaria</option>
+                    <option value="Curso">Curso</option>
+                </select>
+            </label>
+            @if (_errorDialogo is not null)
+            {
+                <p class="estado estado--error" role="alert" style="margin:0">@_errorDialogo</p>
+            }
+        </div>
+        <div class="dialogo__acciones">
+            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
+            <button type="button" class="boton boton--primario" disabled="@_guardando" @onclick="GuardarAsync">
+                @(_editando is null ? "Crear" : "Guardar")
+            </button>
+        </div>
+    }
+</Dialogo>
 
 @code {
     private List<InstitucionDto> _instituciones = [];
     private bool _cargando = true;
     private string? _error;
+    private string? _mensaje;
+
+    private Dialogo _dialogo = default!;
+    private InstitucionDto? _editando;
+    private bool _confirmandoBorrado;
+    private string _nombre = "";
+    private string _tipo = "Universidad";
+    private string? _errorDialogo;
+    private bool _guardando;
+    private string _tituloDialogo = "";
+    private bool _animadas;
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,7 +143,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Entrada escalonada de filas (GSAP vía servicio — sin JS directo), una vez.
         if (!_animadas && _instituciones.Count > 0)
         {
             _animadas = true;
@@ -61,5 +150,92 @@
         }
     }
 
-    private bool _animadas;
+    private async Task RecargarAsync()
+    {
+        _instituciones = await Http.GetSeguroAsync<List<InstitucionDto>>("administracion/instituciones", Nav.Token) ?? [];
+    }
+
+    private Task AbrirNueva()
+    {
+        _editando = null;
+        _confirmandoBorrado = false;
+        _nombre = "";
+        _tipo = "Universidad";
+        _errorDialogo = null;
+        _tituloDialogo = "Nueva institución";
+        return _dialogo.AbrirAsync();
+    }
+
+    private Task AbrirEdicion(InstitucionDto institucion)
+    {
+        _editando = institucion;
+        _confirmandoBorrado = false;
+        _nombre = institucion.Nombre;
+        _tipo = institucion.Tipo;
+        _errorDialogo = null;
+        _tituloDialogo = "Editar institución";
+        return _dialogo.AbrirAsync();
+    }
+
+    private Task ConfirmarEliminar(InstitucionDto institucion)
+    {
+        _editando = institucion;
+        _confirmandoBorrado = true;
+        _errorDialogo = null;
+        _tituloDialogo = "Eliminar institución";
+        return _dialogo.AbrirAsync();
+    }
+
+    private async Task GuardarAsync()
+    {
+        _guardando = true;
+        _errorDialogo = null;
+        try
+        {
+            InstitucionRequest cuerpo = new(_nombre, _tipo);
+            HttpResponseMessage? respuesta = _editando is null
+                ? await Http.PostSeguroAsync("administracion/instituciones", cuerpo, Nav.Token)
+                : await Http.PutSeguroAsync($"administracion/instituciones/{_editando.Id}", cuerpo, Nav.Token);
+
+            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+            {
+                _errorDialogo = await HttpSeguro.LeerErrorAsync(respuesta) ?? "No se pudo guardar la institución.";
+                return;
+            }
+
+            await _dialogo.CerrarAsync();
+            await RecargarAsync();
+            _mensaje = _editando is null ? "Institución creada." : "Institución actualizada.";
+            _animadas = false;
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
+    private async Task EliminarAsync()
+    {
+        _guardando = true;
+        _errorDialogo = null;
+        try
+        {
+            HttpResponseMessage? respuesta = await Http.DeleteAsync(
+                $"administracion/instituciones/{_editando!.Id}", Nav.Token);
+            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+            {
+                _errorDialogo = "No se pudo eliminar la institución.";
+                return;
+            }
+
+            await _dialogo.CerrarAsync();
+            await RecargarAsync();
+            _mensaje = "Institución eliminada.";
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
 }

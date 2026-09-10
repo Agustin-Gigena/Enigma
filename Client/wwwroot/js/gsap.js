@@ -56,6 +56,22 @@ window.EnigmaGsap = (() => {
                 { duration: reduce() ? 0.001 : 0.26, ease: "power3.out", stagger: base, clearProps: "all" });
         }),
 
+        /// Diálogo/modal: entrada (overlay + tarjeta) y salida con promesa.
+        dialogoAbrir: (overlaySel, tarjetaSel) => listo(() => {
+            window.gsap.fromTo(overlaySel,
+                { opacity: 0 },
+                { duration: reduce() ? 0.001 : 0.2, ease: "power2.out", opacity: 1 });
+            window.gsap.fromTo(tarjetaSel,
+                { opacity: 0, y: reduce() ? 0 : 16, scale: reduce() ? 1 : 0.97 },
+                { duration: reduce() ? 0.001 : 0.28, ease: "power3.out", opacity: 1, y: 0, scale: 1 });
+        }),
+
+        dialogoCerrar: (overlaySel, tarjetaSel) => listo(() => new Promise((res) => {
+            if (reduce()) { res(); return; }
+            window.gsap.to(tarjetaSel, { duration: 0.18, ease: "power2.in", opacity: 0, y: 8, scale: 0.98 });
+            window.gsap.to(overlaySel, { duration: 0.2, ease: "power2.in", opacity: 0, delay: 0.04 }).then(res);
+        })),
+
         /// Resaltar un elemento (feedback de acción: guardado, selección).
         pulso: (selector) => listo(() => {
             if (reduce()) return;

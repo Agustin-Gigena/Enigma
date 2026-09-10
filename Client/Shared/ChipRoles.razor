@@ -1,0 +1,33 @@
+@* Selector de roles como chips toggleables: pill con estado activo (jade).
+   Reemplaza los checkboxes inline: mismas capacidades, mejor lectura. *@
+<div class="chips" role="group" aria-label="Roles">
+    @foreach (RolDto rol in Roles)
+    {
+        bool activo = Seleccionados.Contains(rol.Nombre);
+        <button type="button"
+                class="chip @(activo ? "chip--activa" : "")"
+                aria-pressed="@activo"
+                @onclick="() => Alternar(rol.Nombre)">
+            @rol.Nombre
+        </button>
+    }
+    @if (Roles.Count == 0)
+    {
+        <span class="chips__vacio">No hay roles definidos.</span>
+    }
+</div>
+
+@code {
+    [Parameter] public List<RolDto> Roles { get; set; } = [];
+    [Parameter] public List<string> Seleccionados { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> SeleccionadosChanged { get; set; }
+
+    private async Task Alternar(string rol)
+    {
+        if (!Seleccionados.Remove(rol))
+        {
+            Seleccionados.Add(rol);
+        }
+        await SeleccionadosChanged.InvokeAsync(Seleccionados);
+    }
+}
