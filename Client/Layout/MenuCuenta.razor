@@ -1,29 +1,25 @@
-@* Icono de cuenta extensible (hoy: Cerrar sesión). Dropdown estándar del
-   sistema: data-menu + .menu__lista + .menu__item (app.css + EnigmaMenu). *@
-@inject AuthService Auth
-@inject NavigationManager Navigation
+@* Menú de cuenta: patrón estándar Material (nombre + chevron como trigger).
+   El nombre deja de ser texto decorativo: ES el trigger (hallazgo P2 de la
+   crítica). El nombre del trigger vive dentro del dropdown. *@
+@using MudBlazor
 
-<div class="app-cuenta">
-    <span class="app-cuenta__nombre">@NombreUsuario</span>
-    <details class="app-cuenta__menu" data-menu>
-        <summary aria-label="Menú de cuenta">
-            <svg class="app-cuenta__icono" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-            </svg>
-            <svg class="menu__chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" />
-            </svg>
-        </summary>
-        <ul class="menu__lista menu__lista--derecha">
-            <li><button type="button" class="menu__item" @onclick="CerrarSesion">Cerrar sesión</button></li>
-            @* Ítems futuros: perfil, preferencias… (separador: <li><hr class="menu__separador" /></li>) *@
-        </ul>
-    </details>
-</div>
+<MudMenu Class="app-cuenta"
+         Label="@NombreUsuario"
+         StartIcon="@Icons.Material.Filled.AccountCircle"
+         EndIcon="@Icons.Material.Filled.ExpandMore"
+         Color="Color.Inherit"
+         Variant="Variant.Text"
+         Dense="true"
+         CloseOnItemClick="true">
+    <MudMenuItem OnClick="CerrarSesion">Cerrar sesión</MudMenuItem>
+    @* Ítems futuros: perfil, preferencias… *@
+</MudMenu>
 
 @code {
     [Parameter] public string? NombreUsuario { get; set; }
+
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     private async Task CerrarSesion()
     {

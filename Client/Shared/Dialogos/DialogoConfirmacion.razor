@@ -1,0 +1,61 @@
+@* Confirmación destructiva genérica: el botón de acción se pinta en rojo de
+   error y el copy explica la consecuencia (borrado lógico auditable). *@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Inline="true" Style="display:block">@Texto</MudText>
+        @if (!string.IsNullOrEmpty(Detalle))
+        {
+            <MudText Typo="Typo.body2" Class="mt-2" Style="opacity:.85">@Detalle</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="@Color.Error" Loading="@_guardando" OnClick="Confirmar">@TextoAccion</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>Pregunta principal ("¿Quitar a fulano de esta institución?").</summary>
+    [Parameter] public string Texto { get; set; } = "¿Confirmás la acción?";
+
+    /// <summary>Explicación de la consecuencia (opcional).</summary>
+    [Parameter] public string? Detalle { get; set; }
+
+    /// <summary>Texto del botón de confirmación ("Quitar", "Eliminar").</summary>
+    [Parameter] public string TextoAccion { get; set; } = "Confirmar";
+
+    /// <summary>Permite al invocador ejecutar la acción ANTES de cerrar:
+    /// si devuelve false, el diálogo queda abierto (falla mostrada afuera).</summary>
+    [Parameter] public Func<Task<bool>>? ConfirmarAsync { get; set; }
+
+    private bool _guardando;
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private async Task Confirmar()
+    {
+        if (ConfirmarAsync is null)
+        {
+            MudDialog.Close(true);
+            return;
+        }
+
+        _guardando = true;
+        try
+        {
+            bool ok = await ConfirmarAsync();
+            if (ok)
+            {
+                MudDialog.Close(true);
+            }
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+}

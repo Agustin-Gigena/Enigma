@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject AuthService Auth
 @using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 
 <PageTitle>Inicio · Enigma</PageTitle>
 
@@ -11,7 +12,7 @@
         <div class="home__franja-copy">
             <p class="home__saludo">Bienvenido, @_usuario?.NombreUsuario</p>
             <h1>@_institucion?.Nombre</h1>
-            <p class="home__tipo">@_institucion?.Tipo</p>
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="home__tipo">@_institucion?.Tipo</MudChip>
         </div>
     </section>
 
@@ -19,17 +20,13 @@
         <aside class="home__contexto">
             <h2 class="home__contexto-titulo">Tu contexto</h2>
 
-            <dl class="home__ficha">
-                <dt>Institución activa</dt>
-                <dd>@_institucion?.Nombre</dd>
-                <dd class="home__ficha-sub">@_institucion?.Tipo</dd>
-            </dl>
-
-            <dl class="home__ficha">
-                <dt>Usuario</dt>
-                <dd>@_usuario?.NombreUsuario</dd>
-                <dd class="home__ficha-sub">@_usuario?.Correo</dd>
-            </dl>
+            <MudPaper Class="home__ficha" Elevation="0" Outlined="true">
+                <dl>
+                    <dt>Usuario</dt>
+                    <dd>@_usuario?.NombreUsuario</dd>
+                    <dd class="home__ficha-sub">@_usuario?.Correo</dd>
+                </dl>
+            </MudPaper>
         </aside>
 
         <section class="home__modulos">

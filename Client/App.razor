@@ -1,6 +1,13 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 @using Enigma.Shared.Auth
 @using Enigma.Shared.Modules
+@using MudBlazor
+
+<MudThemeProvider Theme="Themes.TemaEnigma.Instancia" IsDarkMode="_oscuro" IsDarkModeChanged="FijarTema" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Program).Assembly" OnNavigateAsync="OnNavigateAsync">
@@ -21,25 +28,32 @@
     </Router>
 </CascadingAuthenticationState>
 
-@inject IJSRuntime JS
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
+@inject Services.ThemeService Tema
 
 @code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private bool _oscuro = true; // Coincide con el splash oscuro hasta leer la preferencia.
+
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
-        {
-            // EnigmaMotion.init() es idempotente: ata una sola vez el
-            // visibilitychange que pausa toda vida ambiental (.panel-vivo).
-            await JS.InvokeVoidAsync("EnigmaMotion.init");
-        }
+        Tema.Cambiado += SincronizarTema;
+        await Tema.InicializarAsync();
+        SincronizarTema();
     }
+
+    private void SincronizarTema()
+    {
+        _oscuro = Tema.Oscuro ?? true;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void FijarTema(bool oscuro) => Tema.Fijar(oscuro);
 
     /// <summary>Guard central: toda navegación pasa por acá antes de resolver la ruta.
     /// El provider solo reporta "autenticado" con sesión completa (pre-auth ⇒ /auth/me
     /// da 403 ⇒ anónimo), así que autenticado ≡ institución elegida.</summary>
-    private async Task OnNavigateAsync(NavigationContext contexto)
+    private async Task OnNavigateAsync(Microsoft.AspNetCore.Components.Routing.NavigationContext contexto)
     {
         string ruta = $"/{contexto.Path.TrimStart('/')}";
         AuthenticationState estado = await AuthState.GetAuthenticationStateAsync();
@@ -89,7 +103,7 @@
     /// navegación actual y re-arranca el ciclo para el destino (el guard corre de
     /// nuevo para la ruta nueva, que corta temprano). Sin recarga completa: la
     /// animación de arranque del WASM queda solo para la carga inicial.</summary>
-    private void Redirigir(NavigationContext contexto, string destino)
+    private void Redirigir(Microsoft.AspNetCore.Components.Routing.NavigationContext contexto, string destino)
     {
         contexto.CancellationToken.ThrowIfCancellationRequested();
         Navigation.NavigateTo(destino);

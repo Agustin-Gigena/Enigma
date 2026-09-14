@@ -33,6 +33,8 @@ logs/
 # NuGet packages (for top-level)
 packages/
 
+node_modules/
+
 # Test results
 TestResults/
 

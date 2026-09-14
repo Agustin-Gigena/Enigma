@@ -1,0 +1,54 @@
+@* Alta de usuario en la institución: usuario, correo opcional, contraseña
+   inicial (MudPasswordField con ojo de visibilidad) y roles iniciales como
+   chips. Devuelve DatosAltaUsuario; el POST vive en la página. *@
+@using MudBlazor
+@using MudExtensions
+@using Enigma.Shared.Dtos
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" ValidatableChanged="c => _valido = c">
+            <MudTextField @bind-Value="_usuario" Label="Usuario" Variant="Variant.Outlined"
+                          Required="true" RequiredError="El usuario es obligatorio"
+                          Immediate="false" autocomplete="off"
+                          placeholder="nombre de usuario" />
+            <MudTextField @bind-Value="_correo" Label="Correo (opcional)" Variant="Variant.Outlined"
+                          Immediate="false" autocomplete="off" Class="mt-6"
+                          placeholder="correo@institucion.edu" />
+            <MudPasswordField T="string" @bind-Text="_contrasena" Label="Contraseña inicial" Variant="Variant.Outlined"
+                              Required="true" RequiredError="La contraseña es obligatoria"
+                              Immediate="false" autocomplete="new-password" Class="mt-6"
+                              placeholder="Mínimo 8 caracteres" />
+            <div class="mt-6">
+                <ChipRoles Roles="@Roles" @bind-Seleccionados="_roles" />
+            </div>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_valido)"
+                   OnClick="Crear">Crear usuario</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>Rolés disponibles de la institución.</summary>
+    [Parameter] public List<RolDto> Roles { get; set; } = [];
+
+    private MudForm _form = default!;
+    private bool _valido;
+    private string _usuario = "";
+    private string _correo = "";
+    private string _contrasena = "";
+    private List<string> _roles = [];
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Crear() => MudDialog.Close(new DatosAltaUsuario(
+        _usuario.Trim(),
+        string.IsNullOrWhiteSpace(_correo) ? null : _correo.Trim(),
+        _contrasena,
+        [.. _roles]));
+}

@@ -3,6 +3,7 @@ using Enigma.Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -17,7 +18,9 @@ builder.Services.AddScoped<AuthenticationStateProvider>(
     sp => sp.GetRequiredService<EnigmaAuthenticationStateProvider>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<ServicioNotificaciones>();
 builder.Services.AddScoped<CancelacionNavegacion>();
+builder.Services.AddMudServices();
 builder.Services.AddScoped<Gsap>();
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())

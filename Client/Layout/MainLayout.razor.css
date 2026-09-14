@@ -1,24 +1,6 @@
-/* Shell de la app: navbar superior fija + área de contenido. Sin sidebar.
-   Los dropdowns de la barra (NavMenu, SelectorInstitucion, MenuCuenta) usan
-   el vocabulario global .menu__* de app.css + EnigmaMenu (js). */
-.app {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.app__bar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.6rem clamp(1.25rem, 4vw, 2.5rem);
-    background: var(--enigma-surface);
-    border-bottom: 1px solid var(--enigma-border);
-}
+/* Shell de la app: MudAppBar (Material) + área de contenido. Sin sidebar.
+   El look de la barra lo aporta MudBlazor; acá van gaps, separador entre
+   selector de institución y cuenta, y la columna del contenido. */
 
 .app__acciones {
     display: flex;
@@ -38,11 +20,14 @@
     flex-direction: column;
 }
 
-@media (max-width: 640px) {
-    .app__bar {
-        padding: 0.5rem 1rem;
-    }
+/* Vista con transición de entrada (GSAP via servicio). */
+.app__vista {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
+@media (max-width: 640px) {
     .app__acciones .app-institucion-menu {
         border-right: 0;
         margin-right: 0;

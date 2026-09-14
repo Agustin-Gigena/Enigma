@@ -1,17 +1,17 @@
-/* Barra de módulos: layout propio del nav. El vocabulario de dropdowns
-   (trigger/lista/ítem/animaciones) vive en app.css (.menu__*).
-   El flex deja el sobrante real para que EnigmaMenu mida overflow contra el
-   espacio disponible (no contra el ancho del contenido). */
+/* Barra de módulos: layout propio del nav; los menús son MudMenu. */
+
 .app-nav {
     display: flex;
     align-items: center;
     gap: 0.15rem;
     min-width: 0;
-    flex: 1 1 0%;
+    flex: 0 1 auto;
+    margin-left: 1.5rem;
 }
 
 @media (max-width: 640px) {
     .app-nav {
-        max-width: 7rem;
+        margin-left: 0.5rem;
+        max-width: 9rem;
     }
 }

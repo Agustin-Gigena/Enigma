@@ -3,6 +3,8 @@
 @inject AuthService Auth
 @inject EnigmaAuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
+@using MudBlazor
+@using MudExtensions
 
 <PageTitle>Elegí tu institución · Enigma</PageTitle>
 
@@ -15,40 +17,49 @@
             </svg>
             <span class="enigma-brand__name">Enigma</span>
         </a>
-        <button class="seleccion__logout" type="button" @onclick="CerrarSesion">Salir</button>
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="CerrarSesion">Salir</MudButton>
     </header>
 
     <main class="seleccion__main">
         <h1>Elegí tu institución</h1>
         <p class="seleccion__lead">Tu usuario tiene acceso a varias instituciones. Elegí en cuál querés trabajar.</p>
 
-        @if (_cargando)
-        {
-            <p class="seleccion__estado">Cargando instituciones…</p>
-        }
-        else if (_error is not null)
-        {
-            <p class="seleccion__error" role="alert">@_error</p>
-        }
-        else
-        {
-            <div class="seleccion__grilla">
-                @foreach (InstitucionDto institucion in _instituciones)
+        <MudLoading Loading="@_cargando" LoaderType="LoaderType.Circular">
+            <ChildContent>
+                @if (_error is not null)
                 {
-                    <button class="seleccion__tarjeta" type="button" @onclick="() => Seleccionar(institucion)">
-                        <span class="seleccion__tarjeta-cuerpo">
-                            <span class="seleccion__tarjeta-nombre">@institucion.Nombre</span>
-                            <span class="seleccion__tarjeta-tipo">@institucion.Tipo</span>
-                        </span>
-                        <svg class="seleccion__tarjeta-flecha" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 6l6 6-6 6" />
-                        </svg>
-                    </button>
+                    <MudAlert Severity="Severity.Error" role="alert" Class="seleccion__error">@_error</MudAlert>
                 }
-            </div>
-        }
+                else
+                {
+                    <div class="seleccion__grilla">
+                        @foreach (InstitucionDto institucion in _instituciones)
+                        {
+                            <MudCard Class="seleccion__tarjeta" Outlined="true" @onclick="() => Seleccionar(institucion)">
+                                <MudCardInner Class="seleccion__tarjeta-cuerpo">
+                                    <MudText Typo="Typo.h6" Class="seleccion__tarjeta-nombre">@institucion.Nombre</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="seleccion__tarjeta-tipo">@institucion.Tipo</MudChip>
+                                </MudCardInner>
+                                <MudCardActions>
+                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="seleccion__tarjeta-flecha" />
+                                </MudCardActions>
+                            </MudCard>
+                        }
+                    </div>
+                }
+            </ChildContent>
+            <LoaderContent>
+                <div class="seleccion__grilla">
+                    @for (int i = 0; i < 2; i++)
+                    {
+                        <MudSkeleton Width="100%" Height="86px" Rounded="true" />
+                    }
+                </div>
+            </LoaderContent>
+        </MudLoading>
     </main>
 </div>
+
 @code {
     private List<InstitucionDto> _instituciones = [];
     private bool _cargando = true;

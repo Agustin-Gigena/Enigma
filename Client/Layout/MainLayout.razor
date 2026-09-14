@@ -1,13 +1,14 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
 @inject AuthenticationStateProvider AuthState
+@inject ThemeService Tema
 @inject Gsap Animaciones
-@inject IJSRuntime JS
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
 @implements IDisposable
-<div class="app">
-    <header class="app__bar">
+<MudLayout>
+    <MudAppBar Elevation="1" Class="app__bar">
         <a class="enigma-brand" href="/">
             <img class="enigma-brand__logo" src="images/logo_size.jpg" alt="" width="28" height="28" />
             <span class="enigma-brand__name">Enigma</span>
@@ -15,16 +16,21 @@
 
         <NavMenu />
 
+        <MudSpacer />
+
         <div class="app__acciones">
+            <MudIconButton Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)"
+                           Variant="Variant.Text" Color="Color.Inherit"
+                           aria-label="Cambiar tema claro/oscuro"
+                           OnClick="AlternarTema" />
             @if (_institucion is not null)
             {
                 <SelectorInstitucion Activa="_institucion" />
             }
             <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario" />
         </div>
-    </header>
-
-    <main class="app__main">
+    </MudAppBar>
+    <MudMainContent Class="app__main">
         @* Red general de errores: cualquier excepción no manejada de las páginas
            muestra el mensaje amable en lugar de romper el shell. @key por URI:
            cada navegación arranca con el boundary limpio. *@
@@ -36,28 +42,40 @@
             </ChildContent>
             <ErrorContent Context="error">
                 <section class="pagina">
-                    <div class="estado estado--error" role="alert">
-                        <p style="margin:0 0 0.4rem"><strong>Algo se rompió inesperadamente.</strong></p>
-                        <p style="margin:0 0 0.4rem">El error ya quedó registrado. Probá de nuevo o volvé al inicio.</p>
-                        <a class="boton" href="/" style="margin-top:0.5rem">Volver al inicio</a>
-                    </div>
+                    <MudAlert Severity="Severity.Error" role="alert">
+                        <p><strong>Algo se rompió inesperadamente.</strong></p>
+                        <p>El error ya quedó registrado. Probá de nuevo o volvé al inicio.</p>
+                        <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Volver al inicio</MudButton>
+                    </MudAlert>
                 </section>
             </ErrorContent>
         </ErrorBoundary>
-    </main>
-</div>
+    </MudMainContent>
+</MudLayout>
 
 @code {
     private SesionDto? _sesion;
     private InstitucionDto? _institucion;
+    private bool _temaOscuro = true;
 
     protected override async Task OnInitializedAsync()
     {
         // Reactivo a la re-emisión de sesión (elección/cambio de institución, roles):
         // sin recargar la app, el shell muestra institución y usuario vigentes.
         AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        Tema.Cambiado += SincronizarTema;
+        await Tema.InicializarAsync();
+        SincronizarTema();
         await RecargarAsync();
     }
+
+    private void SincronizarTema()
+    {
+        _temaOscuro = Tema.Oscuro ?? true;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void AlternarTema() => Tema.Fijar(!_temaOscuro);
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
     {
@@ -82,11 +100,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("EnigmaMotion.init");
-        }
-
         // Transición de vista al navegar (GSAP vía el servicio C# — sin JS directo).
         if (_vistaAnimada != Navigation.Uri)
         {
@@ -98,5 +111,6 @@
     public void Dispose()
     {
         AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        Tema.Cambiado -= SincronizarTema;
     }
 }

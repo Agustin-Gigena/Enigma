@@ -1,0 +1,33 @@
+@* Edición de roles de un usuario en la institución: chips toggleables
+   (ChipRoles conserva aria-pressed). Devuelve List<string> con los roles
+   finales; el PUT vive en la página. *@
+@using Enigma.Shared.Dtos
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Inline="true" Style="display:block;margin-bottom:.8rem">
+            Roles de <strong>@Usuario.Usuario.NombreUsuario</strong> en esta institución.
+        </MudText>
+        <ChipRoles Roles="@RolesDisponibles" @bind-Seleccionados="_seleccionados" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Guardar">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public UsuarioInstitucionDto Usuario { get; set; } = default!;
+    [Parameter] public List<RolDto> RolesDisponibles { get; set; } = [];
+
+    private List<string> _seleccionados = [];
+
+    protected override void OnParametersSet() => _seleccionados = [.. Usuario.Roles];
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Guardar() => MudDialog.Close(_seleccionados);
+}

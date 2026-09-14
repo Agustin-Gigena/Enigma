@@ -1,0 +1,52 @@
+@* Alta/edición de institución: campos Material con validación obligatoria del
+   nombre. Devuelve DatosInstitucion al cerrar con Guardar; el guardado real
+   vive en la página (errores de servidor → snackbar). *@
+@using Enigma.Shared.Dtos
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" ValidatableChanged="c => _valido = c">
+            <MudTextField @bind-Value="_nombre" Label="Nombre" Variant="Variant.Outlined"
+                          Required="true" RequiredError="El nombre es obligatorio"
+                          Immediate="false" autocomplete="off"
+                          placeholder="Nombre de la institución" />
+            <MudSelect @bind-Value="_tipo" Label="Tipo" Variant="Variant.Outlined" Class="mt-6">
+                <MudSelectItem Value="@("Universidad")">Universidad</MudSelectItem>
+                <MudSelectItem Value="@("Secundaria")">Secundaria</MudSelectItem>
+                <MudSelectItem Value="@("Primaria")">Primaria</MudSelectItem>
+                <MudSelectItem Value="@("Curso")">Curso</MudSelectItem>
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_valido)"
+                   OnClick="Guardar">@(EsAlta ? "Crear" : "Guardar")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>Institución a editar; null = alta.</summary>
+    [Parameter] public InstitucionDto? Inicial { get; set; }
+
+    private MudForm _form = default!;
+    private bool _valido;
+    private string _nombre = "";
+    private string _tipo = "Universidad";
+
+    private bool EsAlta => Inicial is null;
+
+    protected override void OnParametersSet()
+    {
+        _nombre = Inicial?.Nombre ?? "";
+        _tipo = Inicial?.Tipo ?? "Universidad";
+        _valido = !string.IsNullOrWhiteSpace(_nombre);
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Guardar() => MudDialog.Close(new DatosInstitucion(_nombre.Trim(), _tipo));
+}

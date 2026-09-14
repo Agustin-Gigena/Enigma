@@ -4,7 +4,11 @@
 @inject NavigationManager Navigation
 @inject Gsap Animaciones
 @inject CancelacionNavegacion Nav
+@inject ServicioNotificaciones Notificar
+@inject IDialogService Dialogos
 @using Enigma.Client.Shared
+@using Enigma.Client.Shared.Dialogos
+@using MudBlazor
 
 <PageTitle>Usuarios · Enigma</PageTitle>
 
@@ -14,178 +18,97 @@
             <h1 class="pagina__titulo">Usuarios</h1>
             <p class="pagina__lead">Miembros de la institución activa y sus roles.</p>
         </div>
-        <button type="button" class="boton boton--primario" @onclick="AbrirAlta">+ Agregar usuario</button>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="AbrirAlta" Class="boton">+ Agregar usuario</MudButton>
     </div>
 
-    @if (_cargando)
-    {
-        <div class="pagina__superficie">
-            <table class="tabla-admin" aria-hidden="true">
-                <thead><tr><th>Usuario</th><th>Roles</th><th></th></tr></thead>
-                <tbody>
-                    @for (int i = 0; i < 4; i++)
-                    {
-                        <tr><td><div class="skeleton" style="width:45%"></div></td><td><div class="skeleton" style="width:60%"></div></td><td></td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else if (_error is not null)
-    {
-        <p class="estado estado--error" role="alert">@_error</p>
-    }
-    else if (_usuarios.Count == 0)
-    {
-        <div class="pagina__superficie">
-            <div class="vacio">
-                <p class="vacio__titulo">Nadie en esta institución todavía</p>
-                <p>Agregá el primer usuario y asignale roles para que acceda a las secciones.</p>
-                <button type="button" class="boton boton--primario" @onclick="AbrirAlta">+ Agregar usuario</button>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="pagina__superficie">
-            <table class="tabla-admin">
-                <thead><tr><th>Usuario</th><th>Roles</th><th class="tabla-admin__acciones"></th></tr></thead>
-                <tbody>
-                @foreach (UsuarioInstitucionDto usuario in _usuarios)
-                {
-                    <tr>
-                        <td>
-                            <div class="usuario-celda">
-                                <span class="usuario-celda__nombre">@usuario.Usuario.NombreUsuario</span>
-                                @if (!string.IsNullOrEmpty(usuario.Usuario.Correo))
-                                {
-                                    <span class="usuario-celda__correo">@usuario.Usuario.Correo</span>
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <div class="chips">
-                                @foreach (string rol in usuario.Roles)
-                                {
-                                    <span class="chip chip--activa">@rol</span>
-                                }
-                                @if (usuario.Roles.Count == 0)
-                                {
-                                    <span class="chips__vacio">Sin roles</span>
-                                }
-                            </div>
-                        </td>
-                        <td class="tabla-admin__acciones">
-                            <button type="button" class="boton-icono" title="Editar roles" aria-label="Editar roles de @usuario.Usuario.NombreUsuario" @onclick="() => AbrirRoles(usuario)">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.4l-4.8 2.5.9-5.4L4.2 7.7l5.4-.8Z" />
-                                </svg>
-                            </button>
-                            <button type="button" class="boton-icono boton-icono--peligro" title="Quitar de la institución" aria-label="Quitar a @usuario.Usuario.NombreUsuario" @onclick="() => ConfirmarQuitar(usuario)">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-        @if (_mensaje is not null)
-        {
-            <p class="estado estado--exito" role="status">@_mensaje</p>
-        }
-    }
+    <div class="pagina__superficie">
+        <MudTable T="UsuarioInstitucionDto" Items="@_usuarios" Hover="true" Elevation="0"
+                  Class="tabla-admin" Loading="@_cargando" LoadingProgressColor="Color.Primary">
+            <LoadingContent>
+                <MudSkeleton Width="100%" Height="34px" Rounded="true" />
+                <MudSkeleton Width="100%" Height="34px" Rounded="true" />
+                <MudSkeleton Width="100%" Height="34px" Rounded="true" />
+                <MudSkeleton Width="100%" Height="34px" Rounded="true" />
+            </LoadingContent>
+            <HeaderContent>
+                <MudTh T="UsuarioInstitucionDto">Usuario</MudTh>
+                <MudTh T="UsuarioInstitucionDto">Roles</MudTh>
+                <MudTh T="UsuarioInstitucionDto" Class="tabla-admin__acciones"></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd T="UsuarioInstitucionDto" DataLabel="Usuario">
+                    <div class="usuario-celda">
+                        <span class="usuario-celda__nombre">@context.Usuario.NombreUsuario</span>
+                        @if (!string.IsNullOrEmpty(context.Usuario.Correo))
+                        {
+                            <span class="usuario-celda__correo">@context.Usuario.Correo</span>
+                        }
+                    </div>
+                </MudTd>
+                <MudTd T="UsuarioInstitucionDto" DataLabel="Roles">
+                    <div class="chips">
+                        @foreach (string rol in context.Roles)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">@rol</MudChip>
+                        }
+                        @if (context.Roles.Count == 0)
+                        {
+                            <span class="chips__vacio">Sin roles</span>
+                        }
+                    </div>
+                </MudTd>
+                <MudTd T="UsuarioInstitucionDto" Class="tabla-admin__acciones">
+                    <MudTooltip Text="Editar roles">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                       aria-label="@($"Editar roles de {context.Usuario.NombreUsuario}")"
+                                       OnClick="@(() => AbrirRoles(context))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Quitar de la institución">
+                        <MudIconButton Icon="@Icons.Material.Outlined.PersonRemove" Size="Size.Small" Color="Color.Error"
+                                       aria-label="@($"Quitar a {context.Usuario.NombreUsuario}")"
+                                       OnClick="@(() => ConfirmarQuitar(context))" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <div class="vacio">
+                    <p class="vacio__titulo">Nadie en esta institución todavía</p>
+                    <p>Agregá el primer usuario y asignale roles para que acceda a las secciones.</p>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2"
+                               OnClick="AbrirAlta">+ Agregar usuario</MudButton>
+                </div>
+            </NoRecordsContent>
+        </MudTable>
+    </div>
 </section>
 
-<Dialogo @ref="_dialogo" Titulo="@_tituloDialogo" OnCerrado="AlCerrarDialogo">
-    @if (_modo == ModoDialogo.Roles)
-    {
-        <p class="pagina__lead" style="margin:0 0 0.9rem">Roles de <strong>@_editando?.Usuario.NombreUsuario</strong> en esta institución.</p>
-        <ChipRoles Roles="_roles" @bind-Seleccionados="_rolesEdicion" />
-        @if (_errorDialogo is not null)
-        {
-            <p class="estado estado--error" role="alert" style="margin:1rem 0 0">@_errorDialogo</p>
-        }
-        <div class="dialogo__acciones">
-            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
-            <button type="button" class="boton boton--primario" disabled="@_guardando" @onclick="GuardarRolesAsync">Guardar</button>
-        </div>
-    }
-    else if (_modo == ModoDialogo.Alta)
-    {
-        <div class="dialogo__campos">
-            <label class="campo">
-                <span class="campo__etiqueta">Usuario</span>
-                <input class="campo__entrada" @bind="_altaUsuario" placeholder="nombre de usuario" autocomplete="off" />
-            </label>
-            <label class="campo">
-                <span class="campo__etiqueta">Correo (opcional)</span>
-                <input class="campo__entrada" type="email" @bind="_altaCorreo" placeholder="correo@institucion.edu" autocomplete="off" />
-            </label>
-            <label class="campo">
-                <span class="campo__etiqueta">Contraseña inicial</span>
-                <input class="campo__entrada" type="password" @bind="_altaContrasena" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
-            </label>
-            <div class="campo">
-                <span class="campo__etiqueta">Roles</span>
-                <ChipRoles Roles="_roles" @bind-Seleccionados="_altaRoles" />
-            </div>
-            @if (_errorDialogo is not null)
-            {
-                <p class="estado estado--error" role="alert" style="margin:0">@_errorDialogo</p>
-            }
-        </div>
-        <div class="dialogo__acciones">
-            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
-            <button type="button" class="boton boton--primario" disabled="@_guardando" @onclick="DarDeAltaAsync">Crear usuario</button>
-        </div>
-    }
-    else if (_modo == ModoDialogo.Quitar)
-    {
-        <p style="margin:0 0 0.2rem">¿Quitar a <strong>@_editando?.Usuario.NombreUsuario</strong> de esta institución?</p>
-        <p class="pagina__lead" style="margin:0">Pierde el acceso a sus secciones acá; sus otras instituciones no se tocan. Es un borrado lógico auditable.</p>
-        <div class="dialogo__acciones">
-            <button type="button" class="boton" @onclick="() => _dialogo.CerrarAsync()">Cancelar</button>
-            <button type="button" class="boton boton--primario" style="background:var(--enigma-error);border-color:var(--enigma-error)" disabled="@_guardando" @onclick="QuitarAsync">Quitar</button>
-        </div>
-    }
-</Dialogo>
-
 @code {
-    private enum ModoDialogo { Ninguno, Roles, Alta, Quitar }
-
     private List<UsuarioInstitucionDto> _usuarios = [];
     private List<RolDto> _roles = [];
     private bool _cargando = true;
-    private string? _error;
-    private string? _mensaje;
-
-    private Dialogo _dialogo = default!;
-    private ModoDialogo _modo;
-    private UsuarioInstitucionDto? _editando;
-    private string _tituloDialogo = "";
-    private string? _errorDialogo;
-    private bool _guardando;
     private bool _filasAnimadas;
 
-    // Roles
-    private List<string> _rolesEdicion = [];
-
-    // Alta
-    private string _altaUsuario = "";
-    private string _altaCorreo = "";
-    private string _altaContrasena = "";
-    private List<string> _altaRoles = [];
+    private static readonly DialogOptions OpcionesDialogo = new()
+    {
+        CloseButton = true,
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true,
+        BackdropClick = false
+    };
 
     protected override async Task OnInitializedAsync()
     {
-        _usuarios = await Http.GetSeguroAsync<List<UsuarioInstitucionDto>>("administracion/usuarios", Nav.Token) ?? [];
+        // Carga vacía ([]) NO es error: null sí lo es (falla de red/API).
+        List<UsuarioInstitucionDto>? usuarios = await Http.GetSeguroAsync<List<UsuarioInstitucionDto>>("administracion/usuarios", Nav.Token);
         _roles = await Http.GetSeguroAsync<List<RolDto>>("administracion/usuarios/roles", Nav.Token) ?? [];
-        _error = _usuarios.Count == 0 ? "No se pudieron cargar los usuarios." : null;
+        if (usuarios is null)
+        {
+            Notificar.Error("No se pudieron cargar los usuarios.");
+        }
+        _usuarios = usuarios ?? [];
         _cargando = false;
     }
 
@@ -203,137 +126,105 @@
         _usuarios = await Http.GetSeguroAsync<List<UsuarioInstitucionDto>>("administracion/usuarios", Nav.Token) ?? [];
     }
 
-    private Task AbrirRoles(UsuarioInstitucionDto usuario)
+    private async Task AbrirAlta()
     {
-        _modo = ModoDialogo.Roles;
-        _editando = usuario;
-        _rolesEdicion = [.. usuario.Roles];
-        _errorDialogo = null;
-        _tituloDialogo = "Editar roles";
-        return _dialogo.AbrirAsync();
-    }
-
-    private Task AbrirAlta()
-    {
-        _modo = ModoDialogo.Alta;
-        _editando = null;
-        _altaUsuario = "";
-        _altaCorreo = "";
-        _altaContrasena = "";
-        _altaRoles = [];
-        _errorDialogo = null;
-        _tituloDialogo = "Agregar usuario";
-        return _dialogo.AbrirAsync();
-    }
-
-    private Task ConfirmarQuitar(UsuarioInstitucionDto usuario)
-    {
-        _modo = ModoDialogo.Quitar;
-        _editando = usuario;
-        _errorDialogo = null;
-        _tituloDialogo = "Quitar de la institución";
-        return _dialogo.AbrirAsync();
-    }
-
-    private void AlCerrarDialogo()
-    {
-        _modo = ModoDialogo.Ninguno;
-        _editando = null;
-        _errorDialogo = null;
-    }
-
-    private async Task GuardarRolesAsync()
-    {
-        _guardando = true;
-        _errorDialogo = null;
-        try
+        IDialogReference referencia = await Dialogos.ShowAsync<DialogoAltaUsuario>(
+            "Agregar usuario", new DialogParameters { { nameof(DialogoAltaUsuario.Roles), _roles } }, OpcionesDialogo);
+        DatosAltaUsuario? datos = await referencia.GetReturnValueAsync<DatosAltaUsuario?>();
+        if (datos is null)
         {
-            HttpResponseMessage? respuesta = await Http.PutSeguroAsync(
-                $"administracion/usuarios/{_editando!.Usuario.Id}/roles",
-                new ActualizarRolesRequest(_rolesEdicion), Nav.Token);
-            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+            return;
+        }
+
+        HttpResponseMessage? respuesta = await Http.PostSeguroAsync(
+            "administracion/usuarios",
+            new AltaUsuarioRequest(datos.Usuario, datos.Correo, datos.Contrasena, datos.Roles),
+            Nav.Token);
+        if (respuesta is null || !respuesta.IsSuccessStatusCode)
+        {
+            await Notificar.ErrorAsync("No se pudo crear el usuario:", respuesta);
+            return;
+        }
+
+        await RecargarAsync();
+        Notificar.Exito("Usuario agregado a la institución.");
+        _filasAnimadas = false;
+    }
+
+    private async Task AbrirRoles(UsuarioInstitucionDto usuario)
+    {
+        IDialogReference referencia = await Dialogos.ShowAsync<DialogoRolesUsuario>(
+            "Editar roles",
+            new DialogParameters
             {
-                _errorDialogo = "No se pudieron guardar los roles.";
-                return;
-            }
+                { nameof(DialogoRolesUsuario.Usuario), usuario },
+                { nameof(DialogoRolesUsuario.RolesDisponibles), _roles }
+            },
+            OpcionesDialogo);
+        List<string>? roles = await referencia.GetReturnValueAsync<List<string>?>();
+        if (roles is null)
+        {
+            return;
+        }
 
-            bool soloAdiciones = _editando.Roles.All(_rolesEdicion.Contains);
-            int usuarioId = _editando.Usuario.Id;
+        HttpResponseMessage? respuesta = await Http.PutSeguroAsync(
+            $"administracion/usuarios/{usuario.Usuario.Id}/roles",
+            new ActualizarRolesRequest(roles), Nav.Token);
+        if (respuesta is null || !respuesta.IsSuccessStatusCode)
+        {
+            Notificar.Error("No se pudieron guardar los roles.");
+            return;
+        }
 
-            await _dialogo.CerrarAsync();
-            await RecargarAsync();
-            _mensaje = "Roles actualizados.";
-            _filasAnimadas = false;
+        bool soloAdiciones = usuario.Roles.All(roles.Contains);
+        int usuarioId = usuario.Usuario.Id;
 
-            // Autorefresco solo si te editaste a vos mismo y SOLO ganaste permisos:
-            // re-emitir tras perderlos te dejaría fuera de esta página en el acto.
-            SesionDto? sesion = await Auth.GetSesionAsync(Nav.Token);
-            if (sesion is not null && sesion.Usuario.Id == usuarioId && soloAdiciones)
+        await RecargarAsync();
+        Notificar.Exito("Roles actualizados.");
+        _filasAnimadas = false;
+
+        // Autorefresco solo si te editaste a vos mismo y SOLO ganaste permisos:
+        // re-emitir tras perderlos te dejaría fuera de esta página en el acto.
+        SesionDto? sesion = await Auth.GetSesionAsync(Nav.Token);
+        if (sesion is not null && sesion.Usuario.Id == usuarioId && soloAdiciones)
+        {
+            InstitucionDto? activa = await Auth.GetInstitucionActivaAsync();
+            if (activa is not null)
             {
-                InstitucionDto? activa = await Auth.GetInstitucionActivaAsync();
-                if (activa is not null)
-                {
-                    await Auth.SeleccionarInstitucionAsync(activa, Nav.Token);
-                    Navigation.NavigateTo("/administracion/usuarios");
-                }
+                await Auth.SeleccionarInstitucionAsync(activa, Nav.Token);
+                Navigation.NavigateTo("/administracion/usuarios");
             }
         }
-        finally
-        {
-            _guardando = false;
-        }
     }
 
-    private async Task DarDeAltaAsync()
+    private async Task ConfirmarQuitar(UsuarioInstitucionDto usuario)
     {
-        _guardando = true;
-        _errorDialogo = null;
-        try
-        {
-            HttpResponseMessage? respuesta = await Http.PostSeguroAsync(
-                "administracion/usuarios",
-                new AltaUsuarioRequest(_altaUsuario.Trim(), string.IsNullOrWhiteSpace(_altaCorreo) ? null : _altaCorreo.Trim(), _altaContrasena, _altaRoles),
-                Nav.Token);
-            if (respuesta is null || !respuesta.IsSuccessStatusCode)
+        IDialogReference referencia = await Dialogos.ShowAsync<DialogoConfirmacion>(
+            "Quitar de la institución",
+            new DialogParameters
             {
-                _errorDialogo = await HttpSeguro.LeerErrorAsync(respuesta) ?? "No se pudo crear el usuario.";
-                return;
-            }
-
-            await _dialogo.CerrarAsync();
-            await RecargarAsync();
-            _mensaje = "Usuario agregado a la institución.";
-            _filasAnimadas = false;
-        }
-        finally
-        {
-            _guardando = false;
-        }
+                { nameof(DialogoConfirmacion.Texto), $"¿Quitar a {usuario.Usuario.NombreUsuario} de esta institución?" },
+                { nameof(DialogoConfirmacion.Detalle), "Pierde el acceso a sus secciones acá; sus otras instituciones no se tocan. Es un borrado lógico auditable." },
+                { nameof(DialogoConfirmacion.TextoAccion), "Quitar" },
+                { nameof(DialogoConfirmacion.ConfirmarAsync), (Func<Task<bool>>)(async () =>
+                    {
+                        HttpResponseMessage? respuesta = await Http.DeleteAsync(
+                            $"administracion/usuarios/{usuario.Usuario.Id}", Nav.Token);
+                        bool ok = respuesta is not null && respuesta.IsSuccessStatusCode;
+                        if (ok)
+                        {
+                            await RecargarAsync();
+                            Notificar.Exito("Usuario quitado de la institución.");
+                            _filasAnimadas = false;
+                        }
+                        else
+                        {
+                            await Notificar.ErrorAsync("No se pudo quitar al usuario.", respuesta);
+                        }
+                        return ok;
+                    }) }
+            },
+            OpcionesDialogo);
+        await referencia.Result;
     }
-
-    private async Task QuitarAsync()
-    {
-        _guardando = true;
-        _errorDialogo = null;
-        try
-        {
-            HttpResponseMessage? respuesta = await Http.DeleteAsync(
-                $"administracion/usuarios/{_editando!.Usuario.Id}", Nav.Token);
-            if (respuesta is null || !respuesta.IsSuccessStatusCode)
-            {
-                _errorDialogo = "No se pudo quitar al usuario.";
-                return;
-            }
-
-            await _dialogo.CerrarAsync();
-            await RecargarAsync();
-            _mensaje = "Usuario quitado de la institución.";
-            _filasAnimadas = false;
-        }
-        finally
-        {
-            _guardando = false;
-        }
-    }
-
 }

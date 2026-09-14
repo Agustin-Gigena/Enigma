@@ -1,0 +1,36 @@
+{
+  "name": "enigma",
+  "version": "0.0.1",
+  "description": "Monorepo del proyecto Enigma: cliente Blazor WebAssembly, API ASP.NET Core y librería compartida, todo sobre .NET 10 con backend MySQL.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "dotnet build Enigma.slnx",
+    "test": "dotnet test Tests/Enigma.Test.csproj",
+    "test:e2e": "dotnet test Tests/Enigma.Test.csproj --filter \"FullyQualifiedName~Enigma.Test.E2E\"",
+    "pwbrowsers": "playwright install chromium",
+    "agent-browser": "agent-browser",
+    "agent-browser:install": "agent-browser install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Agustin-Gigena/Enigma.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Agustin-Gigena/Enigma/issues"
+  },
+  "homepage": "https://github.com/Agustin-Gigena/Enigma#readme",
+  "devDependencies": {
+    "agent-browser": "0.37.1",
+    "playwright": "1.52.0"
+  },
+  "allowScripts": {
+    "agent-browser@0.37.1": true
+  }
+}

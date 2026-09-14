@@ -1,6 +1,6 @@
 @page "/acceso-denegado"
 
-<PageTitle>Acceso denegado · Enigma</PageTitle>
+@using MudBlazor
 
 <section class="pagina denegado">
     <div class="denegado__tarjeta">
@@ -12,7 +12,7 @@
         </span>
         <h1 class="pagina__titulo">No tenés permisos para esta sección</h1>
         <p class="pagina__lead">Tu usuario no tiene asignada esta sección en la institución actual. Si creés que es un error, contactá al administrador de tu institución.</p>
-        <a class="boton" href="/">Volver al inicio</a>
+        <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">Volver al inicio</MudButton>
     </div>
 </section>
 

@@ -7,12 +7,13 @@
     <title>Enigma</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
-    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
+    <link rel="stylesheet" href="_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/svg+xml" href="images/icon-invert.svg" />
     <link rel="icon" type="image/jpeg" href="images/logo_size.jpg" />
     <meta name="description" content="Enigma — la plataforma de tu institución." />
-    <meta name="theme-color" content="#0E3736" />
+    <meta name="theme-color" content="#0C2524" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -20,15 +21,21 @@
     <link rel="apple-touch-icon" href="images/logo_size.jpg" />
     <link href="Enigma.Client.styles.css" rel="stylesheet" />
     <script>
-        // Aplica el tema antes del primer render: preferencia guardada, o la del sistema.
+        // Aplica el tema antes del primer render: preferencia guardada, o la del
+        // sistema (persistida resuelta para que MudThemeProvider lea lo mismo).
         (function () {
             var t = localStorage.getItem('enigma_theme');
             if (t !== 'light' && t !== 'dark') {
                 t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             }
+            localStorage.setItem('enigma_theme', t);
             document.documentElement.setAttribute('data-theme', t);
+            var mtc = document.querySelector('meta[name="theme-color"]');
+            if (mtc) mtc.setAttribute('content', t === 'dark' ? '#0C2524' : '#FFFFFF');
         })();
     </script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.js"></script>
 </head>
 
 <body>
@@ -89,8 +96,6 @@
     </script>
     <script src="lib/gsap/gsap.min.js"></script>
     <script src="js/gsap.js"></script>
-    <script src="js/login-motion.js"></script>
-    <script src="js/enigma-menu.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');

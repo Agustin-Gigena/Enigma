@@ -1,36 +1,30 @@
-@* Cambio de institución activa: re-emite la sesión y recarga (la recarga
-   completa re-valida sesión y permisos contra el guard, patrón de T9). *@
+@* Cambio de institución activa: re-emite la sesión y el shell recalcula por
+   suscripción (SPA, sin recargar la app). MudMenu con popover: el nombre de
+   la institución activa queda visible también en pantallas angostas
+   (hallazgo P3 de la crítica). *@
+@using MudBlazor
 @inject AuthService Auth
 @inject NavigationManager Navigation
 @inject CancelacionNavegacion Nav
 
-<div class="app-institucion-menu">
-    <details data-menu>
-        <summary title="Cambiar institución">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 21V8l9-5 9 5v13" />
-                <path d="M9 21v-6h6v6" />
-            </svg>
-            <span class="app-institucion-menu__nombre">@Activa?.Nombre</span>
-            <svg class="menu__chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" />
-            </svg>
-        </summary>
-        <ul class="menu__lista menu__lista--derecha">
-            @foreach (InstitucionDto institucion in _instituciones.Where(i => Activa is null || i.Id != Activa.Id))
-            {
-                <li>
-                    <button type="button" class="menu__item" @onclick="() => Cambiar(institucion)">
-                        @institucion.Nombre
-                    </button>
-                </li>
-            }
-        </ul>
-    </details>
-</div>
+<MudMenu Class="app-institucion-menu"
+         Label="@Activa?.Nombre"
+         StartIcon="@Icons.Material.Filled.HomeWork"
+         EndIcon="@Icons.Material.Filled.ExpandMore"
+         Color="Color.Inherit"
+         Variant="Variant.Text"
+         Dense="true"
+         CloseOnItemClick="true"
+         title="Cambiar institución">
+    @foreach (InstitucionDto institucion in _instituciones.Where(i => Activa is null || i.Id != Activa.Id))
+    {
+        <MudMenuItem OnClick="() => Cambiar(institucion)">@institucion.Nombre</MudMenuItem>
+    }
+</MudMenu>
 
 @code {
     [Parameter] public InstitucionDto? Activa { get; set; }
+
     private List<InstitucionDto> _instituciones = [];
 
     protected override async Task OnInitializedAsync() =>

@@ -1,148 +1,97 @@
-.seleccion__header .enigma-brand__glyph {
-    --enigma-brand-glyph-stroke: var(--enigma-accent);
-    color: var(--enigma-ink);
-}
-
-.seleccion__logout:focus-visible,
-.seleccion__tarjeta:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 2px;
-}
+/* ── Selección de institución: layout centrado + tarjetas Material.
+   El look de la tarjeta lo aporta MudCard; acá va la grilla, el flujo de
+   lectura y la pata de interacción (cursor, flecha). ── */
 
 .seleccion {
     min-height: 100vh;
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
 }
 
 .seleccion__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 3.5rem;
+    gap: 1rem;
 }
 
-.seleccion__logout {
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--enigma-ink-2);
-    background: none;
-    border: 1px solid var(--enigma-border);
-    border-radius: var(--enigma-radius);
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: color 180ms var(--enigma-ease), border-color 180ms var(--enigma-ease), background 180ms var(--enigma-ease);
+.seleccion__header .enigma-brand__glyph {
+    color: var(--enigma-ink);
 }
 
-.seleccion__logout:hover {
-    color: var(--enigma-accent);
-    border-color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
+.seleccion__main {
+    width: min(100%, 34rem);
+    margin: 0 auto;
+    padding-top: clamp(3rem, 12vh, 6rem);
 }
 
 .seleccion__main h1 {
+    margin: 0 0 0.4rem;
     font-family: var(--enigma-font-display);
-    font-size: clamp(1.9rem, 4vw, 2.5rem);
-    font-weight: 750;
+    font-size: 2rem;
+    font-weight: 800;
     letter-spacing: -0.03em;
-    margin: 0 0 0.5rem;
+    color: var(--enigma-ink);
 }
 
 .seleccion__lead {
+    margin: 0 0 2rem;
     color: var(--enigma-ink-2);
-    margin: 0 0 2.5rem;
+    font-size: 0.95rem;
 }
 
 .seleccion__grilla {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
+    gap: 0.9rem;
 }
 
+/* Tarjeta = MudCard Outlined; la interacción es de la tarjeta completa. */
 .seleccion__tarjeta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    text-align: left;
-    padding: 1.35rem 1.4rem;
-    background: var(--enigma-surface);
-    border: 1px solid var(--enigma-border);
-    border-radius: var(--enigma-radius);
-    color: var(--enigma-ink);
-    font: inherit;
     cursor: pointer;
-    box-shadow: var(--enigma-shadow);
-    transition: border-color 180ms var(--enigma-ease), transform 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease);
+    transition: border-color 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease),
+                transform 180ms var(--enigma-ease);
 }
 
 .seleccion__tarjeta:hover {
     border-color: var(--enigma-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 1px 2px rgba(14, 55, 54, 0.06), 0 14px 32px rgba(14, 55, 54, 0.14);
+    box-shadow: var(--enigma-shadow);
+    transform: translateY(-1px);
 }
 
-.seleccion__tarjeta:active {
-    transform: translateY(0);
+.seleccion__tarjeta:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
 }
 
 .seleccion__tarjeta-cuerpo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
+    align-content: start;
 }
 
 .seleccion__tarjeta-nombre {
+    color: var(--enigma-ink);
     font-family: var(--enigma-font-display);
-    font-size: 1.05rem;
-    font-weight: 650;
-    letter-spacing: -0.01em;
-}
-
-.seleccion__tarjeta-tipo {
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--enigma-accent);
+    font-weight: 700;
 }
 
 .seleccion__tarjeta-flecha {
-    flex: none;
     color: var(--enigma-ink-3);
     transition: color 180ms var(--enigma-ease), transform 180ms var(--enigma-ease);
 }
 
 .seleccion__tarjeta:hover .seleccion__tarjeta-flecha {
     color: var(--enigma-accent);
-    transform: translateX(3px);
-}
-
-.seleccion__estado,
-.seleccion__error {
-    padding: 1rem 1.1rem;
-    border-radius: var(--enigma-radius);
-}
-
-.seleccion__estado {
-    color: var(--enigma-ink-2);
+    transform: translateX(2px);
 }
 
 .seleccion__error {
-    color: var(--enigma-error);
-    background: var(--enigma-error-soft);
-    border: 1px solid color-mix(in srgb, var(--enigma-error) 35%, transparent);
+    margin-top: 1rem;
 }
 
 @media (max-width: 480px) {
-    .seleccion {
-        padding: 1.5rem 1.25rem 2.5rem;
-    }
-
-    .seleccion__header {
-        margin-bottom: 2.5rem;
+    .seleccion__main {
+        padding-top: 2rem;
     }
 }

@@ -9,10 +9,11 @@
 }
 
 /* ── Enigma design tokens ──
-   World: petrol-jade greens. The dark palette is the user's (accent #259585,
-   depths #123E3C / #0E3736); the light palette derives from the same hue
-   family (ink = #123E3C, action jade deepened to #14665C for AA on white).
-   Scene: staff and students in offices and classrooms — both modes always. */
+   Mundo petrol-jade sobre el sistema Material de MudBlazor. Estos tokens
+   alimentan el CSS propio restante (layout, marca, splash); los componentes
+   MudBlazor se gobiernan por su paleta (Themes/TemaEnigma.cs).
+   Dark: elevación real — fondo #081D1C < drawer/appbar #0C2524 < superficie
+   #102E2C — y acento claro #2BB09E con tinta oscura encima (AA ≈ 5:1). */
 :root {
     --enigma-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --enigma-font-display: 'Manrope', var(--enigma-font);
@@ -22,15 +23,17 @@
     /* light */
     --enigma-bg: #F3F8F7;
     --enigma-surface: #FFFFFF;
-    --enigma-ink: #123E3C;
-    --enigma-ink-2: #43605D;
-    --enigma-ink-3: #64807D;
-    --enigma-border: #D5E2E0;
+    --enigma-surface-2: #F7FBFA;
+    --enigma-ink: #10201F;
+    --enigma-ink-2: #37504C;
+    --enigma-ink-3: #5E7A76;
+    --enigma-border: #C7D8D5;
     --enigma-accent: #14665C;
     --enigma-accent-hover: #0F524A;
     --enigma-accent-soft: rgba(20, 102, 92, 0.10);
-    --enigma-error: #B42318;
-    --enigma-error-soft: rgba(180, 35, 24, 0.08);
+    --enigma-accent-link: #14665C;
+    --enigma-error: #B3261E;
+    --enigma-error-soft: rgba(179, 38, 30, 0.08);
     --enigma-shadow: 0 1px 2px rgba(14, 55, 54, 0.06), 0 8px 24px rgba(14, 55, 54, 0.08);
     --enigma-brand-panel: #0E3736;
     --enigma-brand-panel-ink: #EAF3F1;
@@ -39,25 +42,24 @@
 }
 
 [data-theme="dark"] {
-    /* dark — user palette: accent #259585, layers #123E3C / #0E3736 */
-    --enigma-bg: #0E3736;
-    --enigma-surface: #123E3C;
-    --enigma-surface-2: #173F3D;
-    --enigma-ink: #E9F2F0;
-    --enigma-ink-2: #A9BEBB;
-    --enigma-ink-3: #86A09D;
-    --enigma-border: #2A615F;
-    --enigma-accent: #259585;
-    --enigma-accent-hover: #2BB09E;
-    --enigma-accent-soft: rgba(37, 149, 133, 0.16);
+    --enigma-bg: #081D1C;
+    --enigma-surface: #102E2C;
+    --enigma-surface-2: #173B38;
+    --enigma-ink: #E4F1EF;
+    --enigma-ink-2: #A9C3BF;
+    --enigma-ink-3: #9CB4B0;
+    --enigma-border: #2E605B;
+    --enigma-accent: #2BB09E;
+    --enigma-accent-hover: #43C4B2;
+    --enigma-accent-soft: rgba(43, 176, 158, 0.16);
     --enigma-accent-link: #4FD1BE;
-    --enigma-error: #F97066;
-    --enigma-error-soft: rgba(249, 112, 102, 0.10);
-    --enigma-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --enigma-brand-panel: #0B2B2A;
+    --enigma-error: #E5726B;
+    --enigma-error-soft: rgba(229, 114, 107, 0.10);
+    --enigma-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.45);
+    --enigma-brand-panel: #0C2524;
     --enigma-brand-panel-ink: #EAF3F1;
     --enigma-brand-panel-ink-2: #A9BEBB;
-    --enigma-brand-accent: #259585;
+    --enigma-brand-accent: #4FD1BE;
 }
 
 html, body {
@@ -91,6 +93,7 @@ html, body {
     stroke-width: 2.4;
     stroke-linecap: round;
 }
+
 .enigma-brand__logo {
     flex: none;
     border-radius: 7px;
@@ -103,44 +106,8 @@ html, body {
     letter-spacing: -0.02em;
 }
 
-h1:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 4px;
-    border-radius: 2px;
-}
-
-a, .btn-link {
-    color: var(--enigma-accent-link, var(--enigma-accent));
-}
-
-.btn-primary {
-    color: #FFFFFF;
-    background-color: var(--enigma-accent);
-    border-color: var(--enigma-accent);
-}
-
-.btn-primary:hover,
-.btn-primary:focus {
-    color: #FFFFFF;
-    background-color: var(--enigma-accent-hover);
-    border-color: var(--enigma-accent-hover);
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--enigma-accent-soft);
-}
-
-
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid red;
-}
-
-.validation-message {
-    color: red;
+a {
+    color: var(--enigma-accent-link);
 }
 
 #blazor-error-ui {
@@ -165,7 +132,7 @@ a, .btn-link {
     }
 
 .blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjY3ODIgMjM2IDk5IDIwMy4yNyA5OSAyMDMuMjcgOTlMMjAzLjI3IDUxTDIwOC4yMiA1MSAyMDguMjIgOTlMMjYzLjUwNiA5OVoiIGZpbGw9IiNlM2UzZTMiLz48L2c+PC9zdmc+) no-repeat 1rem/1.8rem, #b32121;
     padding: 1rem 1rem 1rem 3.7rem;
     color: white;
 }
@@ -359,145 +326,12 @@ a, .btn-link {
     }
 }
 
-code {
-    color: #c02d76;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
-    text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-    text-align: start;
-}
-
-/* ─── Sistema de dropdowns de la barra (EnigmaMenu) ───────────────────────
-   Vocabulario compartido por NavMenu, MenuCuenta y SelectorInstitucion:
-   mismo trigger, misma lista, mismo motion (180ms, curva propia). El
-   comportamiento vive en js/enigma-menu.js (data-menu). */
-details[data-menu] {
-    position: relative;
-}
-
-details[data-menu] > summary {
-    list-style: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.75rem;
-    border-radius: var(--enigma-radius);
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--enigma-ink-2);
-    white-space: nowrap;
-    border: 1px solid transparent;
-    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease),
-                border-color 180ms var(--enigma-ease);
-}
-
-details[data-menu] > summary::-webkit-details-marker {
-    display: none;
-}
-
-details[data-menu] > summary:hover {
-    color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
-}
-
-details[data-menu][open] > summary {
-    color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
-    border-color: var(--enigma-border);
-}
-
-details[data-menu] > summary:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 2px;
-}
-
-.menu__chevron {
-    color: var(--enigma-ink-3);
-    transition: transform 180ms var(--enigma-ease), color 180ms var(--enigma-ease);
-}
-
-details[data-menu][open] > summary .menu__chevron,
-details[data-menu] > summary:hover .menu__chevron {
-    color: var(--enigma-accent);
-}
-
-details[data-menu][open] > summary .menu__chevron {
-    transform: rotate(180deg);
-}
-
-.menu__lista {
-    position: absolute;
-    top: calc(100% + 0.45rem);
-    left: 0;
-    z-index: 40;
-    min-width: 13rem;
-    margin: 0;
-    padding: 0.4rem;
-    list-style: none;
-    background: var(--enigma-surface);
-    border: 1px solid var(--enigma-border);
-    border-radius: var(--enigma-radius);
-    box-shadow: var(--enigma-shadow);
-    /* Apertura/cierre animados por GSAP (EnigmaGsap), no por CSS. */
-}
-
-/* El cierre animado lo maneja EnigmaGsap (menuCerrar). */
-
-details[data-menu] .menu__lista--derecha,
-details[data-menu]:has(.menu__lista--derecha) .menu__lista {
-    left: auto;
-    right: 0;
-}
-
-.menu__item {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    width: 100%;
-    padding: 0.55rem 0.75rem;
-    border: 0;
-    border-radius: calc(var(--enigma-radius) - 3px);
-    background: transparent;
-    color: var(--enigma-ink);
-    text-decoration: none;
-    font: inherit;
-    font-size: 0.9rem;
-    text-align: left;
-    cursor: pointer;
-    transition: background-color 180ms var(--enigma-ease), color 180ms var(--enigma-ease);
-}
-
-.menu__item:hover {
-    background: var(--enigma-accent-soft);
-    color: var(--enigma-accent);
-}
-
-.menu__item:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: -2px;
-}
-
+/* ─── Ítem activo del menú de módulos (MudMenuItem de NavMenu) ─────────── */
 .menu__item--activa {
-    background: var(--enigma-accent-soft);
-    color: var(--enigma-accent);
+    background: var(--enigma-accent-soft) !important;
+    color: var(--enigma-accent) !important;
     font-weight: 650;
 }
-
-.menu__separador {
-    height: 1px;
-    margin: 0.4rem 0.3rem;
-    background: var(--enigma-border);
-    border: 0;
-}
-
-/* Las animaciones de menús las posee GSAP (EnigmaGsap): sin keyframes CSS.
-   prefers-reduced-motion también lo respeta el adaptador (duración ~0). */
 
 /* ─── Páginas de módulo (Administración) ────────────────────────────────── */
 .pagina {
@@ -528,120 +362,26 @@ details[data-menu]:has(.menu__lista--derecha) .menu__lista {
     overflow-x: auto;
 }
 
-.tabla-admin {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-}
-
-.tabla-admin th,
-.tabla-admin td {
-    text-align: left;
-    padding: 0.7rem 1rem;
-}
-
+/* ─── Tabla admin: armonización con MudTable ─────────────────────────────
+   MudTable aporta la estructura Material; acá solo ajustamos densidad y
+   jerarquía de encabezados (AA: ink-3 ≥ 4.5:1 sobre superficie). */
 .tabla-admin thead th {
-    color: var(--enigma-ink-3);
-    font-size: 0.72rem;
-    font-weight: 650;
+    color: var(--enigma-ink-3) !important;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    border-bottom: 1px solid var(--enigma-border);
     white-space: nowrap;
+}
+
+.tabla-admin .mud-table-cell {
+    padding: 0.7rem 1rem;
 }
 
 .tabla-admin tbody tr {
     transition: background-color 180ms var(--enigma-ease);
 }
 
-.tabla-admin tbody tr:hover {
-    background: var(--enigma-accent-soft);
-}
-
-.tabla-admin tbody td {
-    border-bottom: 1px solid var(--enigma-border);
-    color: var(--enigma-ink);
-}
-
-.tabla-admin tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.tabla-admin input[type="checkbox"] {
-    accent-color: var(--enigma-accent);
-    width: 1rem;
-    height: 1rem;
-}
-
-.tabla-admin .rol-check {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-right: 0.9rem;
-    margin-bottom: 0.25rem;
-    color: var(--enigma-ink-2);
-    font-size: 0.88rem;
-    cursor: pointer;
-}
-
-.tabla-admin .rol-check:hover {
-    color: var(--enigma-ink);
-}
-
-.boton {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: var(--enigma-radius);
-    border: 1px solid var(--enigma-border);
-    background: transparent;
-    color: var(--enigma-ink-2);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: color 180ms var(--enigma-ease), border-color 180ms var(--enigma-ease),
-                background-color 180ms var(--enigma-ease);
-}
-
-.boton:hover {
-    color: var(--enigma-accent);
-    border-color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
-}
-
-.boton:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 2px;
-}
-
-.boton:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-.estado {
-    margin-top: 1rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: var(--enigma-radius);
-    font-size: 0.9rem;
-    width: fit-content;
-}
-
-.estado--exito {
-    background: var(--enigma-accent-soft);
-    color: var(--enigma-accent);
-    border: 1px solid var(--enigma-border);
-}
-
-.estado--error {
-    background: var(--enigma-error-soft);
-    color: var(--enigma-error);
-    border: 1px solid color-mix(in srgb, var(--enigma-error) 35%, transparent);
-}
 /* ─── Toolbar de páginas ──────────────────────────────────────────────── */
 .pagina__toolbar {
     display: flex;
@@ -656,52 +396,12 @@ details[data-menu]:has(.menu__lista--derecha) .menu__lista {
     margin: 0;
 }
 
-/* ─── Botón de acción primaria (crear) ────────────────────────────────── */
-.boton--primario {
-    background: var(--enigma-accent);
-    border-color: var(--enigma-accent);
-    color: #fff;
+/* Gancho de tests y espaciado mínimo; el look lo aporta MudButton. */
+.boton {
+    white-space: nowrap;
 }
 
-.boton--primario:hover {
-    background: var(--enigma-accent-hover);
-    border-color: var(--enigma-accent-hover);
-    color: #fff;
-}
-
-/* ─── Botones de icono (acciones de fila) ─────────────────────────────── */
-.boton-icono {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    border-radius: calc(var(--enigma-radius) - 3px);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--enigma-ink-3);
-    cursor: pointer;
-    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease),
-                border-color 180ms var(--enigma-ease);
-}
-
-.boton-icono:hover {
-    color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
-}
-
-.boton-icono:focus-visible {
-    outline: 2px solid var(--enigma-accent);
-    outline-offset: 2px;
-}
-
-.boton-icono--peligro:hover {
-    color: var(--enigma-error);
-    background: var(--enigma-error-soft);
-}
-
-/* ─── Chips de roles ──────────────────────────────────────────────────── */
+/* ─── Chips de roles (ChipRoles) ──────────────────────────────────────── */
 .chips {
     display: flex;
     flex-wrap: wrap;
@@ -753,147 +453,6 @@ details[data-menu]:has(.menu__lista--derecha) .menu__lista {
 .chips__vacio {
     color: var(--enigma-ink-3);
     font-size: 0.85rem;
-}
-
-/* Chips estáticos (solo lectura, en tabla) */
-.tabla-admin .chip {
-    cursor: default;
-    pointer-events: none;
-}
-
-/* ─── Diálogo / modal ─────────────────────────────────────────────────── */
-.dialogo {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: grid;
-    place-items: center;
-    padding: 1.25rem;
-}
-
-.dialogo__overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(14, 55, 54, 0.45);
-    backdrop-filter: blur(3px);
-}
-
-.dialogo__tarjeta {
-    position: relative;
-    width: min(100%, 26rem);
-    max-height: min(88vh, 44rem);
-    overflow-y: auto;
-    background: var(--enigma-surface);
-    border: 1px solid var(--enigma-border);
-    border-radius: calc(var(--enigma-radius) + 2px);
-    box-shadow: var(--enigma-shadow);
-    padding: 1.5rem 1.6rem 1.6rem;
-}
-
-.dialogo__encabezado {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.1rem;
-}
-
-.dialogo__titulo {
-    margin: 0;
-    font-family: var(--enigma-font-display);
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--enigma-ink);
-}
-
-.dialogo__cerrar {
-    font: inherit;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 1px solid var(--enigma-border);
-    background: transparent;
-    color: var(--enigma-ink-2);
-    cursor: pointer;
-    transition: color 180ms var(--enigma-ease), background-color 180ms var(--enigma-ease);
-}
-
-.dialogo__cerrar:hover {
-    color: var(--enigma-accent);
-    background: var(--enigma-accent-soft);
-}
-
-.dialogo__campos {
-    display: grid;
-    gap: 0.9rem;
-}
-
-.dialogo__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.6rem;
-    margin-top: 1.4rem;
-}
-
-/* ─── Campos de formulario (diálogos) ─────────────────────────────────── */
-.campo {
-    display: grid;
-    gap: 0.35rem;
-}
-
-.campo__etiqueta {
-    font-size: 0.82rem;
-    font-weight: 650;
-    color: var(--enigma-ink-2);
-}
-
-.campo__entrada,
-.campo__select {
-    font: inherit;
-    font-size: 0.95rem;
-    color: var(--enigma-ink);
-    background: var(--enigma-surface);
-    border: 1px solid var(--enigma-border);
-    border-radius: var(--enigma-radius);
-    padding: 0.6rem 0.8rem;
-    transition: border-color 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease);
-}
-
-.campo__entrada:focus-visible,
-.campo__select:focus-visible {
-    outline: none;
-    border-color: var(--enigma-accent);
-    box-shadow: 0 0 0 3px var(--enigma-accent-soft);
-}
-
-/* ─── Skeleton de carga (filas) ───────────────────────────────────────── */
-.skeleton {
-    position: relative;
-    overflow: hidden;
-    background: var(--enigma-accent-soft);
-    border-radius: calc(var(--enigma-radius) - 3px);
-    height: 0.95rem;
-}
-
-.skeleton::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-    animation: skeleton-brillo 1.4s infinite;
-}
-
-@keyframes skeleton-brillo {
-    to { transform: translateX(100%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .skeleton::after { animation: none; }
 }
 
 /* ─── Estado vacío ────────────────────────────────────────────────────── */
