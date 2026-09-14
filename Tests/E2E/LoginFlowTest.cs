@@ -93,7 +93,7 @@ public class LoginFlowTest
         await _page.Locator(".seleccion__tarjeta").First.ClickAsync();
 
         // Menú de cuenta → "Cerrar sesión" (T10 reemplazó el botón "Salir" de la barra).
-        await _page.Locator(".app-cuenta summary").ClickAsync();
+        await _page.Locator(".app-cuenta > button").ClickAsync();
         await _page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión" }).ClickAsync();
         await _page.WaitForURLAsync("**/auth/login");
 

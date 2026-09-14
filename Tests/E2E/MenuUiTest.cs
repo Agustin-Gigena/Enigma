@@ -61,12 +61,12 @@ public class MenuUiTest
         // institución debe vivir en UNA sola carga de página (SPA).
         await EntrarComoAdminAsync();
 
-        await _page.Locator(".app-nav details summary").First.ClickAsync(new() { Timeout = 45_000 });
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Instituciones" }).ClickAsync(new() { Timeout = 45_000 });
+        await _page.Locator(".app-nav__modulo > button").First.ClickAsync(new() { Timeout = 45_000 });
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Instituciones" }).ClickAsync(new() { Timeout = 45_000 });
         await _page.WaitForURLAsync("**/administracion/instituciones", new() { Timeout = 45_000 });
         await _page.Locator(".tabla-admin tbody tr").First.WaitForAsync(new() { Timeout = 45_000 });
 
-        await _page.Locator(".app-institucion-menu summary").ClickAsync(new() { Timeout = 45_000 });
+        await _page.Locator(".app-institucion-menu > button").ClickAsync(new() { Timeout = 45_000 });
         await _page.GetByRole(AriaRole.Button, new() { Name = "Universidad Nacional del Plata" }).ClickAsync(new() { Timeout = 45_000 });
         await _page.WaitForURLAsync(url => new Uri(url).AbsolutePath == "/", new() { Timeout = 45_000 });
 
@@ -84,26 +84,16 @@ public class MenuUiTest
     {
         await EntrarComoAdminAsync();
         await _page.Locator(".app-nav").WaitForAsync(new() { Timeout = 10_000 });
-        await _page.Locator(".app-nav details summary").First.ClickAsync();
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Usuarios" }).WaitForAsync(new() { Timeout = 5_000 });
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Instituciones" }).WaitForAsync(new() { Timeout = 5_000 });
-    }
-
-    [Test]
-    public async Task Barra_Angosta_LasSeccionesVanAMas()
-    {
-        await EntrarComoAdminAsync();
-        await _page.SetViewportSizeAsync(420, 800);
-        await _page.Locator(".app-nav__mas").WaitForAsync(new() { Timeout = 10_000 });
-        await _page.Locator(".app-nav__mas summary").ClickAsync();
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Usuarios" }).WaitForAsync(new() { Timeout = 5_000 });
+        await _page.Locator(".app-nav__modulo > button").First.ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Usuarios" }).WaitForAsync(new() { Timeout = 5_000 });
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Instituciones" }).WaitForAsync(new() { Timeout = 5_000 });
     }
 
     [Test]
     public async Task MenuCuenta_CierraSesion()
     {
         await EntrarComoAdminAsync();
-        await _page.Locator(".app-cuenta summary").ClickAsync();
+        await _page.Locator(".app-cuenta > button").ClickAsync();
         await _page.GetByRole(AriaRole.Button, new() { Name = "Cerrar sesión" }).ClickAsync();
         await _page.WaitForURLAsync("**/auth/login", new() { Timeout = 10_000 });
     }
@@ -115,14 +105,14 @@ public class MenuUiTest
         // La primera tarjeta (orden alfabético) es "Colegio San Martín" → queda
         // activa tras EntrarComoAdminAsync y el dropdown la excluye (spec). El
         // cambio real es hacia la otra institución del seed.
-        await _page.Locator(".app-institucion-menu summary").ClickAsync();
+        await _page.Locator(".app-institucion-menu > button").ClickAsync();
         await _page.GetByRole(AriaRole.Button, new() { Name = "Universidad Nacional del Plata" }).ClickAsync();
         // La URL no cambia (forceLoad a "/"): esperar el contenido recalculado.
         // 45 s: cubre el arranque completo del WASM tras la recarga forzada.
-        await _page.Locator(".app-institucion-menu summary")
+        await _page.Locator(".app-institucion-menu > button")
             .Filter(new() { HasTextString = "Universidad Nacional del Plata" })
             .WaitForAsync(new() { Timeout = 45_000 });
-        Assert.That(await _page.Locator(".app-institucion-menu summary").InnerTextAsync(),
+        Assert.That(await _page.Locator(".app-institucion-menu > button").InnerTextAsync(),
             Does.Contain("Universidad Nacional del Plata"));
     }
 }

@@ -76,21 +76,42 @@ public class PaginasAdministracionTest
         // ("Admin", "Administrador") por substring case-insensitive.
         await _page.Locator(".tabla-admin").GetByRole(AriaRole.Cell, new() { Name = "admin", Exact = true })
             .WaitForAsync(new() { Timeout = 45_000 });
-        ILocator checkAdmin = _page.Locator("input[type='checkbox'][name='Admin']").First;
-        Assert.That(await checkAdmin.IsCheckedAsync(), Is.True, "El admin sembrado tiene rol Admin.");
 
-        await checkAdmin.UncheckAsync();
-        await _page.GetByRole(AriaRole.Button, new() { Name = "Guardar" }).First.ClickAsync();
+        // Abrir el diálogo de roles (icono lápiz de la fila del admin).
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Editar roles de admin" })
+            .ClickAsync(new() { Timeout = 10_000 });
+        await _page.Locator(".mud-dialog .chip").First.WaitForAsync(new() { Timeout = 10_000 });
+
+        // El admin sembrado tiene el chip Admin activo (aria-pressed=true).
+        ILocator chipAdmin = _page.Locator(".mud-dialog .chip").GetByText("Admin", new() { Exact = true });
+        Assert.That(await chipAdmin.GetAttributeAsync("aria-pressed"), Is.EqualTo("true"),
+            "El admin sembrado tiene rol Admin.");
+
+        // Quitar el rol, guardar (MudDialog) y esperar el snackbar de éxito.
+        await chipAdmin.ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Guardar" }).ClickAsync();
         await _page.GetByText("Roles actualizados.").WaitForAsync(new() { Timeout = 10_000 });
 
-        // Restaurar (deja la BD como estaba) y verificar. Restaurar SUMA permisos al
-        // propio usuario → la página re-emite su sesión y se recarga completa
-        // (forceLoad): no hay mensaje inline; la tabla vuelve con el estado persistido.
-        await checkAdmin.CheckAsync();
-        await _page.GetByRole(AriaRole.Button, new() { Name = "Guardar" }).First.ClickAsync();
-        await _page.Locator(".tabla-admin").GetByRole(AriaRole.Cell, new() { Name = "admin", Exact = true })
-            .WaitForAsync(new() { Timeout = 45_000 });
-        await _page.Locator("input[type='checkbox'][name='Admin']").First.WaitForAsync(new() { Timeout = 45_000 });
-        Assert.That(await _page.Locator("input[type='checkbox'][name='Admin']").First.IsCheckedAsync(), Is.True);
+        // Restaurar (deja la BD como estaba) y verificar el estado persistido.
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Editar roles de admin" })
+            .ClickAsync(new() { Timeout = 10_000 });
+        ILocator chipAdminReabierto = _page.Locator(".mud-dialog .chip").GetByText("Admin", new() { Exact = true });
+        await chipAdminReabierto.WaitForAsync(new() { Timeout = 10_000 });
+        Assert.That(await chipAdminReabierto.GetAttributeAsync("aria-pressed"), Is.EqualTo("false"),
+            "El rol quedó quitado tras guardar.");
+
+        await chipAdminReabierto.ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Guardar" }).ClickAsync();
+        await _page.GetByText("Roles actualizados.").WaitForAsync(new() { Timeout = 10_000 });
+
+        // Reabrir: el rol restaurado persiste.
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Editar roles de admin" })
+            .ClickAsync(new() { Timeout = 10_000 });
+        ILocator chipAdminFinal = _page.Locator(".mud-dialog .chip").GetByText("Admin", new() { Exact = true });
+        await chipAdminFinal.WaitForAsync(new() { Timeout = 10_000 });
+        Assert.That(await chipAdminFinal.GetAttributeAsync("aria-pressed"), Is.EqualTo("true"));
+        // Cerrar el diálogo con Cancelar (regresión del crash de cierre).
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Cancelar" }).ClickAsync();
+        await _page.Locator(".mud-dialog").WaitForAsync(new() { Timeout = 10_000 });
     }
 }
