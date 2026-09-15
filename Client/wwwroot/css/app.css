@@ -124,6 +124,16 @@ a {
     z-index: 1000;
 }
 
+/* Foco programático (FocusOnNavigate → h1): sin anillo del navegador. */
+h1:focus {
+    outline: none;
+}
+
+/* Monograma: en dark, jade de marca en vez de blob claro. */
+[data-theme="dark"] .enigma-brand__glyph {
+    color: var(--enigma-brand-accent);
+}
+
     #blazor-error-ui .dismiss {
         cursor: pointer;
         position: absolute;
@@ -342,6 +352,7 @@ a {
 
 .pagina__titulo {
     margin: 0 0 0.35rem;
+    font-family: var(--enigma-font-display);
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -371,13 +382,9 @@ a {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
+    text-align: left;
     white-space: nowrap;
 }
-
-.tabla-admin .mud-table-cell {
-    padding: 0.7rem 1rem;
-}
-
 .tabla-admin tbody tr {
     transition: background-color 180ms var(--enigma-ease);
 }
@@ -492,4 +499,111 @@ a {
     text-align: right;
     white-space: nowrap;
     width: 1%;
+}
+
+/* ─── Superficie: selección de institución (global: el scope de Blazor no
+       llega a la raíz de los componentes MudBlazor) ───────────────────────── */
+.seleccion__main {
+    width: min(100%, 55rem);
+}
+
+.seleccion__grilla {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.seleccion__tarjeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 180ms var(--enigma-ease), box-shadow 180ms var(--enigma-ease),
+                transform 180ms var(--enigma-ease);
+}
+
+.seleccion__tarjeta:hover {
+    border-color: var(--enigma-accent);
+    box-shadow: var(--enigma-shadow);
+    transform: translateY(-1px);
+}
+
+.seleccion__tarjeta:focus-visible {
+    outline: 2px solid var(--enigma-accent);
+    outline-offset: 2px;
+}
+
+.seleccion__tarjeta-cuerpo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.seleccion__tarjeta-nombre {
+    font-family: var(--enigma-font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--enigma-ink);
+}
+
+.seleccion__tarjeta .seleccion__tarjeta-tipo {
+    width: fit-content;
+}
+
+.seleccion__tarjeta-flecha {
+    flex: none;
+    color: var(--enigma-ink-3);
+    transition: color 180ms var(--enigma-ease), transform 180ms var(--enigma-ease);
+}
+
+.seleccion__tarjeta:hover .seleccion__tarjeta-flecha {
+    color: var(--enigma-accent);
+    transform: translateX(2px);
+}
+
+/* ─── Home: chip de tipo sobre la franja de marca ────────────────────────── */
+.home__franja .home__tipo {
+    color: var(--enigma-brand-accent) !important;
+}
+
+/* ─── Separador entre selector de institución y cuenta en la appbar ──────── */
+.app__acciones .app-institucion-menu {
+    padding-right: 0.4rem;
+    margin-right: 0.4rem;
+    border-right: 1px solid var(--enigma-border);
+}
+
+/* ─── Entrada escalonada de la selección (misma coreografía que login) ───── */
+@media (prefers-reduced-motion: no-preference) {
+    .seleccion__main h1 {
+        animation: seleccion-rise 0.65s var(--enigma-ease) both;
+    }
+
+    .seleccion__lead {
+        animation: seleccion-rise 0.65s var(--enigma-ease) 0.08s both;
+    }
+
+    .seleccion__grilla .seleccion__tarjeta {
+        animation: seleccion-rise 0.6s var(--enigma-ease) both;
+    }
+
+    .seleccion__grilla .seleccion__tarjeta:nth-child(1) { animation-delay: 0.16s; }
+    .seleccion__grilla .seleccion__tarjeta:nth-child(2) { animation-delay: 0.24s; }
+    .seleccion__grilla .seleccion__tarjeta:nth-child(3) { animation-delay: 0.32s; }
+    .seleccion__grilla .seleccion__tarjeta:nth-child(4) { animation-delay: 0.4s; }
+}
+
+@keyframes seleccion-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

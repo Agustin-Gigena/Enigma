@@ -35,14 +35,12 @@
                     <div class="seleccion__grilla">
                         @foreach (InstitucionDto institucion in _instituciones)
                         {
-                            <MudCard Class="seleccion__tarjeta" Outlined="true" @onclick="() => Seleccionar(institucion)">
-                                <MudCardInner Class="seleccion__tarjeta-cuerpo">
-                                    <MudText Typo="Typo.h6" Class="seleccion__tarjeta-nombre">@institucion.Nombre</MudText>
+                            <MudCard Class="seleccion__tarjeta" Outlined="true" Elevation="0" @onclick="() => Seleccionar(institucion)">
+                                <div class="seleccion__tarjeta-cuerpo">
+                                    <span class="seleccion__tarjeta-nombre">@institucion.Nombre</span>
                                     <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="seleccion__tarjeta-tipo">@institucion.Tipo</MudChip>
-                                </MudCardInner>
-                                <MudCardActions>
-                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="seleccion__tarjeta-flecha" />
-                                </MudCardActions>
+                                </div>
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="seleccion__tarjeta-flecha" />
                             </MudCard>
                         }
                     </div>
@@ -52,7 +50,7 @@
                 <div class="seleccion__grilla">
                     @for (int i = 0; i < 2; i++)
                     {
-                        <MudSkeleton Width="100%" Height="86px" Rounded="true" />
+                        <MudSkeleton Width="100%" Height="109px" Rounded="true" />
                     }
                 </div>
             </LoaderContent>

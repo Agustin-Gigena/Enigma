@@ -40,6 +40,7 @@ public static class TemaEnigma
         PaletteDark = new PaletteDark
         {
             Primary = "#2BB09E",
+            PrimaryContrastText = "#06201E",
             TextPrimary = "#E4F1EF",
             TextSecondary = "#A9C3BF",
             TextDisabled = "#6F8B87",
