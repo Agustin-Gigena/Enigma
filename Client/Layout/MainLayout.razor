@@ -26,11 +26,9 @@
         <MudSpacer />
 
         <div class="app__acciones">
-            @if (_institucion is not null)
-            {
-                <SelectorInstitucion Activa="_institucion" />
-            }
-            <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario" />
+            <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario"
+                        Activa="_institucion"
+                        Otras="_otrasInstituciones" />
         </div>
     </MudAppBar>
 
@@ -50,40 +48,40 @@
             </div>
         </MudDrawerHeader>
         <MudNavMenu>
-            @if (_otrasInstituciones.Count > 0)
-            {
-                <MudText Typo="Typo.overline" Class="drawer__seccion">Cambiar institución</MudText>
-                @foreach (InstitucionDto institucion in _otrasInstituciones)
-                {
-                    <button type="button" class="drawer__item" @onclick="() => CambiarInstitucion(institucion)">
-                        <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
-                        @institucion.Nombre
-                    </button>
-                }
-                <MudDivider Class="my-2" />
-            }
+            <MudText Typo="Typo.overline" Class="drawer__seccion">Secciones</MudText>
+            <div class="drawer__buscador">
+                <MudAutocomplete T="SeccionDef"
+                                 Value="_seleccionDrawer"
+                                 ValueChanged="IrA"
+                                 SearchFunc="@BuscarSecciones"
+                                 ToStringFunc="@(s => s?.Etiqueta ?? "")"
+                                 Label="Buscar secciones…"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 MaxItems="10"
+                                 ResetValueOnEmptyText="true" />
+            </div>
 
-            @if (_seccionesPermitidas.Count > 0)
-            {
-                <MudText Typo="Typo.overline" Class="drawer__seccion">Secciones</MudText>
-                @foreach (SeccionDef seccion in _seccionesPermitidas)
-                {
-                    <button type="button" class="drawer__item @(seccion.Ruta == _rutaActual ? "drawer__item--activa" : "")"
-                            @onclick="() => IrA(seccion.Ruta)">
-                        @seccion.Etiqueta
-                    </button>
-                }
-                <MudDivider Class="my-2" />
-            }
-
+            <MudDivider Class="my-2" />
             <MudText Typo="Typo.overline" Class="drawer__seccion">Cuenta</MudText>
             <div class="drawer__item drawer__item--estatico">
                 <MudIcon Icon="@Icons.Material.Filled.Person" Class="drawer__item-icono" />
                 @(_sesion?.Usuario.NombreUsuario ?? "Sin sesión")
             </div>
+            <div class="drawer__item drawer__item--estatico">
+                <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
+                @(_institucion?.Nombre ?? "Sin institución")
+            </div>
+            @foreach (InstitucionDto institucion in _otrasInstituciones)
+            {
+                <button type="button" class="drawer__item" @onclick="() => CambiarInstitucion(institucion)">
+                    <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
+                    Cambiar a @institucion.Nombre
+                </button>
+            }
             <button type="button" class="drawer__item" @onclick="AlternarTema">
                 <MudIcon Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Class="drawer__item-icono" />
-                @(_temaOscuro ? "Tema claro" : "Tema oscuro")
+                @(_temaOscuro ? "Pasar a tema claro" : "Pasar a tema oscuro")
             </button>
             <button type="button" class="drawer__item drawer__item--peligro" @onclick="CerrarSesion">
                 <MudIcon Icon="@Icons.Material.Outlined.Logout" Class="drawer__item-icono" />
@@ -120,6 +118,7 @@
     private InstitucionDto? _institucion;
     private List<InstitucionDto> _otrasInstituciones = [];
     private List<SeccionDef> _seccionesPermitidas = [];
+    private SeccionDef? _seleccionDrawer;
     private bool _drawerAbierta;
     private bool _temaOscuro = true;
     private string _rutaActual = "/";
@@ -177,7 +176,7 @@
         _sesion = await Auth.GetSesionAsync();
         _institucion = await Auth.GetInstitucionActivaAsync();
         SincronizarPermisos();
-        _ = CargarOtrasInstitucionesAsync();
+        await CargarOtrasInstitucionesAsync();
     }
 
     private void SincronizarPermisos()
@@ -188,10 +187,36 @@
             .ToList();
     }
 
+    private Task<IEnumerable<SeccionDef>> BuscarSecciones(string texto, CancellationToken ct)
+    {
+        List<SeccionDef> resultados = string.IsNullOrWhiteSpace(texto)
+            ? _seccionesPermitidas
+            : [.. _seccionesPermitidas.Where(s => s.Etiqueta.Contains(texto, StringComparison.OrdinalIgnoreCase))];
+        return Task.FromResult<IEnumerable<SeccionDef>>(resultados);
+    }
+
+    private void IrA(SeccionDef? seccion)
+    {
+        if (seccion is null)
+        {
+            return;
+        }
+
+        _drawerAbierta = false;
+        Navigation.NavigateTo(seccion.Ruta);
+    }
+
     private async Task CargarOtrasInstitucionesAsync()
     {
-        List<InstitucionDto>? todas = await Auth.GetInstitucionesAsync();
-        _otrasInstituciones = [.. (todas ?? []).Where(i => _institucion is null || i.Id != _institucion.Id)];
+        try
+        {
+            List<InstitucionDto>? todas = await Auth.GetInstitucionesAsync();
+            _otrasInstituciones = [.. (todas ?? []).Where(i => _institucion is null || i.Id != _institucion.Id)];
+        }
+        catch (Exception)
+        {
+            _otrasInstituciones = [];
+        }
     }
 
     private async Task AbrirDrawerAsync()
@@ -203,16 +228,11 @@
     private async Task CambiarInstitucion(InstitucionDto institucion)
     {
         _drawerAbierta = false;
-        if (await Auth.SeleccionarInstitucionAsync(institucion))
+        bool ok = await Auth.SeleccionarInstitucionAsync(institucion);
+        if (ok)
         {
             Navigation.NavigateTo("/");
         }
-    }
-
-    private void IrA(string ruta)
-    {
-        _drawerAbierta = false;
-        Navigation.NavigateTo(ruta);
     }
 
     private string? _vistaAnimada;

@@ -619,10 +619,8 @@ h1:focus {
 }
 
 /* ─── Separador entre selector de institución y cuenta en la appbar ──────── */
-.app__acciones .app-institucion-menu {
+.app__acciones .app-cuenta {
     padding-right: 0.4rem;
-    margin-right: 0.4rem;
-    border-right: 1px solid var(--enigma-border);
 }
 
 /* ─── Entrada escalonada de la selección (misma coreografía que login) ───── */
@@ -844,17 +842,6 @@ h1:focus {
     padding: 0.45rem 0.75rem;
 }
 
-/* ─── Appbar: selector de institución en caso normal, no como botón de nav ── */
-.app__acciones .app-institucion-menu button.mud-button-root {
-    text-transform: none;
-    font-weight: 600;
-    letter-spacing: normal;
-}
-
-.app__acciones .app-institucion-menu .mud-icon-root:first-child {
-    color: var(--enigma-accent-link);
-}
-
 /* ─── Mobile (≤640px): sin menú de módulos en la barra; selector + cuenta ── */
 @media (max-width: 640px) {
     .app-nav {
@@ -978,4 +965,29 @@ h1:focus {
 .mud-navmenu .drawer__item {
     justify-content: flex-start;
     text-align: left;
+}
+
+/* ─── Buscador de secciones (appbar desktop y drawer mobile) ──────────────── */
+.app-nav {
+    width: min(250px, 30vw);
+    margin-left: 1.25rem;
+}
+
+.drawer__buscador {
+    padding: 0 0.5rem;
+}
+
+.app-cuenta__seccion {
+    padding: 0.35rem 1rem 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
+}
+
+.app-cuenta__activa {
+    padding: 0 1rem 0.35rem;
+    font-size: 0.82rem;
+    color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
 }

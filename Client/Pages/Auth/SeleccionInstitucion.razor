@@ -27,7 +27,6 @@
 
         <MudLoading Loading="@_cargando" LoaderType="LoaderType.Circular">
             <ChildContent>
-                {
                     <div class="seleccion__grilla">
                         @foreach (InstitucionDto institucion in _instituciones)
                         {
@@ -40,7 +39,6 @@
                             </MudCard>
                         }
                     </div>
-                }
             </ChildContent>
             <LoaderContent>
                 <div class="seleccion__grilla">
