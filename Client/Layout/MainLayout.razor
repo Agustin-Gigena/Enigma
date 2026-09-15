@@ -1,13 +1,18 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
 @inject AuthenticationStateProvider AuthState
+@inject Services.ThemeService Tema
 @inject Gsap Animaciones
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Web
+@using Enigma.Shared.Modules
 @using MudBlazor
 @implements IDisposable
 <MudLayout>
     <MudAppBar Elevation="1" Class="app__bar">
+        @* Mobile: hamburguesa que abre el drawer (nav + institución + cuenta). *@
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Class="app__menu-mobile"
+                       aria-label="Abrir menú" OnClick="@(async () => await AbrirDrawerAsync())" />
         <a class="enigma-brand" href="/">
             <svg class="enigma-brand__glyph" viewBox="0 0 32 32" aria-hidden="true">
                 <rect x="4" y="4" width="24" height="24" rx="7" />
@@ -28,6 +33,65 @@
             <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario" />
         </div>
     </MudAppBar>
+
+    @* Drawer exclusivo de mobile (≤640px): navegación de secciones, cambio de
+       institución, tema y cierre de sesión en un solo lugar. *@
+    <MudDrawer @bind-Open="_drawerAbierta" Elevation="10" Temporary>
+        <MudDrawerHeader>
+            <div class="drawer__marca">
+                <svg class="enigma-brand__glyph enigma-brand__glyph--drawer" viewBox="0 0 32 32" aria-hidden="true">
+                    <rect x="4" y="4" width="24" height="24" rx="7" />
+                    <path d="M11 11.5h10M11 16h6.5M11 20.5h9" />
+                </svg>
+                <div>
+                    <div class="drawer__titulo">Enigma</div>
+                    <div class="drawer__institucion">@_institucion?.Nombre</div>
+                </div>
+            </div>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            @if (_otrasInstituciones.Count > 0)
+            {
+                <MudText Typo="Typo.overline" Class="drawer__seccion">Cambiar institución</MudText>
+                @foreach (InstitucionDto institucion in _otrasInstituciones)
+                {
+                    <button type="button" class="drawer__item" @onclick="() => CambiarInstitucion(institucion)">
+                        <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
+                        @institucion.Nombre
+                    </button>
+                }
+                <MudDivider Class="my-2" />
+            }
+
+            @if (_seccionesPermitidas.Count > 0)
+            {
+                <MudText Typo="Typo.overline" Class="drawer__seccion">Secciones</MudText>
+                @foreach (SeccionDef seccion in _seccionesPermitidas)
+                {
+                    <button type="button" class="drawer__item @(seccion.Ruta == _rutaActual ? "drawer__item--activa" : "")"
+                            @onclick="() => IrA(seccion.Ruta)">
+                        @seccion.Etiqueta
+                    </button>
+                }
+                <MudDivider Class="my-2" />
+            }
+
+            <MudText Typo="Typo.overline" Class="drawer__seccion">Cuenta</MudText>
+            <div class="drawer__item drawer__item--estatico">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="drawer__item-icono" />
+                @(_sesion?.Usuario.NombreUsuario ?? "Sin sesión")
+            </div>
+            <button type="button" class="drawer__item" @onclick="AlternarTema">
+                <MudIcon Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Class="drawer__item-icono" />
+                @(_temaOscuro ? "Tema claro" : "Tema oscuro")
+            </button>
+            <button type="button" class="drawer__item drawer__item--peligro" @onclick="CerrarSesion">
+                <MudIcon Icon="@Icons.Material.Outlined.Logout" Class="drawer__item-icono" />
+                Cerrar sesión
+            </button>
+        </MudNavMenu>
+    </MudDrawer>
+
     <MudMainContent Class="app__main">
         @* Red general de errores: cualquier excepción no manejada de las páginas
            muestra el mensaje amable en lugar de romper el shell. @key por URI:
@@ -54,14 +118,32 @@
 @code {
     private SesionDto? _sesion;
     private InstitucionDto? _institucion;
+    private List<InstitucionDto> _otrasInstituciones = [];
+    private List<SeccionDef> _seccionesPermitidas = [];
+    private bool _drawerAbierta;
+    private bool _temaOscuro = true;
+    private string _rutaActual = "/";
 
     protected override async Task OnInitializedAsync()
     {
         // Reactivo a la re-emisión de sesión (elección/cambio de institución, roles):
         // sin recargar la app, el shell muestra institución y usuario vigentes.
         AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        Tema.Cambiado += SincronizarTema;
+        _rutaActual = Navigation.Uri;
+        await Tema.InicializarAsync();
+        SincronizarTema();
         await RecargarAsync();
     }
+
+    private void SincronizarTema()
+    {
+        _temaOscuro = Tema.Oscuro ?? true;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void AlternarTema() => Tema.Fijar(!_temaOscuro);
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
     {
@@ -76,10 +158,61 @@
         }
     }
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        _ = InvokeAsync(() =>
+        {
+            _rutaActual = e.Location;
+            StateHasChanged();
+        });
+
+    private async Task CerrarSesion()
+    {
+        _drawerAbierta = false;
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/auth/login");
+    }
+
     private async Task RecargarAsync()
     {
         _sesion = await Auth.GetSesionAsync();
         _institucion = await Auth.GetInstitucionActivaAsync();
+        SincronizarPermisos();
+        _ = CargarOtrasInstitucionesAsync();
+    }
+
+    private void SincronizarPermisos()
+    {
+        _seccionesPermitidas = CatalogoModulos.Secciones
+            .Where(s => _sesion?.Permisos.Contains(s.Clave) == true)
+            .OrderBy(s => s.Orden)
+            .ToList();
+    }
+
+    private async Task CargarOtrasInstitucionesAsync()
+    {
+        List<InstitucionDto>? todas = await Auth.GetInstitucionesAsync();
+        _otrasInstituciones = [.. (todas ?? []).Where(i => _institucion is null || i.Id != _institucion.Id)];
+    }
+
+    private async Task AbrirDrawerAsync()
+    {
+        await RecargarAsync(); // secciones e instituciones frescas al abrir
+        _drawerAbierta = true;
+    }
+
+    private async Task CambiarInstitucion(InstitucionDto institucion)
+    {
+        _drawerAbierta = false;
+        if (await Auth.SeleccionarInstitucionAsync(institucion))
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private void IrA(string ruta)
+    {
+        _drawerAbierta = false;
+        Navigation.NavigateTo(ruta);
     }
 
     private string? _vistaAnimada;
@@ -97,5 +230,7 @@
     public void Dispose()
     {
         AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        Tema.Cambiado -= SincronizarTema;
     }
 }

@@ -897,3 +897,85 @@ h1:focus {
         max-width: none !important;
     }
 }
+
+/* ─── Drawer de mobile (nav + institución + cuenta) ───────────────────────── */
+.drawer__marca {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.enigma-brand__glyph--drawer {
+    width: 32px;
+    height: 32px;
+    color: var(--enigma-accent-link);
+}
+
+.drawer__titulo {
+    font-family: var(--enigma-font-display);
+    font-size: 1.15rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    color: var(--mud-palette-textprimary, var(--enigma-ink));
+}
+
+.drawer__institucion {
+    font-size: 0.82rem;
+    color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
+}
+
+.drawer__seccion {
+    padding: 0.9rem 1rem 0.35rem;
+    color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
+    font-weight: 700;
+}
+
+.drawer__item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.7rem 1.1rem;
+    border: 0;
+    background: transparent;
+    color: var(--mud-palette-textprimary, var(--enigma-ink));
+    font: inherit;
+    font-size: 0.92rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 160ms var(--enigma-ease);
+}
+
+.drawer__item:hover {
+    background: var(--enigma-accent-soft);
+}
+
+.drawer__item--activa {
+    background: var(--enigma-accent-soft);
+    font-weight: 650;
+}
+
+.drawer__item--peligro {
+    color: var(--mud-palette-error, var(--enigma-error));
+}
+
+/* ─── Hamburguesa + drawer: SOLO mobile; desktop usa appbar completa ──────── */
+.app__menu-mobile {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .app__menu-mobile {
+        display: inline-flex;
+        margin-right: 0.25rem;
+    }
+
+    .app__acciones {
+        display: none;
+    }
+}
+
+.mud-navmenu .drawer__item {
+    justify-content: flex-start;
+    text-align: left;
+}

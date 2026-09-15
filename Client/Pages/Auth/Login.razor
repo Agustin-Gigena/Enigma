@@ -4,6 +4,7 @@
 @inject AuthService Auth
 @inject NavigationManager Navigation
 @inject Services.ThemeService Tema
+@inject ServicioNotificaciones Notificar
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @using MudExtensions
@@ -52,11 +53,6 @@
                                   Immediate="false" autocomplete="current-password"
                                   Class="login__campo" Margin="Margin.Dense" />
 
-                @if (_error is not null)
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true" role="alert" Class="login__alerta">@_error</MudAlert>
-                }
-
                 <MudLoadingButton Loading="@_cargando" Variant="Variant.Filled" Color="Color.Primary"
                                   ButtonType="ButtonType.Submit" OnClick="LoginAsync" Class="login__submit" FullWidth="true">
                     Ingresá
@@ -92,13 +88,12 @@
         }
 
         _cargando = true;
-        _error = null;
         try
         {
             LoginResult resultado = await Auth.LoginAsync(_usuario.Trim(), _contrasena);
             if (!resultado.Ok || resultado.Datos is null)
             {
-                _error = resultado.Error ?? "No se pudo iniciar sesión. Intentá de nuevo.";
+                Notificar.Error(resultado.Error ?? "No se pudo iniciar sesión. Intentá de nuevo.");
                 return;
             }
 
@@ -112,7 +107,7 @@
                 }
                 else
                 {
-                    _error = "No se pudo iniciar la sesión con esa institución. Intentá de nuevo.";
+                    Notificar.Error("No se pudo iniciar la sesión con esa institución. Intentá de nuevo.");
                 }
             }
             else if (instituciones.Count > 1)
@@ -121,7 +116,8 @@
             }
             else
             {
-                _error = "Tu usuario no tiene instituciones asignadas. Contactá al administrador.";
+                Navigation.NavigateTo("/auth/seleccion-institucion");
+                Notificar.Advertencia("Tu usuario no tiene instituciones asignadas. Contactá al administrador.");
             }
         }
         finally
