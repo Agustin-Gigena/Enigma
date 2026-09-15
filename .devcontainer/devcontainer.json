@@ -31,8 +31,8 @@
     }
   ],
   "runArgs": [
-    "--userns=keep-id",
-    "--memory=3g",
+    "--privileged",
+    "--memory=6g",
     "--cpus=2",
     "--name",
     "enigma-devcontainer",
