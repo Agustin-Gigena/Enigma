@@ -806,3 +806,46 @@ h1:focus {
 .app__acciones .app-institucion-menu .mud-icon-root:first-child {
     color: var(--enigma-accent-link);
 }
+
+/* ─── Mobile (≤640px): sin menú de módulos en la barra; selector + cuenta ── */
+@media (max-width: 640px) {
+    .app-nav {
+        display: none;
+    }
+
+    .app__acciones {
+        gap: 0.15rem;
+    }
+
+    .app__acciones .app-institucion-menu {
+        border-right: 1px solid var(--enigma-border);
+        margin-right: 0.3rem;
+        padding-right: 0.3rem;
+    }
+}
+
+/* ─── Mobile: los menús del appbar caen full-width bajo la barra (así no
+       cubren los triggers vecinos) ───────────────────────────────────────── */
+@media (max-width: 640px) {
+    .app__acciones .mud-popover {
+        left: 8px !important;
+        right: 8px !important;
+        top: 56px !important;
+        bottom: auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .appbar-popover {
+        left: 8px !important;
+        right: 8px !important;
+        top: 56px !important;
+        bottom: auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+}
