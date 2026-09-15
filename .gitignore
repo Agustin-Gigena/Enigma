@@ -30,6 +30,8 @@ Thumbs.db
 *.log
 logs/
 
+**/tmp/
+
 # NuGet packages (for top-level)
 packages/
 

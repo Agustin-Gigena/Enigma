@@ -503,13 +503,59 @@ h1:focus {
 
 /* ─── Superficie: selección de institución (global: el scope de Blazor no
        llega a la raíz de los componentes MudBlazor) ───────────────────────── */
+.seleccion {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+}
+
+.seleccion__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.seleccion__header .enigma-brand__glyph {
+    color: var(--enigma-ink);
+}
+
 .seleccion__main {
     width: min(100%, 55rem);
+    margin: 0 auto;
+    padding-top: clamp(3rem, 12vh, 6rem);
+}
+
+.seleccion__main h1 {
+    margin: 0 0 0.4rem;
+    font-family: var(--enigma-font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--enigma-ink);
+}
+
+.seleccion__lead {
+    margin: 0 0 2rem;
+    color: var(--enigma-ink-2);
+    font-size: 0.95rem;
 }
 
 .seleccion__grilla {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.9rem;
+}
+
+.seleccion__error {
+    margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+    .seleccion__main {
+        padding-top: 2rem;
+    }
 }
 
 .seleccion__tarjeta {
