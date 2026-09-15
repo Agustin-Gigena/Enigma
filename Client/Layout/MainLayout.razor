@@ -1,7 +1,6 @@
 @inherits LayoutComponentBase
 @inject AuthService Auth
 @inject AuthenticationStateProvider AuthState
-@inject ThemeService Tema
 @inject Gsap Animaciones
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Web
@@ -16,16 +15,9 @@
             </svg>
             <span class="enigma-brand__name">Enigma</span>
         </a>
-
-        <NavMenu />
-
         <MudSpacer />
 
         <div class="app__acciones">
-            <MudIconButton Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)"
-                           Variant="Variant.Text" Color="Color.Inherit"
-                           aria-label="Cambiar tema claro/oscuro"
-                           OnClick="AlternarTema" />
             @if (_institucion is not null)
             {
                 <SelectorInstitucion Activa="_institucion" />
@@ -59,26 +51,14 @@
 @code {
     private SesionDto? _sesion;
     private InstitucionDto? _institucion;
-    private bool _temaOscuro = true;
 
     protected override async Task OnInitializedAsync()
     {
         // Reactivo a la re-emisión de sesión (elección/cambio de institución, roles):
         // sin recargar la app, el shell muestra institución y usuario vigentes.
         AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
-        Tema.Cambiado += SincronizarTema;
-        await Tema.InicializarAsync();
-        SincronizarTema();
         await RecargarAsync();
     }
-
-    private void SincronizarTema()
-    {
-        _temaOscuro = Tema.Oscuro ?? true;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    private void AlternarTema() => Tema.Fijar(!_temaOscuro);
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
     {
@@ -114,6 +94,5 @@
     public void Dispose()
     {
         AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
-        Tema.Cambiado -= SincronizarTema;
     }
 }

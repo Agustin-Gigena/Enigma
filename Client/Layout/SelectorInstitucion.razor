@@ -15,6 +15,8 @@
          Variant="Variant.Text"
          Dense="true"
          CloseOnItemClick="true"
+         AnchorOrigin="Origin.BottomRight"
+         TransformOrigin="Origin.TopRight"
          title="Cambiar institución">
     @foreach (InstitucionDto institucion in _instituciones.Where(i => Activa is null || i.Id != Activa.Id))
     {

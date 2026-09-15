@@ -1,8 +1,7 @@
-@* Menú de cuenta: patrón estándar Material (nombre + chevron como trigger).
-   El nombre deja de ser texto decorativo: ES el trigger (hallazgo P2 de la
-   crítica). El nombre del trigger vive dentro del dropdown. *@
+@* Menú de cuenta: perfil + toggle de tema + cierre de sesión. El tema vive
+   acá (decisión de diseño: el appbar no lleva controles sueltos). *@
 @using MudBlazor
-
+@implements IDisposable
 <MudMenu Class="app-cuenta"
          Label="@NombreUsuario"
          StartIcon="@Icons.Material.Filled.AccountCircle"
@@ -10,20 +9,48 @@
          Color="Color.Inherit"
          Variant="Variant.Text"
          Dense="true"
-         CloseOnItemClick="true">
+         CloseOnItemClick="false">
+    <MudMenuItem OnClick="() => { }">
+        <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+        Perfil
+    </MudMenuItem>
+    <MudMenuItem OnClick="AlternarTema">
+        <MudIcon Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Class="mr-2" />
+        @(_temaOscuro ? "Pasar a tema claro" : "Pasar a tema oscuro")
+    </MudMenuItem>
+    <MudDivider Class="my-1" />
     <MudMenuItem OnClick="CerrarSesion">Cerrar sesión</MudMenuItem>
-    @* Ítems futuros: perfil, preferencias… *@
 </MudMenu>
 
 @code {
     [Parameter] public string? NombreUsuario { get; set; }
 
+    private bool _temaOscuro = true;
+
     [Inject] private AuthService Auth { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private Services.ThemeService Tema { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tema.Cambiado += SincronizarTema;
+        await Tema.InicializarAsync();
+        SincronizarTema();
+    }
+
+    private void SincronizarTema() => _ = InvokeAsync(() =>
+    {
+        _temaOscuro = Tema.Oscuro ?? true;
+        StateHasChanged();
+    });
+
+    private void AlternarTema() => Tema.Fijar(!_temaOscuro);
 
     private async Task CerrarSesion()
     {
         await Auth.LogoutAsync();
         Navigation.NavigateTo("/auth/login");
     }
+
+    public void Dispose() => Tema.Cambiado -= SincronizarTema;
 }
