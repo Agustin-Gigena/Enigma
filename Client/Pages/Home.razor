@@ -1,7 +1,12 @@
 @page "/"
 @attribute [Authorize]
 @inject AuthService Auth
+@inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Authorization
+@using Enigma.Shared.Dtos
+@using Enigma.Shared.Modules
+@using Enigma.Client.Services
+@using Enigma.Shared.Modules
 @using MudBlazor
 
 <PageTitle>Inicio · Enigma</PageTitle>
@@ -31,14 +36,34 @@
 
         <section class="home__modulos">
             <h2 class="home__modulos-titulo">Tus módulos</h2>
-            <div class="home__vacio">
-                <svg class="home__vacio-marca" viewBox="0 0 32 32" aria-hidden="true">
-                    <rect x="4" y="4" width="24" height="24" rx="7" />
-                    <path d="M11 11.5h10M11 16h6.5M11 20.5h9" />
-                </svg>
-                <p class="home__vacio-titulo">Todavía no hay módulos</p>
-                <p class="home__vacio-copy">Cuando tu institución active uno, lo vas a ver acá.</p>
-            </div>
+
+            @if (_secciones.Count == 0)
+            {
+                <div class="home__vacio">
+                    <svg class="home__vacio-marca" viewBox="0 0 32 32" aria-hidden="true">
+                        <rect x="4" y="4" width="24" height="24" rx="7" />
+                        <path d="M11 11.5h10M11 16h6.5M11 20.5h9" />
+                    </svg>
+                    <p class="home__vacio-titulo">Todavía no hay módulos</p>
+                    <p class="home__vacio-copy">Cuando tu institución active uno, lo vas a ver acá.</p>
+                </div>
+            }
+            else
+            {
+                <div class="home__modulos-grilla">
+                    @foreach (SeccionDef seccion in _secciones)
+                    {
+                        <MudPaper Class="home__modulo" Elevation="1" @onclick="() => Navigation.NavigateTo(seccion.Ruta)">
+                            <MudIcon Icon="@IconosSeccion.Para(seccion.Clave)" Color="Color.Primary" Class="home__modulo-icono" />
+                            <div>
+                                <div class="home__modulo-nombre">@seccion.Etiqueta</div>
+                                <div class="home__modulo-sub">Ir a la sección</div>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="home__modulo-flecha" />
+                        </MudPaper>
+                    }
+                </div>
+            }
         </section>
     </div>
 </div>
@@ -46,10 +71,20 @@
 @code {
     private UsuarioDto? _usuario;
     private InstitucionDto? _institucion;
+    private List<SeccionDef> _secciones = [];
+
+    [Inject] private AuthenticationStateProvider AuthState { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
         _usuario = await Auth.GetUsuarioAsync();
         _institucion = await Auth.GetInstitucionActivaAsync();
+
+        // Módulos = secciones permitidas por los claims vigentes.
+        AuthenticationState estado = await AuthState.GetAuthenticationStateAsync();
+        HashSet<string> permisos = [.. estado.User.FindAll("permiso").Select(c => c.Value)];
+        _secciones = [.. CatalogoModulos.Secciones
+            .Where(s => permisos.Contains(s.Clave))
+            .OrderBy(s => s.Orden)];
     }
 }
