@@ -991,3 +991,84 @@ h1:focus {
     font-size: 0.82rem;
     color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
 }
+
+/* ─── Nav escritorio: tabs de módulos + Más ───────────────────────────────── */
+.app-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 0 1 auto;
+    margin-left: 1.25rem;
+}
+
+.app-nav__modulo--oculto,
+.app-nav__mas--oculto {
+    display: none;
+}
+
+.app-nav__modulo--activa > button.mud-button-root {
+    background: var(--enigma-accent-soft);
+    color: var(--enigma-accent);
+    font-weight: 650;
+}
+
+.mas__modulo {
+    padding: 0.35rem 1rem 0.15rem;
+    font-weight: 700;
+    color: var(--mud-palette-textsecondary, var(--enigma-ink-2));
+}
+
+/* ─── Nav mobile: buscador + tabs horizontales de secciones ───────────────── */
+.nav-movil {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .app-nav {
+        display: none;
+    }
+
+    .nav-movil {
+        display: block;
+        position: sticky;
+        top: 56px;
+        z-index: 5;
+        background: var(--enigma-bg);
+        padding: 0.5rem clamp(0.75rem, 3vw, 1.25rem) 0.6rem;
+        border-bottom: 1px solid var(--enigma-border);
+    }
+
+    .nav-movil__buscador {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-movil__tabs {
+        display: flex;
+        gap: 0.4rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .nav-movil__tab {
+        flex: none;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--enigma-border);
+        background: var(--enigma-surface);
+        color: var(--enigma-ink-2);
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: color 160ms var(--enigma-ease), border-color 160ms var(--enigma-ease),
+                    background-color 160ms var(--enigma-ease);
+    }
+
+    .nav-movil__tab--activa,
+    .nav-movil__tab:hover {
+        color: var(--enigma-accent);
+        border-color: var(--enigma-accent);
+        background: var(--enigma-accent-soft);
+    }
+}

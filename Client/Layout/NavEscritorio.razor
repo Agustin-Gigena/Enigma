@@ -1,0 +1,163 @@
+@* Nav de escritorio: tabs de módulos; los que no entran caen a "Más +"
+   (medición por interop + listener de resize). Cada tab abre sus secciones. *@
+@inject AuthenticationStateProvider AuthState
+@using Enigma.Shared.Modules
+@using MudBlazor
+@implements IDisposable
+
+<div class="app-nav" @ref="_contenedor">
+    @foreach (ModuloDef modulo in _modulosVisibles)
+    {
+        var oculto = _fueraDeBarra.Contains(modulo.Clave);
+        var activa = SeccionesDe(modulo).Any(s => s.Ruta == RutaActual());
+        <MudMenu Class="@ClaseModulo(modulo, oculto)"
+                 Label="@modulo.Etiqueta"
+                 EndIcon="@Icons.Material.Filled.ExpandMore"
+                 Color="Color.Inherit"
+                 Variant="Variant.Text"
+                 Dense="true"
+                 CloseOnItemClick="true">
+            @foreach (SeccionDef seccion in SeccionesDe(modulo))
+            {
+                <MudMenuItem Href="@seccion.Ruta" Class="@ClaseSeccion(seccion)">@seccion.Etiqueta</MudMenuItem>
+            }
+        </MudMenu>
+    }
+    <MudMenu Class="@ClaseMas()"
+             Label="Más +"
+             EndIcon="@Icons.Material.Filled.ExpandMore"
+             Color="Color.Inherit"
+             Variant="Variant.Text"
+             Dense="true"
+             CloseOnItemClick="true">
+        @foreach (ModuloDef modulo in _modulosVisibles.Where(m => _fueraDeBarra.Contains(m.Clave)))
+        {
+            <MudText Typo="Typo.overline" Class="mas__modulo">@modulo.Etiqueta</MudText>
+            @foreach (SeccionDef seccion in SeccionesDe(modulo))
+            {
+                <MudMenuItem Href="@seccion.Ruta" Class="@ClaseSeccion(seccion)">@seccion.Etiqueta</MudMenuItem>
+            }
+        }
+    </MudMenu>
+</div>
+
+@code {
+    private List<ModuloDef> _modulosVisibles = [];
+    private HashSet<string> _fueraDeBarra = [];
+    private HashSet<string> _permisos = [];
+    private string _rutaActual = "/";
+    private int _ultimoRecorte = -1;
+    private DotNetObjectReference<NavEscritorio>? _ref;
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    private ElementReference _contenedor;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        _rutaActual = Navigation.Uri;
+        await RecalcularAsync((await AuthState.GetAuthenticationStateAsync()).User);
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> tarea)
+    {
+        try
+        {
+            AuthenticationState estado = await tarea;
+            await RecalcularAsync(estado.User);
+            _ultimoRecorte = -1; // fuerza nueva medición con los módulos nuevos
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // El componente puede estar desmontándose: sin consecuencias.
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        _ = InvokeAsync(() =>
+        {
+            _rutaActual = e.Location;
+            StateHasChanged();
+        });
+
+    private Task RecalcularAsync(System.Security.Claims.ClaimsPrincipal usuario)
+    {
+        _permisos = [.. usuario.FindAll("permiso").Select(c => c.Value)];
+        _modulosVisibles = [.. CatalogoModulos.Modulos
+            .Where(m => CatalogoModulos.Secciones.Any(s => s.ModuloClave == m.Clave && _permisos.Contains(s.Clave)))
+            .OrderBy(m => m.Orden)];
+        _fueraDeBarra = [];
+        _ultimoRecorte = -1;
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ref = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("EnigmaNavTabs.init", _ref, ".app-nav");
+        }
+
+        if (_modulosVisibles.Count == 0 || _ultimoRecorte >= _modulosVisibles.Count)
+        {
+            return;
+        }
+
+        try
+        {
+            // Cantidad de tabs que entran en la barra; el resto cae a "Más +".
+            int entran = await JS.InvokeAsync<int>("EnigmaNavTabs.medir", ".app-nav");
+            _fueraDeBarra = [.. _modulosVisibles.Skip(entran).Select(m => m.Clave)];
+            _ultimoRecorte = _modulosVisibles.Count;
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            // Sin el script de medición o desmontándose: todos los tabs en la barra.
+            _fueraDeBarra = [];
+        }
+    }
+
+    [JSInvokable]
+    public Task OnResize()
+    {
+        _ultimoRecorte = -1;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private string RutaActual()
+    {
+        Uri uri = new(_rutaActual);
+        return uri.AbsolutePath;
+    }
+
+    private string ClaseModulo(ModuloDef modulo, bool oculto)
+    {
+        string clases = oculto ? "app-nav__modulo app-nav__modulo--oculto" : "app-nav__modulo";
+        return SeccionesDe(modulo).Any(s => s.Ruta == RutaActual())
+            ? clases + " app-nav__modulo--activa"
+            : clases;
+    }
+
+    private string ClaseMas() =>
+        _fueraDeBarra.Count == 0 ? "app-nav__mas app-nav__mas--oculto" : "app-nav__mas";
+
+    private string ClaseSeccion(SeccionDef seccion) =>
+        seccion.Ruta == RutaActual() ? "menu__item menu__item--activa" : "menu__item";
+
+    private IEnumerable<SeccionDef> SeccionesDe(ModuloDef modulo) =>
+        CatalogoModulos.Secciones
+            .Where(s => s.ModuloClave == modulo.Clave && _permisos.Contains(s.Clave))
+            .OrderBy(s => s.Orden);
+
+    public void Dispose()
+    {
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        _ref?.Dispose();
+    }
+}
