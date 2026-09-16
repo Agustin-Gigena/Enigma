@@ -20,22 +20,6 @@
         <MudIcon Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Class="mr-2" />
         @(_temaOscuro ? "Pasar a tema claro" : "Pasar a tema oscuro")
     </MudMenuItem>
-    @if (Otras.Count > 0)
-    {
-        <MudDivider Class="my-1" />
-        <div class="app-cuenta__seccion">Cambiar institución</div>
-        @if (Activa is not null)
-        {
-            <div class="app-cuenta__activa">@Activa.Nombre</div>
-        }
-        @foreach (InstitucionDto institucion in Otras)
-        {
-            <MudMenuItem OnClick="() => CambiarInstitucion(institucion)">
-                <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="mr-2" />
-                @institucion.Nombre
-            </MudMenuItem>
-        }
-    }
     <MudDivider Class="my-1" />
     <MudMenuItem OnClick="CerrarSesion">Cerrar sesión</MudMenuItem>
 </MudMenu>
@@ -43,8 +27,6 @@
 @code {
     [Parameter] public string? NombreUsuario { get; set; }
     [Parameter] public InstitucionDto? Activa { get; set; }
-    [Parameter] public IReadOnlyList<InstitucionDto> Otras { get; set; } = [];
-
     private bool _temaOscuro = true;
 
     [Inject] private AuthService Auth { get; set; } = default!;
@@ -66,19 +48,6 @@
     });
 
     private void AlternarTema() => Tema.Fijar(!_temaOscuro);
-
-    private async Task CambiarInstitucion(InstitucionDto institucion)
-    {
-        bool ok = await Auth.SeleccionarInstitucionAsync(institucion);
-        if (ok)
-        {
-            Navigation.NavigateTo("/");
-        }
-        else
-        {
-            Notificar.Error("No se pudo cambiar a esa institución. Intentá de nuevo.");
-        }
-    }
 
     private async Task CerrarSesion()
     {

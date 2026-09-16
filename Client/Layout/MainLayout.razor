@@ -26,14 +26,13 @@
         <MudSpacer />
 
         <div class="app__acciones">
-            <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario"
-                        Activa="_institucion"
-                        Otras="_otrasInstituciones" />
+            @if (_institucion is not null)
+            {
+                <SelectorInstitucion Activa="_institucion" Otras="_otrasInstituciones" />
+            }
+            <MenuCuenta NombreUsuario="@_sesion?.Usuario.NombreUsuario" />
         </div>
     </MudAppBar>
-
-    @* Barra de secciones mobile: buscador + tabs horizontales. *@
-    <NavMovil />
 
     @* Drawer exclusivo de mobile (≤640px): navegación de secciones, cambio de
        institución, tema y cierre de sesión en un solo lugar. *@
@@ -71,17 +70,6 @@
                 <MudIcon Icon="@Icons.Material.Filled.Person" Class="drawer__item-icono" />
                 @(_sesion?.Usuario.NombreUsuario ?? "Sin sesión")
             </div>
-            <div class="drawer__item drawer__item--estatico">
-                <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
-                @(_institucion?.Nombre ?? "Sin institución")
-            </div>
-            @foreach (InstitucionDto institucion in _otrasInstituciones)
-            {
-                <button type="button" class="drawer__item" @onclick="() => CambiarInstitucion(institucion)">
-                    <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="drawer__item-icono" />
-                    Cambiar a @institucion.Nombre
-                </button>
-            }
             <button type="button" class="drawer__item" @onclick="AlternarTema">
                 <MudIcon Icon="@(_temaOscuro ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Class="drawer__item-icono" />
                 @(_temaOscuro ? "Pasar a tema claro" : "Pasar a tema oscuro")
@@ -226,16 +214,6 @@
     {
         await RecargarAsync(); // secciones e instituciones frescas al abrir
         _drawerAbierta = true;
-    }
-
-    private async Task CambiarInstitucion(InstitucionDto institucion)
-    {
-        _drawerAbierta = false;
-        bool ok = await Auth.SeleccionarInstitucionAsync(institucion);
-        if (ok)
-        {
-            Navigation.NavigateTo("/");
-        }
     }
 
     private string? _vistaAnimada;

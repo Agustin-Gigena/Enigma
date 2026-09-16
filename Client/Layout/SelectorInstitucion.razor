@@ -1,0 +1,68 @@
+@* Selector de institución del appbar: siempre visible en desktop y mobile
+   (multi-tenant estándar: la institución activa es un control, no un dato).
+   Mobile: popover full-width bajo el appbar para toque cómodo. *@
+@using Enigma.Shared.Dtos
+@using MudBlazor
+
+<MudMenu Class="app-institucion-menu"
+         Label="@(Activa?.Nombre ?? "Institución")"
+         StartIcon="@Icons.Material.Filled.HomeWork"
+         EndIcon="@Icons.Material.Filled.ExpandMore"
+         Color="Color.Inherit"
+         Variant="Variant.Text"
+         Dense="true"
+         CloseOnItemClick="true"
+         AnchorOrigin="Origin.BottomRight"
+         TransformOrigin="Origin.TopRight"
+         PopoverClass="appbar-popover"
+         title="Cambiar institución">
+    <div class="app-institucion-menu__activa">
+        <span class="app-institucion-menu__activa-label">Institución activa</span>
+        <span class="app-institucion-menu__activa-nombre">@Activa?.Nombre</span>
+    </div>
+    @foreach (InstitucionDto institucion in Otras)
+    {
+        <MudMenuItem OnClick="() => Cambiar(institucion)">
+            <MudIcon Icon="@Icons.Material.Filled.HomeWork" Class="mr-2" />
+            @institucion.Nombre
+        </MudMenuItem>
+    }
+</MudMenu>
+
+@code {
+    [Parameter] public InstitucionDto? Activa { get; set; }
+    [Parameter] public IReadOnlyList<InstitucionDto> Otras { get; set; } = [];
+
+    private bool _cambiando;
+
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private ServicioNotificaciones Notificar { get; set; } = default!;
+
+    private async Task Cambiar(InstitucionDto institucion)
+    {
+        if (_cambiando)
+        {
+            return;
+        }
+
+        _cambiando = true;
+        try
+        {
+            bool ok = await Auth.SeleccionarInstitucionAsync(institucion);
+            if (ok)
+            {
+                // La sesión se re-emite: el shell recalcula (SPA, sin recargar).
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                Notificar.Error("No se pudo cambiar a esa institución. Intentá de nuevo.");
+            }
+        }
+        finally
+        {
+            _cambiando = false;
+        }
+    }
+}
