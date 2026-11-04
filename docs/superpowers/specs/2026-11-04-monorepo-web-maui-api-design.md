@@ -36,7 +36,7 @@ Directory.Build.props            ← net10.0, nullable, implicit usings comunes
 Directory.Packages.props         ← CPM + CentralPackageTransitivePinningEnabled=true
 src/
 ├── Enigma.Api/                  ← ex Server/ (git mv) · ns Enigma.Server.* → Enigma.Api.* · Dockerfile
-├── Enigma.Web/                  ← ex Client/ (git mv), host WASM fino · ns Enigma.Client.* → Enigma.Web.* · Dockerfile
+├── Enigma.Web/                  ← ex Client/ (git mv), host WASM fino · ns Enigma.Client.* → Enigma.Web.*
 ├── Enigma.SharedUI/             ← NUEVO RCL · ns Enigma.SharedUI.*
 ├── Enigma.Maui/                 ← NUEVO Blazor Hybrid · ns Enigma.Maui.*
 └── Enigma.Shared/               ← se mueve a src/ (sin cambios internos)
@@ -138,7 +138,7 @@ flowchart LR
 - **API (VPS):** se conserva `build-server-image.yml` (path del Dockerfile actualizado). `deploy/docker-compose.yml` + `deploy/Caddyfile` versionados; deploy a la instancia manual por ahora (`docker compose pull && up -d`).
 - **Web (Pages):** nuevo `deploy-web.yml` (`workflow_dispatch`): publish → `wrangler@4 pages deploy dist/wwwroot`. Lecciones Build-It obligatorias: wrangler 4 (no 3.x), verificar bundle CSS de la RCL post-publish (rehash/reescritura si hace falta), `_redirects` solo rutas explícitas SIN catch-all (rompe `_framework/`), `404.html` presente desactiva el fallback SPA automático. Auditoría del placeholder `#[.{fingerprint}]` en `index.html` (una sola ocurrencia, nunca en comentarios HTML).
 - **MAUI (artifacts):** `build-maui.yml`: job ubuntu (`maui-android`) → APK; job `windows-latest` (`dotnet workload install maui-windows`) → publish self-contained + MSIX sin firmar (sideload; firma = follow-up). Sin store.
-- **Obsoleto:** `build-client-image.yml` se ELIMINA (la Web es estática; ya no hay imagen del client).
+- **Obsoleto:** `build-client-image.yml` se ELIMINA (la Web es estática; ya no hay imagen del client) junto con `src/Enigma.Web/Dockerfile` — el publish WASM es estático directo a Pages.
 
 **CI de validación:** `pr-validation.yml` buildea `Enigma.Core.slnf` (sin Maui → ubuntu sin workload MAUI). Maui lo cubren los jobs dedicados. `dev-db-image.yml` y `apply-rulesets.yml` intactos.
 
