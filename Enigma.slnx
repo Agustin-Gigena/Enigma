@@ -8,11 +8,9 @@
   <Folder Name="/src/SharedUI/">
     <Project Path="src/Enigma.SharedUI/Enigma.SharedUI.csproj" />
   </Folder>
-  <!-- Task 3 crea Enigma.Maui: descomentar entonces.
   <Folder Name="/src/Maui/">
     <Project Path="src/Enigma.Maui/Enigma.Maui.csproj" />
   </Folder>
-  -->
   <Folder Name="/src/Shared/">
     <Project Path="src/Enigma.Shared/Enigma.Shared.csproj" />
   </Folder>
