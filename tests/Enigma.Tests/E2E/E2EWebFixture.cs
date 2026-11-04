@@ -46,6 +46,17 @@ public class E2EWebFixture
         await WaitForUrl(ClientUrl, TimeSpan.FromSeconds(60));
     }
 
+    /// <summary>
+    /// Config de build de esta corrida: <c>dotnet run --no-build</c> sin -c
+    /// usa Debug por defecto y falla si la suite corre en Release
+    /// (output ausente → los servers nunca levantan).
+    /// </summary>
+#if DEBUG
+    private const string BuildConfig = "Debug";
+#else
+    private const string BuildConfig = "Release";
+#endif
+
     [OneTimeTearDown]
     public void StopServers()
     {
@@ -58,7 +69,7 @@ public class E2EWebFixture
         return Process.Start(new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"run --project {project} --no-build --urls http://localhost:{port}",
+            Arguments = $"run --project {project} --no-build -c {BuildConfig} --urls http://localhost:{port}",
             WorkingDirectory = RepoRoot,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
