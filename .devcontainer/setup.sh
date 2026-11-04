@@ -17,14 +17,13 @@ RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 SOCKET="${PODMAN_SOCKET:-$RUNTIME_DIR/podman/podman.sock}"
 DEVCONTAINER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ═══ Fase CONTENEDOR: Android SDK + emulador (Task 4) ══════════════════════
+# ═══ Fase CONTENEDOR: workload maui-android (Task 4) ═══════════════════════
 # El mismo script atiende ambas caras del devcontainer:
 #   - initializeCommand lo corre en el HOST (bind mounts, socket podman, .env).
 #   - postCreateCommand lo corre DENTRO del contenedor como dev user:
-#     workload maui-android, env del SDK para todas las shells, licencias,
-#     emulador + imagen de sistema y AVD `enigma-dev` (idempotente).
-# Requisito del plan: el devcontainer debe poder EJECUTAR MAUI en el emulador,
-# no solo compilarla.
+#     workload maui-android y env del SDK para todas las shells (idempotente).
+# El build APK (gradle/jarsigner) corre en CI y local; sin provisioning de
+# emulador (scope rechazado por el controller — YAGNI).
 if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
     step "Ensuring maui-android workload"
     if ! dotnet workload list 2>/dev/null | grep -q maui-android; then
@@ -54,7 +53,7 @@ if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
         elif [ -d /usr/lib/jvm/java-17-openjdk-amd64 ]; then
             JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         else
-            warn "JAVA_HOME no localizado — sdkmanager/emulator lo necesitan"
+            warn "JAVA_HOME no localizado — el build MAUI (gradle/jarsigner) lo necesita"
             exit 1
         fi
     fi
@@ -68,6 +67,9 @@ if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
     sudo tee /etc/profile.d/android-sdk.sh >/dev/null <<EOF
 export ANDROID_HOME="$ANDROID_HOME"
 export JAVA_HOME="$JAVA_HOME"
+# jarsigner reserva ~25% del heap visible y aborta (exit 134) dentro del
+# cgroup de 3G del devcontainer — cap explícito (evidencia: task-3-report).
+export JAVA_TOOL_OPTIONS="-Xmx800m"
 EOF
     sudo chmod 0755 /etc/profile.d/android-sdk.sh
     if ! grep -q 'android-sdk.sh' /etc/bash.bashrc 2>/dev/null; then
@@ -75,32 +77,6 @@ EOF
             | sudo tee -a /etc/bash.bashrc >/dev/null
     fi
     info "OK: /etc/profile.d/android-sdk.sh (ANDROID_HOME=$ANDROID_HOME, JAVA_HOME=$JAVA_HOME)"
-
-    step "Accepting Android SDK licenses"
-    SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-    if [ ! -x "$SDKMANAGER" ]; then
-        SDKMANAGER="$(find "$ANDROID_HOME" -name sdkmanager -path '*cmdline-tools*' 2>/dev/null | head -1)"
-    fi
-    if [ -z "$SDKMANAGER" ]; then
-        warn "sdkmanager no encontrado bajo $ANDROID_HOME"
-        exit 1
-    fi
-    yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-    info "OK: licencias aceptadas"
-
-    step "Ensuring Android emulator + system image"
-    if ! "$SDKMANAGER" --list_installed 2>/dev/null | grep -q 'system-images;android-34;google_apis;x86_64'; then
-        yes | "$SDKMANAGER" "emulator" "system-images;android-34;google_apis;x86_64" "platform-tools" >/dev/null
-    fi
-    info "OK: emulator + system-images;android-34;google_apis;x86_64 + platform-tools"
-
-    step "Ensuring AVD enigma-dev"
-    AVDMANAGER="$(dirname "$SDKMANAGER")/avdmanager"
-    if ! "$AVDMANAGER" list avd 2>/dev/null | grep -q enigma-dev; then
-        echo no | "$AVDMANAGER" create avd -n enigma-dev \
-            -k "system-images;android-34;google_apis;x86_64" -d pixel_6
-    fi
-    info "OK: AVD enigma-dev"
 
     info "setup complete (container)"
     exit 0
@@ -147,18 +123,9 @@ fi
 #    user (name, group, uid, gid) as the host. compose.json interpolates these
 #    from .devcontainer/.env (build args, `user`, volume targets). Only the
 #    generated keys are refreshed; any pre-existing lines (e.g. secrets used by
-#    start-dev.sh) are preserved untouched.
-#    También se detecta KVM para el passthrough al emulador Android: sin
-#    /dev/kvm el GID queda en 0 (grupo root, inofensivo) y el emulador x86_64
-#    no podrá arrancar (exige aceleración de CPU por hardware) — ver README.
+#    start-dev.sh) are preserved untouched. KVM_GID purga entradas viejas del
+#    passthrough del emulador (scope rechazado).
 step "Writing host identity to .devcontainer/.env"
-kvm_gid="0"
-if [ -e /dev/kvm ]; then
-    kvm_gid="$(stat -c %g /dev/kvm)"
-    info "KVM disponible: /dev/kvm (gid $kvm_gid) → emulador acelerado"
-else
-    warn "Host sin /dev/kvm — el emulador x86_64 NO arrancará (exige aceleración de CPU)"
-fi
 env_file="$DEVCONTAINER_DIR/.env"
 env_tmp="$(mktemp)"
 {
@@ -168,9 +135,8 @@ env_tmp="$(mktemp)"
     printf 'ENIGMA_USER_UID=%s\n'      "$(id -u)"
     printf 'ENIGMA_USER_GID=%s\n'      "$(id -g)"
     printf 'ENIGMA_PODMAN_SOCKET=%s\n' "$SOCKET"
-    printf 'ENIGMA_KVM_GID=%s\n'       "$kvm_gid"
 } > "$env_tmp"
 mv "$env_tmp" "$env_file"
-info "OK: host identity ($(id -un):$(id -u)), socket y KVM gid=$kvm_gid en $env_file"
+info "OK: host identity ($(id -un):$(id -u)) y socket en $env_file"
 
 info "setup complete"

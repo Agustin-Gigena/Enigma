@@ -49,10 +49,13 @@ builder.Services.AddRateLimiter(options =>
 string[] corsOrigins = (Environment.GetEnvironmentVariable("ENIGMA_CORS_ORIGINS")
         ?? "http://localhost:8080,https://localhost:8080")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+if (corsOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+    throw new InvalidOperationException("ENIGMA_CORS_ORIGINS vacía: no hay orígenes CORS permitidos.");
 builder.Services.AddCors(options =>
 {
+    // AllowCredentials: REQUIRED — el login setea cookie HttpOnly cross-origin.
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod());
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 // Build the MySQL connection string from environment variables (with dev defaults).
@@ -143,10 +146,15 @@ builder.Services.AddAuthorization();
 WebApplication app = builder.Build();
 
 // Detrás de Caddy (proxy TLS): honrar X-Forwarded-* para scheme/host correctos.
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeaders = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+};
+// Caddy vive en la red Docker (no loopback): sin esto, X-Forwarded-* se descartan.
+// (KnownNetworks fue renombrado a KnownIPNetworks en .NET 10.)
+forwardedHeaders.KnownIPNetworks.Clear();
+forwardedHeaders.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeaders);
 
 // Configure the HTTP request pipeline.
 // Order matters: Exception -> CORS -> Auth -> Authorization.

@@ -42,22 +42,6 @@ docker-compose up -d
 dotnet ef database update --project Server/Enigma.Server.csproj
 ```
 
-## Devcontainer y emulador Android
-
-El devcontainer incluye el workload `maui-android`, el emulador y un AVD `enigma-dev`
-(`system-images;android-34;google_apis;x86_64`) para **ejecutar** la app MAUI, no solo
-compilarla. El provisioning corre idempotentemente como dev user vía
-`bash .devcontainer/setup.sh` (invocado desde `postCreateCommand`).
-
-- **Con `/dev/kvm` en el host**: emulación acelerada. `compose.json` monta el device
-  (`devices: ["/dev/kvm:/dev/kvm"]`) y agrega al contenedor el GID del device
-  (`ENIGMA_KVM_GID`, detectado por `setup.sh` en el host).
-- **Sin `/dev/kvm`** (VMs sin nested virtualization): el emulador **no puede arrancar** —
-  las imágenes x86_64 de Android exigen aceleración de CPU por hardware (swiftshader solo
-  reemplaza la GPU). Provisioning y AVD quedan listos para usar el devcontainer en un
-  host con KVM; `setup.sh` detecta la ausencia y lo reporta en el log.
-
-
 ## Licencia
 
 Funcional Source License 1.1 (FSL-1.1-ALv2). Ver [`LICENSE-FSL-1.1-ALv2`](./LICENSE-FSL-1.1-ALv2).

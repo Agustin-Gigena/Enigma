@@ -21,6 +21,8 @@ jobs:
         run: |
           cd dist/wwwroot
           hashed=$(ls _content/Enigma.SharedUI/*.bundle.scp.css 2>/dev/null | head -1 || true)
+          # Verificar que el bundle hasheado existe en dist; warning sin romper el deploy.
+          test -n "$hashed" || echo "::warning::no RCL bundle css in dist"
           if [ -n "$hashed" ]; then
             sed -i "s|_content/Enigma.SharedUI/Enigma.SharedUI.bundle.scp.css|$(basename "$hashed")|g" index.html
           fi

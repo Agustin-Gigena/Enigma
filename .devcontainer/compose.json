@@ -16,8 +16,6 @@
       "security_opt": ["label=disable"],
       "user": "${ENIGMA_USER_NAME}",
       "userns_mode": "keep-id",
-      "devices": ["/dev/kvm:/dev/kvm"],
-      "group_add": ["${ENIGMA_KVM_GID}"],
       "command": "sleep infinity",
       "container_name": "enigma-devcontainer",
       "mem_limit": "3g",
