@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enigma</title>
+    <base href="/" />
+    <link rel="stylesheet" href="_content/Enigma.SharedUI/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="_content/Enigma.SharedUI/css/app.css" />
+    <!-- Scoped CSS de la RCL: en BlazorWebView NO se empaqueta en el host (lección Build-It). -->
+    <link rel="stylesheet" href="_content/Enigma.SharedUI/Enigma.SharedUI.bundle.scp.css" />
+    <script>
+        // Tema antes del primer render (idéntico al shell web).
+        (function () {
+            var t = localStorage.getItem('enigma_theme');
+            if (t !== 'light' && t !== 'dark') {
+                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+</body>
+
+</html>

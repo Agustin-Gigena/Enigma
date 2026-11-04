@@ -1,0 +1,45 @@
+name: Deploy Web
+description: |
+  Publica el host Blazor WASM (src/Enigma.Web) en Cloudflare Pages.
+  CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID llegan como env desde el
+  workflow (las composite actions no acceden al contexto secrets).
+
+inputs:
+  pages_project:
+    description: Nombre del proyecto en Cloudflare Pages.
+    required: false
+    default: enigma
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup-dotnet
+      with:
+        # El slnf excluye Enigma.Maui: corre en ubuntu sin workload maui-android.
+        restore-target: Enigma.Core.slnf
+
+    - name: Publish WASM
+      shell: bash
+      run: dotnet publish src/Enigma.Web -c Release -o dist
+
+    # Lección Build-It #2: el bundle scoped CSS de la RCL sale con hash y el SDK
+    # no reescribe la referencia en el host. Verificar y reescribir si hace falta.
+    - name: Fix hashed bundle css reference (if needed)
+      shell: bash
+      run: |
+        cd dist/wwwroot
+        hashed=$(ls _content/Enigma.SharedUI/*.bundle.scp.css 2>/dev/null | head -1 || true)
+        # Verificar que el bundle hasheado existe en dist; warning sin romper el deploy.
+        test -n "$hashed" || echo "::warning::no RCL bundle css in dist"
+        if [ -n "$hashed" ]; then
+          sed -i "s|_content/Enigma.SharedUI/Enigma.SharedUI.bundle.scp.css|$(basename "$hashed")|g" index.html
+        fi
+
+    - name: Deploy to Cloudflare Pages
+      uses: cloudflare/wrangler-action@v3
+      with:
+        wranglerVersion: "4"
+        apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+        command: pages deploy dist/wwwroot --project-name ${{ inputs.pages_project }}

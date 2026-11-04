@@ -10,6 +10,14 @@ inputs:
     description: 'JSON genérico con parámetros opcionales. Ejemplo: {"tools": {"dotnet-format": "9.0.218"}}'
     required: false
     default: ''
+  restore-target:
+    description: 'Qué restaurar (Enigma.slnx | Enigma.Core.slnf | <csproj>). Vacío = saltear el restore.'
+    required: false
+    default: 'Enigma.slnx'
+  workload:
+    description: 'Workload dotnet a instalar antes del restore (ej: maui-android). Vacío = ninguno.'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -67,8 +75,16 @@ runs:
       env:
         PARAMS_JSON: ${{ inputs.params-json }}
 
-    - name: Restore dependencies
+    - name: Install dotnet workload
+      if: ${{ inputs.workload != '' }}
       shell: bash
       run: |
         set -euo pipefail
-        dotnet restore
+        dotnet workload install "${{ inputs.workload }}"
+
+    - name: Restore dependencies
+      if: ${{ inputs.restore-target != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        dotnet restore "${{ inputs.restore-target }}"

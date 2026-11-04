@@ -1,0 +1,12 @@
+{
+  "solution": {
+    "path": "Enigma.slnx",
+    "projects": [
+      "src/Enigma.Shared/Enigma.Shared.csproj",
+      "src/Enigma.SharedUI/Enigma.SharedUI.csproj",
+      "src/Enigma.Api/Enigma.Api.csproj",
+      "src/Enigma.Web/Enigma.Web.csproj",
+      "tests/Enigma.Tests/Enigma.Tests.csproj"
+    ]
+  }
+}

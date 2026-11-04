@@ -1,0 +1,5 @@
+# Reverse proxy TLS para la Api (Kestrel ya escucha :8081 en la red interna).
+# Caddy emite y renueva el certificado automáticamente.
+{$ENIGMA_API_DOMAIN} {
+    reverse_proxy api:8081
+}
