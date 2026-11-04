@@ -17,6 +17,10 @@ jobs:
 
       - name: Setup .NET 10 SDK and restore dependencies
         uses: ./.github/actions/setup-dotnet
+        with:
+          # El scan de vulnerabilidades cubre TODO el slnx (incl. Maui):
+          # restaurar Maui requiere el workload maui-android.
+          workload: maui-android
 
       - name: Validate package security
         shell: bash
@@ -41,6 +45,8 @@ jobs:
 
       - name: Setup .NET 10 SDK and restore dependencies
         uses: ./.github/actions/setup-dotnet
+        with:
+          restore-target: Enigma.Core.slnf
 
       - name: Validate solution build
         run: dotnet build Enigma.Core.slnf -c Release /p:TreatWarningsAsErrors=true

@@ -19,11 +19,11 @@ runs:
   steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/setup-dotnet
-
-    - name: Install MAUI Android workload
-      if: ${{ inputs.platform == 'android' }}
-      shell: bash
-      run: dotnet workload install maui-android
+      with:
+        # El workload va plegado aquí (antes del restore) y el restore se
+        # saltea: el build/publish de más abajo restaura por sí mismo.
+        workload: ${{ inputs.platform == 'android' && 'maui-android' || 'maui-windows' }}
+        restore-target: ''
 
     - name: Build APK
       if: ${{ inputs.platform == 'android' }}
@@ -45,11 +45,6 @@ runs:
       with:
         name: ${{ inputs.artifact_prefix }}-android-apk
         path: dist/*.apk
-
-    - name: Install MAUI Windows workload
-      if: ${{ inputs.platform == 'windows' }}
-      shell: pwsh
-      run: dotnet workload install maui-windows
 
     - name: Publish self-contained (Windows)
       if: ${{ inputs.platform == 'windows' }}

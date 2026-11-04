@@ -26,6 +26,9 @@ runs:
   steps:
     - name: Setup .NET SDK + dotnet-ef (incluye cache de NuGet)
       uses: ./.github/actions/setup-dotnet
+      with:
+        # El slnf excluye Enigma.Maui: corre en ubuntu sin workload maui-android.
+        restore-target: Enigma.Core.slnf
 
     - name: Cache Playwright browsers
       uses: actions/cache@v4
@@ -45,7 +48,7 @@ runs:
       shell: bash
 
     - name: Run all tests
-      run: dotnet test
+      run: dotnet test Enigma.Core.slnf
       shell: bash
       env:
         ASPNETCORE_ENVIRONMENT: Development

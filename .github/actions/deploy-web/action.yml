@@ -15,6 +15,9 @@ runs:
   steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/setup-dotnet
+      with:
+        # El slnf excluye Enigma.Maui: corre en ubuntu sin workload maui-android.
+        restore-target: Enigma.Core.slnf
 
     - name: Publish WASM
       shell: bash
