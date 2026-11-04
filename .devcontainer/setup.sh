@@ -11,6 +11,7 @@ set -euo pipefail
 _ts()   { date -u +%H:%M:%S; }
 info()  { echo "[$(_ts)] setup: $*"; }
 warn()  { echo "[$(_ts)] setup: WARN — $*" >&2; }
+err()   { echo "[$(_ts)] setup: ERROR — $*" >&2; }
 step()  { echo ""; echo "[$(_ts)] setup: ─── $* ───"; }
 
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -25,25 +26,28 @@ DEVCONTAINER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # El build APK (gradle/jarsigner) corre en CI y local; sin provisioning de
 # emulador (scope rechazado por el controller — YAGNI).
 if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
-    step "Ensuring maui-android workload"
+    # Verificación, no instalación: el workload maui-android se HORNEA en la
+    # imagen (root, build time — ver .devcontainer/Dockerfile). El SDK vive
+    # root-owned en /usr/share/dotnet; instalarlo en runtime como dev user
+    # muere con EACCES sugiriendo sudo (que contamina $HOME con archivos
+    # root). Si falta acá, la imagen es vieja: Rebuild Container.
+    step "Verifying maui-android workload (horneado en la imagen)"
     if ! dotnet workload list 2>/dev/null | grep -q maui-android; then
-        dotnet workload install maui-android
+        err "Workload maui-android ausente — la imagen está vieja. Corré 'Dev Containers: Rebuild Container' (instalarlo en runtime requiere sudo y contamina \$HOME)"
+        exit 1
     fi
     info "OK: workload maui-android"
 
-    # Localizar el SDK Android (el workload lo instala en ~/android-sdk por
-    # defecto; si no, buscar sdkmanager y derivar la raíz del SDK).
+    # Localizar el SDK Android: se provisiona en el PRIMER build net-android
+    # como dev user (default $HOME/android-sdk — no en install-time del
+    # workload). Si aún no existe, NO es un error: avisar y seguir (el env
+    # exportado abajo cubre el resto).
     ANDROID_HOME="${ANDROID_HOME:-}"
     if [ -z "$ANDROID_HOME" ] || [ ! -d "$ANDROID_HOME" ]; then
         ANDROID_HOME="$HOME/android-sdk"
     fi
     if [ ! -d "$ANDROID_HOME" ]; then
-        found="$(find "$HOME" -name sdkmanager -path '*cmdline-tools*' 2>/dev/null | head -1 || true)"
-        if [ -z "$found" ]; then
-            warn "No se encontró el SDK Android tras instalar el workload"
-            exit 1
-        fi
-        ANDROID_HOME="$(cd "$found/../../.." && pwd)"
+        info "SDK Android aún no provisionado — se descargará en el primer build MAUI ($ANDROID_HOME)"
     fi
     JAVA_HOME="${JAVA_HOME:-}"
     if [ -z "$JAVA_HOME" ] || [ ! -d "$JAVA_HOME" ]; then

@@ -81,6 +81,24 @@ RUN dotnet tool install --tool-path /usr/local/share/dotnet-tools dotnet-ef \
  && ln -s /usr/local/share/dotnet-tools/dotnet-ef /usr/local/bin/dotnet-ef
 ENV PATH="${PATH}:/usr/local/share/dotnet-tools"
 
+# MAUI Android workload, pre-horneado en la imagen (root, build time).
+# El SDK vive root-owned en /usr/share/dotnet: un `dotnet workload install`
+# del dev user en runtime intenta escribir ahí y muere con EACCES sugiriendo
+# sudo (que contamina $HOME con archivos root). En runtime el workload SOLO
+# SE LEE (los manifests son input del build); NuGet y obj van al $HOME del
+# usuario.
+# El SDK Android NO va horneado: `dotnet workload install` instala los packs
+# y el SDK se provisiona en el PRIMER build net-android como dev user, al
+# default $HOME/android-sdk (escribible — verificado en build real: honrar
+# ANDROID_HOME en install-time no ocurre). JAVA_HOME sí es del sistema:
+# gradle/jarsigner lo necesitan y es read-only para todos.
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openjdk-17-jdk-headless \
+ && rm -rf /var/lib/apt/lists/* \
+ && dotnet workload install maui-android
+
 # Bun runtime — installed here (not as a devcontainer feature) because the
 # devcontainer feature layer mechanism corrupts /tmp permissions
 # (mode changes from 1777 to 755, breaking VS Code's X11 forwarding
