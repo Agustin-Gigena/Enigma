@@ -36,6 +36,7 @@ runs:
         images: ${{ steps.meta.outputs.image }}
         tags: |
           type=sha,prefix=
+          type=ref,event=branch
           type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
 
     - name: Set up Docker Buildx

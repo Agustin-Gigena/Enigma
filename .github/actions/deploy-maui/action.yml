@@ -18,6 +18,7 @@ runs:
   using: composite
   steps:
     - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup-dotnet
 
     - name: Install MAUI Android workload
       if: ${{ inputs.platform == 'android' }}

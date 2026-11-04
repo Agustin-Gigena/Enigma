@@ -4,7 +4,7 @@
 ; Sin /D usan los defaults de abajo (publicación local de prueba).
 
 #ifndef SourceDir
-#define SourceDir "..\..\dist\win"
+#define SourceDir "..\..\..\dist\win"
 #endif
 
 #ifndef AppVersion
@@ -28,7 +28,7 @@ PrivilegesRequired=admin
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Enigma"; Filename: "{app}\Enigma.exe"
+Name: "{autoprograms}\Enigma"; Filename: "{app}\Enigma.Maui.exe"
 
 [Run]
-Filename: "{app}\Enigma.exe"; Description: "Ejecutar Enigma ahora"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Enigma.Maui.exe"; Description: "Ejecutar Enigma ahora"; Flags: nowait postinstall skipifsilent
