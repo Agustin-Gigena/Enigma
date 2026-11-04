@@ -124,7 +124,7 @@ fi
 #    from .devcontainer/.env (build args, `user`, volume targets). Only the
 #    generated keys are refreshed; any pre-existing lines (e.g. secrets used by
 #    start-dev.sh) are preserved untouched. KVM_GID purga entradas viejas del
-#    passthrough del emulador (scope rechazado).
+#    passthrough de dispositivos (scope rechazado).
 step "Writing host identity to .devcontainer/.env"
 env_file="$DEVCONTAINER_DIR/.env"
 env_tmp="$(mktemp)"

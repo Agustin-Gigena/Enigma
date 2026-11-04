@@ -30,6 +30,31 @@ public class ArchitectureTests
             "Se encontraron archivos DTO fuera de Shared:\n" + string.Join("\n", violatingFiles));
     }
 
+    [Test]
+    public void NadieReferenciaEnigmaApiFueraDeEnigmaTests()
+    {
+        string repoRoot = FindRepositoryRoot(AppContext.BaseDirectory);
+        string[] excludedDirectories = new[]
+        {
+            Path.Combine(repoRoot, ".git"),
+            Path.Combine(repoRoot, "bin"),
+            Path.Combine(repoRoot, "obj"),
+            Path.Combine(repoRoot, ".vs")
+        };
+        string testsProject = Path.Combine(repoRoot, "tests", "Enigma.Tests", "Enigma.Tests.csproj");
+
+        List<string> violatingProjects = Directory.EnumerateFiles(repoRoot, "*.csproj", SearchOption.AllDirectories)
+            .Where(path => !IsExcluded(path, excludedDirectories))
+            .Where(path => !string.Equals(path, testsProject, StringComparison.OrdinalIgnoreCase))
+            .Where(path => Regex.IsMatch(File.ReadAllText(path), "<ProjectReference\\s+Include=\"[^\"]*Enigma\\.Api\\.csproj\"", RegexOptions.IgnoreCase))
+            .OrderBy(path => path)
+            .Select(path => Path.GetRelativePath(repoRoot, path))
+            .ToList();
+
+        Assert.That(violatingProjects.Count, Is.EqualTo(0),
+            "Solo tests/Enigma.Tests puede referenciar Enigma.Api. Violaciones:\n" + string.Join("\n", violatingProjects));
+    }
+
     private static bool IsInSharedFolder(string path)
     {
         string normalized = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);

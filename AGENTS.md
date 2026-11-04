@@ -119,7 +119,7 @@ dotnet ef database update --project src/Enigma.Api
 |`Directory.Packages.props`|Central Package Management: versiones de todos los paquetes|
 |`deploy/docker-compose.yml` + `deploy/Caddyfile`|Stack de producción de la API en VPS|
 |`lefthook.yml`|pre-commit: build Release (warnings=errors) + yamllint strict; commit-msg: conventional; pre-push: build|
-|`.github/workflows/pr-validation.yml`|PR: job `security` (paquetes vulnerables = fail) + job `validate` (actionlint + `dotnet build Enigma.Core.slnf`)|
+|`.github/workflows/pr-validation.yml`|PR: job `security` (paquetes vulnerables = fail) + job `validate` (actionlint + `dotnet build Enigma.Core.slnf`) + job `test` (suite completa con service MySQL para E2E) + job `format` (aplica formato y commit si hay cambios)|
 |`.github/workflows/build-maui.yml`|`workflow_dispatch` → APK Android firmado + MSIX Windows como artifacts|
 |`.github/workflows/deploy-web.yml`|`workflow_dispatch` → `dotnet publish src/Enigma.Web` → Cloudflare Pages|
 |`.github/workflows/build-server-image.yml`|Push a `production` → imagen GHCR `enigma-server` desde `src/Enigma.Api/Dockerfile`|
