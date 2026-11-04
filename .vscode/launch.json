@@ -62,6 +62,19 @@
             "webRoot": "${workspaceFolder}/src/Enigma.Web",
             "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
             "presentation": { "hidden": true }
+        },
+        {
+            // Debug del app MAUI en Android (extensión ms-dotnettools.dotnet-maui):
+            // al lanzar, la extensión pide el dispositivo/emulador objetivo (via
+            // adb del container — el SDK está horneado en /usr/local/android-sdk).
+            // Para un emulador en el HOST: `adb -a nodaemon server start` en el
+            // host y `adb connect 10.89.0.1:5555` desde el container (gateway de
+            // enigma-dev-net).
+            "name": "Maui (Android)",
+            "type": "maui",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/Enigma.Maui/Enigma.Maui.csproj",
+            "configuration": "Debug"
         }
     ],
     "compounds": [
@@ -72,6 +85,14 @@
             // la sesión, caen ambos procesos.
             "name": "Enigma (Server + Client)",
             "configurations": ["Server (.NET Core)", "Client (.NET Core)"],
+            "stopAll": true
+        },
+        {
+            // F5 alternativo: API debuggable (:8081 — el emulador la alcanza por
+            // 10.0.2.2:8081) + app MAUI Android en el dispositivo. Alternativa sin
+            // debugger: task "dev-android".
+            "name": "Enigma (API + Android)",
+            "configurations": ["Server (.NET Core)", "Maui (Android)"],
             "stopAll": true
         }
     ]

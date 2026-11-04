@@ -46,7 +46,7 @@
         "ms-dotnettools.csdevkit",
         "patcx.vscode-nuget-gallery",
         "ms-azuretools.vscode-containers",
-        "agustin-gigena.opencode-sidebar-web"
+        "ms-dotnettools.dotnet-maui"
       ]
     }
   },
