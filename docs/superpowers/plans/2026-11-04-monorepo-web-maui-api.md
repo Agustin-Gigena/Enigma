@@ -637,7 +637,7 @@ git commit -m "feat(maui): host Blazor Hybrid Android+Windows sobre SharedUI"
 
 **Files:**
 - Create: `Enigma.Core.slnf`, `.github/workflows/build-maui.yml`, `.github/workflows/deploy-web.yml`, `deploy/docker-compose.yml`, `deploy/Caddyfile`
-- Modify: `.github/workflows/build-server-image.yml` (context/file paths), `.github/workflows/pr-validation.yml` (build slnf), `.devcontainer/start-dev.sh`, `.devcontainer/setup.sh`, `src/Enigma.Api/Program.cs` (ForwardedHeaders + CORS por config), `src/Enigma.Api/Properties/launchSettings.json` (si referencia `ASPNETCORE_URLS` — no cambiar puertos)
+- Modify: `.github/workflows/build-server-image.yml` (context/file paths), `.github/workflows/pr-validation.yml` (build slnf), `.github/actions/sync-db/action.yml` y `.github/actions/test/action.yml` (paths viejos Server//Client/, hashFiles de Tests/Enigma.Test.csproj), `.devcontainer/start-dev.sh`, `.devcontainer/setup.sh`, `.devcontainer/Dockerfile`, `.devcontainer/compose.json`, `src/Enigma.Api/Program.cs` (ForwardedHeaders + CORS por config), `src/Enigma.Api/Properties/launchSettings.json` (si referencia `ASPNETCORE_URLS` — no cambiar puertos)
 - Delete: `.github/workflows/build-client-image.yml`, `src/Enigma.Web/Dockerfile`
 
 **Interfaces:**
@@ -856,8 +856,10 @@ jobs:
 
 - `.devcontainer/setup.sh`: agregar instalación del workload Android si falta (`dotnet workload list | grep maui-android || dotnet workload install maui-android`) en la sección de tools.
 - `.devcontainer/start-dev.sh`: reemplazar `--project Server` → `--project src/Enigma.Api` y `--project Client` → `--project src/Enigma.Web` en los `dotnet watch` y los `pkill -f` correspondientes.
+- `.github/actions/sync-db/action.yml`: `dotnet build Server/Enigma.Api.csproj` → `dotnet build src/Enigma.Api/Enigma.Api.csproj` (residuo híbrido detectado en review T1).
+- `.github/actions/test/action.yml`: actualizar grep de versión Playwright (`tests/Enigma.Tests/Enigma.Tests.csproj`) y `hashFiles` con la ruta nueva.
 - `scripts/validate.sh` y `scripts/free-ports.sh`: verificar/actualizar referencias a `Server/`/`Client/` si existen.
-- `lefthook.yml`: sin cambios de contenido (buildea `Enigma.slnx`, ahora verde con CPM).
+- `lefthook.yml`: sin cambios de contenido (buildea `Enigma.slnx`, ya verde con CPM).
 
 - [ ] **Step 9: verificar**
 
