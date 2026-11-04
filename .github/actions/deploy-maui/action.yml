@@ -1,0 +1,75 @@
+name: Deploy MAUI
+description: |
+  Compila el host Blazor Hybrid (src/Enigma.Maui) según `platform`:
+  android → APK firmado como artifact; windows → publicación self-contained
+  + instalador Inno Setup como artifact. Los jobs (ubuntu/windows-latest)
+  se definen en los workflows; esta action es única para ambas plataformas.
+
+inputs:
+  platform:
+    description: 'Plataforma destino: android | windows.'
+    required: true
+  artifact_prefix:
+    description: Prefijo del nombre de artifact.
+    required: false
+    default: enigma
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Install MAUI Android workload
+      if: ${{ inputs.platform == 'android' }}
+      shell: bash
+      run: dotnet workload install maui-android
+
+    - name: Build APK
+      if: ${{ inputs.platform == 'android' }}
+      shell: bash
+      run: >
+        dotnet build src/Enigma.Maui -p:AndroidOnly=true -c Release
+        -f net10.0-android
+
+    - name: Copy APK artifact
+      if: ${{ inputs.platform == 'android' }}
+      shell: bash
+      run: |
+        mkdir -p dist
+        find src/Enigma.Maui/bin -name '*-Signed.apk' -exec cp {} dist/ \;
+
+    - name: Upload Android APK
+      if: ${{ inputs.platform == 'android' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_prefix }}-android-apk
+        path: dist/*.apk
+
+    - name: Install MAUI Windows workload
+      if: ${{ inputs.platform == 'windows' }}
+      shell: pwsh
+      run: dotnet workload install maui-windows
+
+    - name: Publish self-contained (Windows)
+      if: ${{ inputs.platform == 'windows' }}
+      shell: pwsh
+      run: >
+        dotnet publish src/Enigma.Maui -c Release
+        -f net10.0-windows10.0.19041.0
+        -p:RuntimeIdentifierOverride=win10-x64 -p:WindowsAppSDKSelfContained=true
+        -o dist/win
+
+    - name: Build installer (Inno Setup)
+      if: ${{ inputs.platform == 'windows' }}
+      shell: pwsh
+      run: |
+        choco install innosetup -y
+        $source = Join-Path (Get-Location) 'dist\win'
+        iscc 'src/Enigma.Maui/installer/windows.iss' "/DSourceDir=$source" '/DAppVersion=1.0'
+
+    - name: Upload Windows installer
+      if: ${{ inputs.platform == 'windows' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_prefix }}-windows-installer
+        path: dist/installer-out/Enigma-setup-*.exe

@@ -1,0 +1,62 @@
+name: Deploy API
+description: |
+  Construye y pushea la imagen GHCR de la API (src/Enigma.Api/Dockerfile).
+  Reutiliza el mecanismo de tags/login probado en build-server-image.yml.
+  GITHUB_TOKEN llega como env desde el workflow (las composite actions no
+  acceden al contexto secrets). Regla de seguridad: `latest` SOLO se pisa
+  desde `production` — la VPS hace pull de `:latest` (ver deploy/README.md),
+  así un dispatch desde development nunca pisa la imagen productiva.
+
+inputs:
+  image_name:
+    description: Nombre de la imagen GHCR (sin registry/owner).
+    required: false
+    default: enigma-server
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Compute GHCR image
+      id: meta
+      shell: bash
+      env:
+        IMAGE_NAME: ${{ inputs.image_name }}
+      run: |
+        OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}"
+        echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+        echo "GHCR image: ${IMAGE}"
+
+    - name: Docker meta
+      id: docker-meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.meta.outputs.image }}
+        tags: |
+          type=sha,prefix=
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker-container
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ env.GITHUB_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: src/Enigma.Api/Dockerfile
+        push: true
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

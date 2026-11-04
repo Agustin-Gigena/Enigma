@@ -1,6 +1,6 @@
 # Deploy de producción (VPS)
 
-Stack: `api` (imagen GHCR `enigma-server` desde `src/Enigma.Api/Dockerfile`) + `db` (MySQL 8.0) + `caddy` (TLS automático). Deploy manual: `docker compose pull && docker compose up -d` desde `deploy/`.
+Stack: `api` (imagen GHCR `enigma-server` desde `src/Enigma.Api/Dockerfile`) + `db` (MySQL 8.0) + `caddy` (TLS automático). Deploy manual: `docker compose pull && docker compose up -d` desde `deploy/`. Refrescar la imagen sin SSH se puede con el workflow **Deploy API** (dispatch de GitHub Actions); la tag `latest` solo se pisa desde `production`.
 
 ## 1. Variables de entorno requeridas
 
