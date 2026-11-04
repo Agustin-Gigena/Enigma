@@ -9,7 +9,8 @@ self.addEventListener('install', event => {
         await cache.addAll([
             './',
             'index.html',
-            'css/app.css',
+            '_content/Enigma.SharedUI/css/app.css',
+            '_content/Enigma.SharedUI/lib/bootstrap/dist/css/bootstrap.min.css',
             'Enigma.Web.styles.css',
             'images/logo_size.jpg',
             'images/logo_size_invert.png',
@@ -18,8 +19,8 @@ self.addEventListener('install', event => {
             'images/icon.svg',
             'images/icon-invert.svg',
             'manifest.webmanifest',
-            'js/login-motion.js',
-            'fonts/manrope-latin.woff2'
+            '_content/Enigma.SharedUI/js/login-motion.js',
+            '_content/Enigma.SharedUI/fonts/manrope-latin.woff2'
         ]);
         await self.skipWaiting();
     })());

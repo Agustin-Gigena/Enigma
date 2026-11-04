@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
-namespace Enigma.Web.Services;
+namespace Enigma.SharedUI.Services;
 
 /// <summary>
 /// Adjunta credentials: 'include' a cada pedido fetch. La página (:8080) y la API

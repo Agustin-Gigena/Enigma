@@ -4,7 +4,7 @@ using Enigma.Shared.Dtos;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
-namespace Enigma.Web.Services;
+namespace Enigma.SharedUI.Services;
 
 /// <summary>
 /// AuthenticationStateProvider basado en cookie HttpOnly:

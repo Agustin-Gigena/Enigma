@@ -1,28 +1,20 @@
-using Enigma.Web;
-using Enigma.Web.Services;
-using Microsoft.AspNetCore.Components.Authorization;
+using Enigma.SharedUI;
+using Enigma.SharedUI.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<Enigma.SharedUI.App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Auth: state provider decodifica el JWT de localStorage; AuthService orquesta
-// login/logout/sesión; ThemeService mantiene el modo claro/oscuro persistido.
-builder.Services.AddOptions();
-builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<EnigmaAuthenticationStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(
-    sp => sp.GetRequiredService<EnigmaAuthenticationStateProvider>());
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<ThemeService>();
+// HttpClient con la cookie de sesión; la BaseAddress viene de wwwroot/appsettings.json
+// (ServerUri). Los servicios compartidos de la RCL consumen este HttpClient.
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
 {
-    // Front (:8080) and API (:8081) are different origins; WebAssembly cannot
-    // read process env vars, so the API origin comes from wwwroot/appsettings.json.
     BaseAddress = new Uri(builder.Configuration["ServerUri"] ?? builder.HostEnvironment.BaseAddress)
 });
+
+builder.Services.AddEnigmaSharedUI();
 
 await builder.Build().RunAsync();

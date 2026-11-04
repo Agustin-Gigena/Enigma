@@ -20,6 +20,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.9" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
     <!-- MAUI -->
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />

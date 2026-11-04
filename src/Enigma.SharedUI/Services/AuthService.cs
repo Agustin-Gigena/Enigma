@@ -3,7 +3,7 @@ using System.Text.Json;
 using Enigma.Shared.Dtos;
 using Microsoft.JSInterop;
 
-namespace Enigma.Web.Services;
+namespace Enigma.SharedUI.Services;
 
 /// <summary>
 /// Autenticación del cliente: login contra POST /auth/login, persistencia del

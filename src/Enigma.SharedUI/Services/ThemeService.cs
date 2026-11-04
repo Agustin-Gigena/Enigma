@@ -1,6 +1,6 @@
 using Microsoft.JSInterop;
 
-namespace Enigma.Web.Services;
+namespace Enigma.SharedUI.Services;
 
 /// <summary>
 /// Toggle claro/oscuro: persiste "enigma_theme" en localStorage y aplica
