@@ -7,6 +7,7 @@ using Enigma.Api.Options;
 using Enigma.Api.Services.Auth;
 using Enigma.Api.Services.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -43,54 +44,15 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// CORS: el front (host :8080) y la API (host :8081) son orígenes distintos;
-// sin estos headers el navegador bloquea las llamadas cruzadas (error CORS).
-// Política permisiva para desarrollo; restringir orígenes para producción.
+// Orígenes del frontend: dev por defecto; en prod, ENIGMA_CORS_ORIGINS (coma-separada,
+// ej: https://enigma.pages.dev).
+string[] corsOrigins = (Environment.GetEnvironmentVariable("ENIGMA_CORS_ORIGINS")
+        ?? "http://localhost:8080,https://localhost:8080")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        string? corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
-        string? corsHeaders = Environment.GetEnvironmentVariable("CORS_ALLOWED_HEADERS");
-        string? corsMethods = Environment.GetEnvironmentVariable("CORS_ALLOWED_METHODS");
-
-        if (corsOrigins is null)
-        {
-            // Dev: allow any localhost origin (any port, http or https)
-            policy.SetIsOriginAllowed(origin =>
-                origin.StartsWith("http://localhost:", StringComparison.Ordinal) ||
-                origin.StartsWith("https://localhost:", StringComparison.Ordinal));
-        }
-        else
-        {
-            // Production: explicit origins from env var
-            string[] origins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            policy.WithOrigins(origins);
-        }
-
-        if (corsHeaders is not null)
-        {
-            string[] headers = corsHeaders.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            policy.WithHeaders(headers);
-        }
-        else
-        {
-            policy.AllowAnyHeader();
-        }
-
-        if (corsMethods is not null)
-        {
-            string[] methods = corsMethods.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            policy.WithMethods(methods);
-        }
-        else
-        {
-            policy.AllowAnyMethod();
-        }
-
-        // REQUIRED: sends HttpOnly cookie cross-origin
-        policy.AllowCredentials();
-    });
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod());
 });
 
 // Build the MySQL connection string from environment variables (with dev defaults).
@@ -180,6 +142,12 @@ builder.Services.AddAuthorization();
 
 WebApplication app = builder.Build();
 
+// Detrás de Caddy (proxy TLS): honrar X-Forwarded-* para scheme/host correctos.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 // Configure the HTTP request pipeline.
 // Order matters: Exception -> CORS -> Auth -> Authorization.
 if (!app.Environment.IsDevelopment())
@@ -243,7 +211,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/health", () => Results.Ok());
 
-app.UseCors();
+app.UseCors("Frontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

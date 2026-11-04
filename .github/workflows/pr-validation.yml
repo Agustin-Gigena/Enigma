@@ -43,7 +43,7 @@ jobs:
         uses: ./.github/actions/setup-dotnet
 
       - name: Validate solution build
-        run: dotnet build Enigma.slnx -c Release /p:TreatWarningsAsErrors=true
+        run: dotnet build Enigma.Core.slnf -c Release /p:TreatWarningsAsErrors=true
 
   test:
     runs-on: ubuntu-latest

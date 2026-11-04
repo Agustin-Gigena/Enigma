@@ -1,0 +1,43 @@
+{
+  "name": "enigma",
+  "services": {
+    "dev": {
+      "build": {
+        "context": ".",
+        "dockerfile": "Dockerfile",
+        "args": {
+          "LOCAL_USER": "${ENIGMA_USER_NAME}",
+          "LOCAL_GROUP": "${ENIGMA_USER_GROUP}",
+          "LOCAL_UID": "${ENIGMA_USER_UID}",
+          "LOCAL_GID": "${ENIGMA_USER_GID}"
+        }
+      },
+      "init": true,
+      "security_opt": ["label=disable"],
+      "user": "${ENIGMA_USER_NAME}",
+      "userns_mode": "keep-id",
+      "devices": ["/dev/kvm:/dev/kvm"],
+      "group_add": ["${ENIGMA_KVM_GID}"],
+      "command": "sleep infinity",
+      "container_name": "enigma-devcontainer",
+      "mem_limit": "3g",
+      "cpus": "2",
+      "networks": ["enigma-dev-net"],
+      "ports": [
+        "127.0.0.1:8080:8080",
+        "127.0.0.1:8081:8081"
+      ],
+      "volumes": [
+        "..:/workspaces/Enigma:cached",
+        "${ENIGMA_PODMAN_SOCKET}:/run/podman.sock",
+        "${HOME}/.omp:/home/${ENIGMA_USER_NAME}/.omp",
+        "${HOME}/.config/gh:/home/${ENIGMA_USER_NAME}/.config/gh"
+      ]
+    }
+  },
+  "networks": {
+    "enigma-dev-net": {
+      "external": true
+    }
+  }
+}

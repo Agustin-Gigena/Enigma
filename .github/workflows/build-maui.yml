@@ -1,0 +1,46 @@
+name: Build MAUI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-dotnet
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+      - name: Build APK
+        run: >
+          dotnet build src/Enigma.Maui -p:AndroidOnly=true -c Release
+          -f net10.0-android
+      - name: Copy APK artifact
+        run: |
+          mkdir -p dist
+          find src/Enigma.Maui/bin -name '*-Signed.apk' -exec cp {} dist/ \;
+      - uses: actions/upload-artifact@v4
+        with:
+          name: enigma-android-apk
+          path: dist/*.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-dotnet
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+      - name: Publish self-contained (Windows)
+        run: >
+          dotnet publish src/Enigma.Maui -c Release
+          -f net10.0-windows10.0.19041.0
+          -p:RuntimeIdentifierOverride=win10-x64 -p:WindowsAppSDKSelfContained=true
+          -o dist/win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: enigma-windows
+          path: dist/win/

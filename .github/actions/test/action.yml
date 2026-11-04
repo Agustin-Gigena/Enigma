@@ -31,13 +31,14 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ hashFiles('Tests/Enigma.Test.csproj') }}
+        key: playwright-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', 'tests/Enigma.Tests/Enigma.Tests.csproj') }}
         restore-keys: |
           playwright-${{ runner.os }}-
 
     - name: Install Playwright browsers (npm CLI, version from csproj)
       run: |
-        VERSION="$(grep -oP '(?<=Include="Microsoft.Playwright" Version=")[^"]+' Tests/Enigma.Test.csproj)"
+        # CPM: la versión vive en Directory.Packages.props (el csproj no la repite).
+        VERSION="$(grep -oP '(?<=Include="Microsoft.Playwright" Version=")[^"]+' Directory.Packages.props)"
         # Idempotente: con cache hit los browsers ya estan instalados;
         # --with-deps reasegura las dependencias de sistema del runner.
         npx -y "playwright@$VERSION" install --with-deps chromium
@@ -56,7 +57,7 @@ runs:
         ENIGMA_JWT_SECRET: ${{ inputs.jwt-secret }}
 
     - name: Run mutation tests
-      run: bash Tests/mutation.run.sh
+      run: bash tests/Enigma.Tests/mutation.run.sh
       shell: bash
       env:
         ASPNETCORE_ENVIRONMENT: Development

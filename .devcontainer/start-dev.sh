@@ -30,20 +30,20 @@ fi
 info "All required env vars present"
 
 # --- Podman client (remote, via host socket) ---
-PODMAN_SOCKET="${PODMAN_SOCKET:-/run/user/1000/podman/podman.sock}"
+PODMAN_SOCKET="${PODMAN_SOCKET:-/run/user/$(id -u)/podman/podman.sock}"
 podman() { command podman --remote --url "unix://${PODMAN_SOCKET}" "$@"; }
 
 # --- Cleanup trap ---
 cleanup() {
   step "Cleaning up"
   # Kill the whole process tree — dotnet watch only wraps the real app; the
-  # child (Enigma.Server / Blazor DevServer) holds the port and survives a
+  # child (Enigma.Api / Blazor DevServer) holds the port and survives a
   # watch-only kill, leaking orphans that block :8081/:80 on the next run.
-  pkill -f 'Enigma\.Server' 2>/dev/null || true
-  pkill -f 'Enigma\.Client' 2>/dev/null || true
+  pkill -f 'Enigma\.Api' 2>/dev/null || true
+  pkill -f 'Enigma\.Web' 2>/dev/null || true
   pkill -f 'webassembly\.devserver' 2>/dev/null || true
-  pkill -f 'dotnet watch --project Server' 2>/dev/null || true
-  pkill -f 'dotnet watch --project Client' 2>/dev/null || true
+  pkill -f 'dotnet watch --project src/Enigma.Api' 2>/dev/null || true
+  pkill -f 'dotnet watch --project src/Enigma.Web' 2>/dev/null || true
   sleep 1
   # Belt and suspenders: dotnet watch can swallow SIGTERM mid-restart.
   pkill -9 -f 'dotnet watch --project' 2>/dev/null || true
@@ -53,11 +53,11 @@ trap cleanup EXIT
 
 # --- Tear down previous session ---
 step "Tearing down previous session"
-pkill -f 'Enigma\.Server' 2>/dev/null && info "Killed old Server app" || true
-pkill -f 'Enigma\.Client' 2>/dev/null && info "Killed old Client app" || true
-pkill -f 'webassembly\.devserver' 2>/dev/null && info "Killed old Client dev server" || true
-pkill -f 'dotnet watch --project Server' 2>/dev/null && info "Killed old Server watch" || true
-pkill -f 'dotnet watch --project Client' 2>/dev/null && info "Killed old Client watch" || true
+pkill -f 'Enigma\.Api' 2>/dev/null && info "Killed old Api app" || true
+pkill -f 'Enigma\.Web' 2>/dev/null && info "Killed old Web app" || true
+pkill -f 'webassembly\.devserver' 2>/dev/null && info "Killed old Web dev server" || true
+pkill -f 'dotnet watch --project src/Enigma.Api' 2>/dev/null && info "Killed old Api watch" || true
+pkill -f 'dotnet watch --project src/Enigma.Web' 2>/dev/null && info "Killed old Web watch" || true
 sleep 1
   # Belt and suspenders: dotnet watch can swallow SIGTERM mid-restart.
   pkill -9 -f 'dotnet watch --project' 2>/dev/null && info "Force-killed remaining watches" || true
@@ -108,7 +108,7 @@ fi
 # The devcontainer and the MySQL container share the podman network
 # enigma-dev-net; the DB is reachable by its container name (aardvark DNS).
 info "MySQL host: enigma-dev-db (network enigma-dev-net)"
-cat > "$WORKSPACE/Server/.env" <<EOF
+cat > "$WORKSPACE/src/Enigma.Api/.env" <<EOF
 ASPNETCORE_ENVIRONMENT=Development
 MYSQL_HOST=enigma-dev-db
 MYSQL_PORT=3306
@@ -128,9 +128,9 @@ HTTPS_PORTS=
 EOF
 
 set -a
-. "$WORKSPACE/Server/.env"
+. "$WORKSPACE/src/Enigma.Api/.env"
 set +a
-info "Wrote Server/.env"
+info "Wrote src/Enigma.Api/.env"
 
 # --- 3. Verify Podman service is accessible ---
 step "Checking Podman service"

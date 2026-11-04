@@ -1,0 +1,33 @@
+name: Deploy Web (Cloudflare Pages)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-dotnet
+      - name: Publish WASM
+        run: dotnet publish src/Enigma.Web -c Release -o dist
+      # Lección Build-It #2: el bundle scoped CSS de la RCL sale con hash y el SDK
+      # no reescribe la referencia en el host. Verificar y reescribir si hace falta.
+      - name: Fix hashed bundle css reference (if needed)
+        run: |
+          cd dist/wwwroot
+          hashed=$(ls _content/Enigma.SharedUI/*.bundle.scp.css 2>/dev/null | head -1 || true)
+          if [ -n "$hashed" ]; then
+            sed -i "s|_content/Enigma.SharedUI/Enigma.SharedUI.bundle.scp.css|$(basename "$hashed")|g" index.html
+          fi
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: "4"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist/wwwroot --project-name enigma
