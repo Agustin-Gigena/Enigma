@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/Server/Enigma.Server.csproj",
+        "${workspaceFolder}/src/Enigma.Api/Enigma.Api.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -20,7 +20,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/Client/Enigma.Client.csproj",
+        "${workspaceFolder}/src/Enigma.Web/Enigma.Web.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
@@ -35,7 +35,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/Server/Enigma.Server.csproj",
+        "${workspaceFolder}/src/Enigma.Api/Enigma.Api.csproj",
         "--launch-profile",
         "http"
       ],
@@ -59,7 +59,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/Client/Enigma.Client.csproj",
+        "${workspaceFolder}/src/Enigma.Web/Enigma.Web.csproj",
         "--launch-profile",
         "http"
       ],

@@ -12,9 +12,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "prelaunch-server",
-            "program": "${workspaceFolder}/Server/bin/Debug/net10.0/Enigma.Server.dll",
+            "program": "${workspaceFolder}/src/Enigma.Api/bin/Debug/net10.0/Enigma.Api.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Server",
+            "cwd": "${workspaceFolder}/src/Enigma.Api",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
@@ -36,12 +36,12 @@
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/Client/Enigma.Client.csproj",
+                "${workspaceFolder}/src/Enigma.Web/Enigma.Web.csproj",
                 "--launch-profile",
                 "http",
                 "--no-build"
             ],
-            "cwd": "${workspaceFolder}/Client",
+            "cwd": "${workspaceFolder}/src/Enigma.Web",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -59,7 +59,7 @@
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/Client",
+            "webRoot": "${workspaceFolder}/src/Enigma.Web",
             "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
             "presentation": { "hidden": true }
         }

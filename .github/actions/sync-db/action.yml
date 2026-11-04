@@ -105,7 +105,7 @@ runs:
         echo "Version before migrate: ${V_BASE:-none}"
 
         # ── Build Server ────────────────────────────────────────
-        dotnet build Server/Enigma.Server.csproj
+        dotnet build Server/Enigma.Api.csproj
 
         # ── Migrate via dotnet ef database update ───────────────
         # Program.cs + EnigmaDbContextFactory assemble the connection string

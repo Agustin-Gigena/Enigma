@@ -19,6 +19,8 @@
 # Build configuration
 *.props
 *.targets
+!Directory.Build.props
+!Directory.Packages.props
 
 # macOS
 .DS_Store
