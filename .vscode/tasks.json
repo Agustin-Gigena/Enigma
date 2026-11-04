@@ -52,6 +52,24 @@
       }
     },
     {
+      "label": "build-maui",
+      // AndroidOnly: en Linux el csproj recorta a net10.0-android (los TFMs
+      // windows solo existen en hosts Windows). El APK queda en
+      // src/Enigma.Maui/bin/Debug/net10.0-android/ (carpeta compartida con
+      // el host: instalarlo con el adb del emulador/dispositivo del host).
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/Enigma.Maui/Enigma.Maui.csproj",
+        "-p:AndroidOnly=true",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
       "label": "watch-client",
       "command": "dotnet",
       "type": "process",
@@ -80,6 +98,19 @@
       "dependsOn": [
         "watch-server",
         "watch-client"
+      ],
+      "problemMatcher": []
+    },
+    {
+      // Loop dev API + Android: la API corre en watch (:8081, debuggable vía
+      // launch "Server (.NET Core)" si querés breakpoints) y el APK Debug se
+      // genera en la carpeta compartida para instalarlo en emulador/dispositivo.
+      // El emulador habla con la API vía 10.0.2.2:8081 (loopback del host,
+      // donde el compose publica la API).
+      "label": "dev-android",
+      "dependsOn": [
+        "watch-server",
+        "build-maui"
       ],
       "problemMatcher": []
     },
