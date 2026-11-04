@@ -54,4 +54,5 @@ AzurePackages/
 .superpowers/
 
 dotnet/
-*.code-workspace
+*.code-workspace 
+StrykerOutput/
