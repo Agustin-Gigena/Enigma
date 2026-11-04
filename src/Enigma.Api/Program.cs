@@ -146,7 +146,7 @@ builder.Services.AddAuthorization();
 WebApplication app = builder.Build();
 
 // Detrás de Caddy (proxy TLS): honrar X-Forwarded-* para scheme/host correctos.
-ForwardedHeadersOptions forwardedHeaders = new ForwardedHeadersOptions
+ForwardedHeadersOptions forwardedHeaders = new()
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
