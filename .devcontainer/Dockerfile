@@ -87,17 +87,27 @@ ENV PATH="${PATH}:/usr/local/share/dotnet-tools"
 # sudo (que contamina $HOME con archivos root). En runtime el workload SOLO
 # SE LEE (los manifests son input del build); NuGet y obj van al $HOME del
 # usuario.
-# El SDK Android NO va horneado: `dotnet workload install` instala los packs
-# y el SDK se provisiona en el PRIMER build net-android como dev user, al
-# default $HOME/android-sdk (escribible — verificado en build real: honrar
-# ANDROID_HOME en install-time no ocurre). JAVA_HOME sí es del sistema:
-# gradle/jarsigner lo necesitan y es read-only para todos.
+# El SDK Android SÍ va horneado: el build headless NO auto-provisiona
+# (XA5300 — verificado en build real; el auto-provision era del entorno
+# interactivo viejo). cmdline-tools + plataformas 35/36 + licenses aceptadas
+# en build time, con ownership del dev user (sdkmanager escribe licenses y
+# el usuario puede actualizar paquetes). JAVA_HOME del sistema: gradle/
+# jarsigner lo necesitan y es read-only para todos.
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+    ANDROID_HOME=/usr/local/android-sdk
 RUN apt-get update \
  && apt-get install -y --no-install-recommends openjdk-17-jdk-headless \
  && rm -rf /var/lib/apt/lists/* \
- && dotnet workload install maui-android
+ && dotnet workload install maui-android \
+ && mkdir -p "${ANDROID_HOME}/cmdline-tools" \
+ && curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/clt.zip \
+ && unzip -q /tmp/clt.zip -d "${ANDROID_HOME}/cmdline-tools" \
+ && mv "${ANDROID_HOME}/cmdline-tools/cmdline-tools" "${ANDROID_HOME}/cmdline-tools/latest" \
+ && rm /tmp/clt.zip \
+ && yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null \
+ && "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "platforms;android-36" "build-tools;35.0.0" "build-tools;36.0.0" > /dev/null \
+ && chown -R "${LOCAL_USER}:${LOCAL_GROUP}" "${ANDROID_HOME}"
 
 # Bun runtime — installed here (not as a devcontainer feature) because the
 # devcontainer feature layer mechanism corrupts /tmp permissions
