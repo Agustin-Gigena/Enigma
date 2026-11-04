@@ -15,6 +15,10 @@ public class ArchitectureTests
             Path.Combine(repoRoot, "bin"),
             Path.Combine(repoRoot, "obj"),
             Path.Combine(repoRoot, ".vs"),
+            // Worktrees anidados (.github/worktrees/{development,production}): checkouts
+            // completos del repo con layout viejo (Server/Client) que disparan falsos
+            // positivos de DTOs fuera de Shared. Solo existen en dev local, no en CI.
+            Path.Combine(repoRoot, ".github", "worktrees"),
             Path.Combine(repoRoot, "tests", "Enigma.Tests", "TestResults")
         };
 
@@ -39,7 +43,11 @@ public class ArchitectureTests
             Path.Combine(repoRoot, ".git"),
             Path.Combine(repoRoot, "bin"),
             Path.Combine(repoRoot, "obj"),
-            Path.Combine(repoRoot, ".vs")
+            Path.Combine(repoRoot, ".vs"),
+            // Worktrees anidados (.github/worktrees/{development,production}): csprojs
+            // ajenos que no forman parte del build de este repo. Solo existen en dev
+            // local, no en CI.
+            Path.Combine(repoRoot, ".github", "worktrees")
         };
         string testsProject = Path.Combine(repoRoot, "tests", "Enigma.Tests", "Enigma.Tests.csproj");
 
