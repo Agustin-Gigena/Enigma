@@ -21,7 +21,7 @@ Plataforma SaaS para instituciones educativas — universidades, secundarias, pr
 
 ## Operating Context
 
-- Aplicación web: cliente Blazor WebAssembly, API ASP.NET Core, backend MySQL 8.0.
+- Plataforma: **Web** (Blazor WASM, deploy estático en Cloudflare Pages) + **MAUI** (Android/Windows, Blazor Hybrid sobre la misma UI compartida) + **Api** (ASP.NET Core, Docker + Caddy en VPS); backend MySQL 8.0.
 - Entorno dev: devcontainer con .NET 10 SDK; MySQL vía Docker Compose (credenciales dev `enigma`/`enigma_dev_password`); migraciones auto-aplicadas en Development.
 - Puertos dev: front en `:80`, API en `:8081`, docs de API (Scalar) en `/api/docs`.
 - Idioma de operación: español (naming de entidades, UI y documentación).
