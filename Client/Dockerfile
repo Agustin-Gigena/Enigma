@@ -2,7 +2,7 @@
 # Client/Dockerfile
 # Build context: repo root (docker build -f Client/Dockerfile .)
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 # Copy project files first for layer caching
