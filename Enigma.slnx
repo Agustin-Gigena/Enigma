@@ -1,14 +1,20 @@
 <Solution>
-  <Folder Name="/Client/">
-    <Project Path="Client/Enigma.Client.csproj" />
+  <Folder Name="/src/Api/">
+    <Project Path="src/Enigma.Api/Enigma.Api.csproj" />
   </Folder>
-  <Folder Name="/Server/">
-    <Project Path="Server/Enigma.Server.csproj" />
+  <Folder Name="/src/Web/">
+    <Project Path="src/Enigma.Web/Enigma.Web.csproj" />
   </Folder>
-  <Folder Name="/Shared/">
-    <Project Path="Shared/Enigma.Shared.csproj" />
+  <Folder Name="/src/SharedUI/">
+    <Project Path="src/Enigma.SharedUI/Enigma.SharedUI.csproj" />
   </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="Tests/Enigma.Test.csproj" />
+  <Folder Name="/src/Maui/">
+    <Project Path="src/Enigma.Maui/Enigma.Maui.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Enigma.Shared/Enigma.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Enigma.Tests/Enigma.Tests.csproj" />
   </Folder>
 </Solution>

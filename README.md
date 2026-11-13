@@ -1,17 +1,23 @@
 # Enigma
 
-Monorepo del proyecto Enigma: cliente Blazor WebAssembly, API ASP.NET Core y librería compartida, todo sobre .NET 10 con backend MySQL.
+Monorepo del proyecto Enigma: hosts Web (Blazor WebAssembly) y MAUI (Android/Windows), API ASP.NET Core y librería de UI compartida, todo sobre .NET 10 con backend MySQL.
 
 ## Estructura
 
 ```
 Enigma/
-├── Client/   # Blazor WebAssembly (net10.0)
-├── Server/   # ASP.NET Core Web API + EF Core (net10.0)
-└── Shared/   # Tipos comunes, DTOs (net10.0)
+├── src/
+│   ├── Enigma.Api/        # ASP.NET Core Web API + EF Core (net10.0)
+│   ├── Enigma.Web/        # Host Blazor WebAssembly (net10.0)
+│   ├── Enigma.SharedUI/   # RCL: páginas, layout, servicios, assets (net10.0)
+│   ├── Enigma.Maui/       # Host Blazor Hybrid Android/Windows (net10.0)
+│   └── Enigma.Shared/     # Tipos comunes, DTOs (net10.0)
+├── tests/
+│   └── Enigma.Tests/      # NUnit unit + Playwright E2E (net10.0)
+└── infra/                 # Deploy VPS (compose + Caddy) + Dockerfile de la Api
 ```
 
-`Server` y `Client` referencian `Shared` vía `ProjectReference`. La solution `Enigma.slnx` orquesta los tres proyectos.
+`Web` y `Maui` montan `SharedUI.App` vía `AddEnigmaSharedUI()`; todos los proyectos consumen `Shared` (DTOs) y solo los hosts referencian `SharedUI`. Nadie referencia `Enigma.Api` salvo los tests. La solution `Enigma.slnx` orquesta los seis proyectos; `Enigma.Core.slnf` excluye Maui para builds de CI/pr-validation.
 
 ## Clonar
 
@@ -28,18 +34,18 @@ No hay submódulos: es un clonado normal.
 # Build completo
 dotnet build Enigma.slnx
 
-# Server (API)
-dotnet run --project Server/Enigma.Server.csproj
+# API (:8081, auto-migra + siembra en Development)
+dotnet watch --project src/Enigma.Api
 
-# Client (Blazor WASM dev server)
-dotnet run --project Client/Enigma.Client.csproj
+# Web (Blazor WASM dev server, :8080)
+dotnet watch --project src/Enigma.Web
 ```
 
 ## Base de datos (MySQL 8.0)
 
 ```bash
-docker-compose up -d
-dotnet ef database update --project Server/Enigma.Server.csproj
+bash .devcontainer/start-dev.sh   # levanta MySQL (enigma-dev-db) + watchers
+dotnet ef database update --project src/Enigma.Api
 ```
 
 ## Licencia

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 9+ bloquea cleartext por defecto; este config habilita HTTP SOLO
+     contra 10.0.2.2 (loopback del host desde el emulador Android). Para probar
+     contra un dispositivo físico en LAN (http://IP_DE_LA_VPS_O_DEL_HOST), hay
+     que agregar ese dominio/IP aquí (domain-config) — no basta con instalar el APK. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

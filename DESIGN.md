@@ -142,7 +142,7 @@ Una sola familia de matices — petrol-jade — expresada como pares claro/oscur
 
 ## Typography
 
-**Display Font:** Manrope (autohosteado, variable 500–800, woff2 en `Client/wwwroot/fonts/`, fallback pila de sistema)
+**Display Font:** Manrope (autohosteado, variable 500–800, woff2 en `src/Enigma.SharedUI/wwwroot/fonts/`, fallback pila de sistema)
 **Body Font:** pila de sistema (`system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`)
 
 **Character:** Manrope geométrico-humanista en display sobre un cuerpo de sistema silencioso: institucional, confiable, sin ruido decorativo.

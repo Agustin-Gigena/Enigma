@@ -21,9 +21,9 @@ Plataforma SaaS para instituciones educativas — universidades, secundarias, pr
 
 ## Operating Context
 
-- Aplicación web: cliente Blazor WebAssembly, API ASP.NET Core, backend MySQL 8.0.
+- Plataforma: **Web** (Blazor WASM, deploy estático en Cloudflare Pages) + **MAUI** (Android/Windows, Blazor Hybrid sobre la misma UI compartida) + **Api** (ASP.NET Core, Docker + Caddy en VPS); backend MySQL 8.0.
 - Entorno dev: devcontainer con .NET 10 SDK; MySQL vía Docker Compose (credenciales dev `enigma`/`enigma_dev_password`); migraciones auto-aplicadas en Development.
-- Puertos dev: front en `:80`, API en `:8081`, docs de API (Scalar) en `/api/docs`.
+- Puertos dev: front en `:8080` (devserver WASM), API en `:8081`, docs de API (Scalar) en `/api/docs`.
 - Idioma de operación: español (naming de entidades, UI y documentación).
 - Autenticación: ASP.NET Core Identity (usuarios con hash y lockout) + JWT bearer (issuer `Enigma`, audience `Enigma.Client`, secret vía `ENIGMA_JWT_SECRET`); seed dev `admin`/`admin123` sin registro público. Docs de API (Scalar) en `/api/docs`.
 
@@ -44,7 +44,7 @@ Plataforma SaaS para instituciones educativas — universidades, secundarias, pr
 - Persistencia del contexto de institución elegido (sesión, token, cookie) — **sin definir**.
 - Módulos funcionales (qué gestiona cada institución) — **sin definir**.
 - Alcance de los estudiantes dentro del sistema — **sin definir**.
-- Tests: no existe ningún proyecto de test; cobertura E2E planeada para `CurrentUserService`.
+- Tests: proyecto único `tests/Enigma.Tests` con unit (NUnit) + E2E (Playwright); umbrales de mutación (Stryker) pendientes de primera corrida post-merge.
 
 ## Brand Commitments
 

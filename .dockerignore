@@ -1,0 +1,7 @@
+# Contexto de build de las imágenes (infra/api.Dockerfile, devcontainer).
+# Sin esto, el COPY del código arrastra obj/bin locales y pisa los assets
+# del restore de la imagen → NETSDK1064 en publish --no-restore.
+.git
+**/bin/
+**/obj/
+**/.vs/

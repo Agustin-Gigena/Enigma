@@ -3,7 +3,7 @@ description: 'Toma la ultima imagen GHCR del package de la rama (o mysql:8 si no
 
 outputs:
   version:
-    description: "Version de la ultima migracion aplicada (tag Version<timestamp>, derivado del filename Server/Data/Migrations/<timestamp>_<name>.cs)"
+    description: "Version de la ultima migracion aplicada (tag Version<timestamp>, derivado del filename src/Enigma.Api/Migrations/<timestamp>_<name>.cs)"
     value: ${{ steps.build.outputs.version }}
   pushed:
     description: "true si se commiteo y pusheo una nueva imagen, false si se skipo"
@@ -22,6 +22,8 @@ runs:
     # ── 2. Setup .NET SDK + dotnet-ef + restore ─────────────────
     - name: Setup .NET + dotnet-ef
       uses: ./.github/actions/setup-dotnet
+      with:
+        restore-target: src/Enigma.Api/Enigma.Api.csproj
 
     # ── 3. Build: resolve base, migrate, commit ────────────────
     # mysql:8 declara VOLUME /var/lib/mysql — docker commit no captura
@@ -105,7 +107,7 @@ runs:
         echo "Version before migrate: ${V_BASE:-none}"
 
         # ── Build Server ────────────────────────────────────────
-        dotnet build Server/Enigma.Server.csproj
+        dotnet build src/Enigma.Api/Enigma.Api.csproj
 
         # ── Migrate via dotnet ef database update ───────────────
         # Program.cs + EnigmaDbContextFactory assemble the connection string
@@ -116,12 +118,12 @@ runs:
         export MYSQL_USER="root"
         export MYSQL_PASSWORD="${MYSQL_ROOT_PASSWORD}"
 
-        dotnet ef database update --project Server
+        dotnet ef database update --project src/Enigma.Api
 
         # ── V_NEW: latest migration by filesystem timestamp ─────
-        # Parse Server/Data/Migrations/<timestamp>_<name>.cs (exclude
+        # Parse src/Enigma.Api/Migrations/<timestamp>_<name>.cs (exclude
         # Designer and Snapshot). sort -r | head -1 → newest timestamp.
-        MIGRATIONS_DIR="Server/Data/Migrations"
+        MIGRATIONS_DIR="src/Enigma.Api/Migrations"
         if [ ! -d "${MIGRATIONS_DIR}" ]; then
           echo "::error::Migrations dir not found: ${MIGRATIONS_DIR}"
           docker stop -t 60 builder || true

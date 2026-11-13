@@ -1,390 +1,145 @@
 # Repository Guidelines
 
-**Enigma** — Full-stack .NET 10 application with Blazor WebAssembly client, ASP.NET Core Web API server, and MySQL backend. Licensed under the Functional Source License 1.1 (FSL-1.1-ALv2): source-available, Competing Use prohibited, converts to Apache 2.0 after 2 years per version.
+**Enigma** — Full-stack .NET 10 monorepo: hosts Web (Blazor WebAssembly) y MAUI (Blazor Hybrid, Android/Windows), ASP.NET Core Web API, MySQL 8.0 backend. Licensed under the Functional Source License 1.1 (FSL-1.1-ALv2): source-available, Competing Use prohibited, converts to Apache 2.0 after 2 years per version.
+
+**Product & design canon:** `PRODUCT.md` (product vision, scope, open decisions) and `DESIGN.md` (design system "Jade Institucional" — colors, typography, layout, motion). Consult both before building UI or scoping features. Historical specs/plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 ---
 
 ## Project Overview
 
-Enigma is a modular, component-based monorepo with three projects: **Client** (Blazor WASM), **Server** (ASP.NET Core API), and **Shared** (common types), all versioned together in a single Git repository (no submodules). Built on .NET 10, it implements soft-delete audit tracking, dependency injection, and repository patterns.
+Single Git monorepo (`src/` + `tests/`) con seis proyectos: **Api** (ASP.NET Core Web API, `src/Enigma.Api`), **Web** (host Blazor WASM, `src/Enigma.Web`), **Maui** (host Blazor Hybrid Android/Windows, `src/Enigma.Maui`), **SharedUI** (RCL con páginas, layout, servicios y assets, `src/Enigma.SharedUI`), **Shared** (DTOs/contracts, `src/Enigma.Shared`), **Tests** (NUnit unit + Playwright E2E, `tests/Enigma.Tests`). Auth is implemented end-to-end: ASP.NET Core Identity + JWT bearer, login → selección de institución → home. Domain folders (Auth, Administracion, Seed) are replicated across Api's Controllers/Services/Data.
 
 ---
 
 ## Architecture & Data Flow
 
 ```
-┌─────────────────────┐     ┌──────────────────────────┐     ┌─────────────────┐
-│  Client (Blazor)    │────▶│  Server (Web API)        │────▶│  MySQL 8.0      │
-│  net10.0            │◀────│  net10.0 + EF Core 10    │◀────│  (Docker)       │
-│                     │     │                          │     │                 │
-│  - App.razor        │     │  - Program.cs (entry)    │     │  - enigma_db    │
-│  - MainLayout       │     │  - Controllers           │     │  - Persistent   │
-│  - Pages/*.razor    │     │  - Services              │     │    volume       │
-│  - HttpClient       │     │  - Repositories          │     │                 │
-│                     │     │  - DbContext             │     │                 │
-└─────────────────────┘     └──────────────────────────┘     └─────────────────┘
+Web (:8080, WASM) / Maui (Android/Windows)         Api (:8081)                        MySQL 8.0
+┌────────────────────────────────┐  HTTP+JWT   ┌────────────────────────┐          ┌──────────────┐
+│ SharedUI.App (RCL montada)     │────────────▶│ AuthController         │─────────▶│ enigma_db    │
+│ - AuthService                  │◀────────────│   POST auth/login      │  EF Core │              │
+│ - CookieHandler                │  JSON+Set-  │   POST auth/logout     │  (retry  │  Usuario     │
+│ - AuthStateProvider            │  Cookie     │   GET  auth/me         │  3×5s)   │  Institucion │
+│ - ThemeService                 │             │ UsuarioService         │          │  (m2m memb.) │
+│ JWT en localStorage            │             │ TokenService (JWT)     │          └──────────────┘
+└────────────────────────────────┘             │ Identity + EF stores   │
+                                               │ CurrentUserMiddleware  │  (AsyncLocal ambient user)
+                                               └────────────────────────┘
 ```
 
-**Key Modules:**
+**Hosts:** `Enigma.Web` (WASM puro) y `Enigma.Maui` (Blazor Hybrid) montan la misma app: `builder.RootComponents.Add<Enigma.SharedUI.App>("#app")` + `builder.Services.AddEnigmaSharedUI()`. Toda página, layout, servicio y asset vive en `Enigma.SharedUI`; los hosts solo eligen runtime (browser vs WebView nativo). La `HttpClient` del host toma su base de `wwwroot/appsettings.json` (`ServerUri`; en Maui, MauiAsset). **Regla de dependencias: nadie referencia `Enigma.Api` salvo los tests.**
 
-- **Client**: Blazor WebAssembly (`Client/Enigma.Client.csproj`)
-  - Entry: `Program.cs`, `App.razor`
-  - Layout: `MainLayout.razor`, `NavMenu.razor`
-  - Pages: `Home.razor`, `Counter.razor`, `Weather.razor`, `NotFound.razor`
-  - Services: Scoped `HttpClient` with base address injection
+**Auth flow:** login con usuario+contraseña (Identity, lockout, password policy) → `TokenService` emite JWT → el host lo guarda en localStorage, `EnigmaAuthenticationStateProvider` lo decodifica para `<AuthorizeView>`; `CookieHandler` adjunta la cookie a cada request. Tras login, `GET auth/instituciones` alimenta `SeleccionInstitucion`. Requests autenticados llegan con JWT bearer; `CurrentUserMiddleware` siembra `CurrentUserService` (AsyncLocal, cache Lazy por request) — consumible desde cualquier capa sin inyección.
 
-- **Server**: ASP.NET Core Web API (`Server/Enigma.Server.csproj`)
-  - Entry: `Server/Program.cs`
-  - DI: DbContext with MySQL retry (3 retries, 5s delay), controllers, OpenAPI
-  - Auto-migrates DB in development
-
-- **Shared**: Class library (`Shared/Enigma.Shared.csproj`)
-  - Currently empty — intended for DTOs, shared models, constants
-
-**Data Flow:**
-
-```
-Client Page (@inject HttpClient)
-  → HTTP request (JSON)
-    → Server Controller
-      → Service Layer
-        → GenericRepository<T>
-          → EnigmaDbContext (EF Core)
-            → MySQL
-```
+**Api pipeline (orden):** ForwardedHeaders (primero, detrás de proxy) → HSTS (no-dev) → SecurityHeaders → HTTPS redirect (prod) → OpenAPI + Scalar `/api/docs` (dev) → `/health` → CORS → RateLimiter → Authentication (JWT forzado sobre defaults de cookie de Identity) → Authorization → `CurrentUserMiddleware` → MapControllers. Kestrel escucha `0.0.0.0:8081`.
 
 ---
 
 ## Key Directories
 
-| Path | Purpose | Notes |
-|------|---------|-------|
-| `Client/` | Blazor WebAssembly frontend | Pages, Layout, wwwroot |
-| `Client/Pages/` | Razor components (routes) | `@page` directive routing |
-| `Client/Layout/` | Layout + NavMenu | Scoped CSS files |
-| `Server/` | ASP.NET Core API | Controllers, Services, Repositories |
-| `Server/Data/` | EF Core DbContext, entities | `EnigmaDbContext.cs`, `GenericEntity.cs` |
-| `Server/Data/Entities/` | Domain entities | Organized by domain (Auth, Administración) |
-| `Server/Data/Repositories/` | Repository implementations | Generic pattern with soft-delete |
-| `Server/Controllers/` | API endpoints | Domain folders (Auth/) |
-| `Server/Services/` | Business logic, helpers | Domain folders (Auth/) |
-| `Shared/` | Common types (empty) | Add DTOs, shared enums, constants |
-| `.devcontainer/` | Dev container config | .NET 10 SDK, Oh My Pi, C# extensions |
+|Path|Purpose|Notes|
+|---|---|---|
+|`src/Enigma.Api/`|ASP.NET Core Web API + EF Core|Identity + JWT bearer, migraciones|
+|`src/Enigma.Api/Controllers/Auth/`|`AuthController`|Único controller de dominio hoy|
+|`src/Enigma.Api/Services/Auth/`|`CurrentUserService`(+`ICurrentUserService`), `CurrentUserMiddleware`, `TokenService`(+`ITokenService`), `UsuarioService`(+`IUsuarioService`), `SecurityHeadersMiddleware`|Interfaz+impl juntas, namespace por dominio (`Enigma.Api.Services.Auth`)|
+|`src/Enigma.Api/Services/Seed/`|`SeedingService`, `SeedLogin`|Seed dev idempotente: `admin`/`admin123` + 2 instituciones con membresía|
+|`src/Enigma.Api/Options/`|`JwtOptions`, `JwtSecretResolver`|Secret vía `ENIGMA_JWT_SECRET` (dev genera uno si falta)|
+|`src/Enigma.Api/Data/Entities/`|`Usuario` (Auth), `Institucion` (Administracion)|Heredan `GenericEntity`; m2m usuarios↔instituciones|
+|`src/Enigma.Api/Data/Repositories/`|`GenericRepository<T>`, `Auth/UsuarioRepository`|Base sync; repos de dominio async|
+|`src/Enigma.Api/Migrations/`|`InitialCreate` (2026-08-10)|Auto-aplicada en Development|
+|`src/Enigma.SharedUI/`|RCL: `App.razor`, Pages, Layout, Services, `wwwroot/`|Montada por Web (`RootComponents.Add`) y Maui; tema claro/oscuro|
+|`src/Enigma.SharedUI/Pages/Auth/`|`Login.razor`, `SeleccionInstitucion.razor`|Flujo de acceso completo|
+|`src/Enigma.SharedUI/Layout/`|`AuthLayout` (sin nav), `MainLayout` (navbar sticky)|Design system Jade Institucional|
+|`src/Enigma.SharedUI/Services/`|`AuthService`, `CookieHandler`, `EnigmaAuthenticationStateProvider`, `ThemeService`|JWT en localStorage; tema en `localStorage` (`enigma_theme`)|
+|`src/Enigma.SharedUI/Shared/PanelVivo.razor`|Vida ambiental compartida (login/selección/home)|Pausa con pestaña oculta; `prefers-reduced-motion` la apaga|
+|`src/Enigma.Web/`|Host Blazor WASM|PWA host mínimo; `ServerUri` en `wwwroot/appsettings.json`|
+|`src/Enigma.Maui/`|Host Blazor Hybrid Android/Windows|`MauiProgram` registra `AddEnigmaSharedUI()`; `appsettings.json` como MauiAsset|
+|`src/Enigma.Shared/Dtos/AuthDtos.cs`|`LoginRequest`, `LoginResult`, `LoginBody`, `UsuarioDto`, `InstitucionDto`|Contratos hosts↔api|
+|`tests/Enigma.Tests/`|Unit (`Unit/`) + E2E (`E2E/`) en un solo proyecto|NUnit + Playwright; `stryker-config.json`, `mutation.run.sh`, `coverage.run.sh`|
+|`infra/`|Deploy VPS + Dockerfile de la Api|`deploy/` (compose + Caddy + README) y `api.Dockerfile` (imagen GHCR)|
+|`.github/workflows/`|CI (ver Testing & QA)|`pr-validation`, `deploy`, `deploy-api`, `deploy-web`, `deploy-maui`, `build-server-image`, `dev-db-image`, `apply-rulesets`|
+|`.github/actions/`|Composite actions|`setup-dotnet`, `deploy-api`, `deploy-web`, `deploy-maui`, `sync-db`, `test`|
+|`scripts/`|`validate.sh`, `validate-yaml.sh`, `validate-commit-msg.sh`, `free-ports.sh`|Usados por lefthook/CI|
 
-
-**Domain Folder Structure:** la estructura de carpetas de `Data` (subcarpetas por
-dominio de negocio) se replica en `Controllers` y `Services`:
-
-```
-Server/
-├── Controllers/
-│   └── Auth/            # Enigma.Server.Controllers.<Dominio>
-├── Services/
-│   └── Auth/            # Enigma.Server.Services.<Dominio>
-└── Data/
-    ├── Entities/
-    │   ├── Auth/
-    │   └── Administracion/
-    └── Repositories/
-        └── Auth/
-```
-
-- Cada dominio de negocio (Auth, Administración, …) tiene su carpeta en las
-  tres capas; el namespace C# refleja la ruta (`Enigma.Server.Controllers.Auth`,
-  `Enigma.Server.Services.Auth`, `Enigma.Server.Data.Entities.Auth`).
-- Archivos genéricos o transversales quedan en la raíz de su capa
-  (`GenericEntity`, `GenericRepository`, `EnigmaDbContext`).
-- Interfaz e implementación viven juntas: `IUsuarioService` + `UsuarioService`
-  en `Services/Auth/UsuarioService.cs`, `ICurrentUserService` +
-  `CurrentUserService` en `Services/Auth/CurrentUserService.cs`.
 ---
 
 ## Development Commands
 
-**Build & Run:**
-
 ```bash
-# Build all projects
-dotnet build Enigma.slnx
+# Build
+dotnet build Enigma.slnx                      # lefthook buildea Release con TreatWarningsAsErrors
+dotnet build Enigma.Core.slnf                 # lo que valida pr-validation: sin Maui (sin workloads Android/Windows)
 
-# Run server (API)
-dotnet run --project Server/Enigma.Server.csproj
+# Run (dev): MySQL debe estar arriba primero (ver Dev Environment)
+dotnet watch --project src/Enigma.Api         # :8081, auto-migra + siembra en Development
+dotnet watch --project src/Enigma.Web         # :8080 (devserver WASM)
 
-# Run client (Blazor WASM dev server)
-dotnet run --project Client/Enigma.Client.csproj
+# Tests (un solo proyecto: tests/Enigma.Tests)
+dotnet test                                   # unit siempre; E2E requiere MySQL + browsers Playwright
+dotnet test --collect:"XPlat Code Coverage"   # coverlet
+bash tests/Enigma.Tests/mutation.run.sh       # Stryker (umbrales 100/90/80)
+bash tests/Enigma.Tests/coverage.run.sh
 
-# Run both via solution
-dotnet run --project Enigma.slnx
+# Migrations (usa versión fija MySQL 8.0.42; no abre TCP en design-time)
+dotnet ef migrations add <Name> --project src/Enigma.Api
+dotnet ef database update --project src/Enigma.Api
 ```
 
-**Database:**
-
-```bash
-# Start MySQL dev database
-docker-compose up -d
-
-# Apply EF Core migrations
-dotnet ef migrations add MigrationName --project Server/Enigma.Server.csproj
-dotnet ef database update --project Server/Enigma.Server.csproj
-
-# Auto-migration enabled in development (Program.cs auto-applies migrations)
-```
-
-**Test (none implemented):**
-
-```bash
-# Placeholders only
-dotnet test
-```
-
-**Environment Setup:**
-
-```bash
-# 1. Start MySQL container
-docker-compose up -d
-
-# 2. Set environment variables (Program.cs assembles the connection string)
-#    Server/Program.cs reads: MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE,
-#    MYSQL_USER, MYSQL_PASSWORD (with dev defaults: localhost/3306/enigma_db/
-#    enigma/enigma_dev_password). appsettings.json keeps ${MYSQL_*}
-#    placeholders only as documentation — .NET IConfiguration does NOT
-#    expand ${VAR}.
-
-# 3. Apply migrations
-dotnet ef database update --project Server
-
-# 4. Run server + client separately or via solution
-```
+**Dev Environment:** el devcontainer (compose: `.devcontainer/compose.json` + `Dockerfile`) corre `start-dev.sh`, que levanta el contenedor MySQL (`enigma-dev-db`, imagen `ghcr.io/agustin-gigena/enigma-dev-db`) en la red podman `enigma-dev-net` y lanza Api+Web con `dotnet watch --project src/Enigma.Api` / `src/Enigma.Web`. `MYSQL_*` viene de `.devcontainer/.env` (**no leer/editar archivos `*.env`**). Sin `docker-compose.yml` en la raíz — la BD vive como contenedor aparte, alcanzable por nombre de contenedor. `Program.cs` de la Api arma el connection string desde `MYSQL_HOST/PORT/DATABASE/USER/PASSWORD` con defaults dev `localhost:3306/enigma_db/enigma/enigma_dev_password`; appsettings.json solo documenta los placeholders (IConfiguration NO expande `${VAR}`).
 
 ---
 
-## Code Conventions & Common Patterns
+## Code Conventions & Patterns
 
-**Language & Configuration:**
-
-- Nullable reference types: **enabled** (`<Nullable>enable</Nullable>`)
-- Implicit usings: **enabled** (`<ImplicitUsings>enable</ImplicitUsings>`)
-- Target framework: **net10.0** (all projects)
-- Naming: **Spanish** for entity properties (e.g., `CreadoEn`, `BorradoLogico`, `Usuario`)
-
-**Dependency Injection:**
-
-All DI configured in `Program.cs`:
-
-```csharp
-builder.Services.AddDbContext<EnigmaDbContext>(options =>
-    options.UseMySql(
-        connectionString,
-        new MySqlServerVersion(ServerVersion.AutoDetect(connectionString)),
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 3,
-            maxRetryDelay: TimeSpan.FromSeconds(5),
-            errorNumbersToAdd: null
-        )
-    ));
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-```
-
-**Service Registration Pattern:**
-
-```csharp
-// Singleton
-builder.Services.AddSingleton<IService, Service>();
-
-// Scoped
-builder.Services.AddScoped<IService, Service>();
-
-// Transient
-builder.Services.AddTransient<IService, Service>();
-```
-
-**Repository Pattern:**
-
-Generic repository with soft-delete support:
-
-```csharp
-public abstract class GenericRepository<T> where T : class
-{
-    private readonly EnigmaDbContext _context;
-
-    public GenericRepository(EnigmaDbContext context) { /* DI */ }
-
-    public virtual T? GetById(int id, bool borradoLogico = false) { /* ... */ }
-    public bool SetBorradoLogico(int id, bool borradoLogico) { /* ... */ }
-}
-```
-
-**Entity Base Class:**
-
-All entities inherit from `GenericEntity` for audit tracking:
-
-```csharp
-public abstract class GenericEntity : IDisposable
-{
-    public int Id { get; set; }
-    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
-    public Usuario CreadoPor { get; set; } = null!;
-    public DateTime? ModificadoEn { get; set; }
-    public Usuario? ModificadoPor { get; set; }
-    public DateTime? BorradoEn { get; set; }
-    public Usuario? BorradoPor { get; set; }
-    public bool BorradoLogico { get; set; } = false;
-
-    public virtual void SetCreadoPor(Usuario? usuario = null) { /* audit */ }
-    public virtual void SetModificadoPor(Usuario? usuario = null) { /* audit */ }
-    public virtual void SetBorradoLogico(bool borradoLogico, Usuario? usuario = null) { /* soft-delete */ }
-}
-```
-
-**Soft-Delete Pattern:**
-
-```csharp
-// Mark as deleted (logical delete)
-entity.SetBorradoLogico(true, user);
-
-// Query excludes soft-deleted unless explicitly included
-var entity = repo.GetById(id, borradoLogico: false); // default
-```
-
-**Async/Await Usage:**
-
-Current repositories: **SYNCHRONOUS** (refactor needed):
-
-```csharp
-public virtual T? GetById(int id, bool borradoLogico = false)
-{
-    return _context.Set<T>().Find(id); // Synchronous
-}
-```
-
-Expect async pattern in new code:
-
-```csharp
-public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
-{
-    return await _context.Set<T>().FindAsync(id, ct);
-}
-
-**Error Handling:**
-
-- Entity operations throw `InvalidOperationException` when user context missing
-- Controller pattern: `[ApiController]` for automatic 400 responses
-- DbContext retry on MySQL transient failures (3 retries, 5s delay)
-
-**State Management:**
-
-- **Client**: Blazor component state (`@currentCount`, `@loading`)
-- **Server**: EF Core change tracking via DbContext
-- **Audit fields**: Auto-populated via `CurrentUserService.GetCurrentUser()` (acceso ambiental, sin inyección)
+- **net10.0**, nullable + implicit usings en todos los proyectos. `Enigma.slnx` (solution XML); `Enigma.Core.slnf` excluye Maui. Central Package Management: versiones solo en `Directory.Packages.props`.
+- **Naming en español** (`BorradoLogico`, `CreadoPor`, `ObtenerInstitucionesAsync`) — NO "corregir" a inglés.
+- **Voseo rioplatense imperativo** en UI ("Ingresá", "Elegí").
+- **MySQL provider:** `Microting.EntityFrameworkCore.MySql` (no Pomelo). Api también referencia `Microsoft.AspNetCore.Authentication.JwtBearer`, `Identity.EntityFrameworkCore`, `Scalar.AspNetCore`.
+- **Soft-delete:** `GenericEntity` base — `Id`, `CreadoEn/CreadoPor`, `ModificadoEn/ModificadoPor`, `BorradoEn/BorradoPor`, `BorradoLogico`, con `SetCreadoPor()`, `SetModificadoPor()`, `SetBorradoLogico()`. El usuario se resuelve vía `CurrentUserService.GetCurrentUser()` (estático, ambiental, sin inyección). Toda entidad nueva hereda y llama los setters antes de `SaveChanges()`. Queries filtran `BorradoLogico` salvo inclusión explícita (`GetById(id, borradoLogico: false)`).
+- **Repository:** `GenericRepository<T>` sync (`GetById`, `SetBorradoLogico`); repos de dominio nuevos van async con `CancellationToken` (patrón `UsuarioRepository`).
+- **Interfaz + implementación juntas** en el mismo archivo, namespace refleja dominio (`Enigma.Api.Services.Auth`).
+- **DTOs** en `Shared` (records); Api, Web, Maui y SharedUI referencian `Shared`. UI (páginas, servicios de cliente, assets) vive en `SharedUI`; Web y Maui solo hospedan.
+- **Ambient user:** `CurrentUserService.IsAuthenticated()/GetClaimsPrincipal()/GetCurrentUser()` — AsyncLocal sembrado por `CurrentUserMiddleware`, cacheada por request. `ENIGMA_AUTH_REQUIRED=true` → `GetCurrentUser()` lanza `UnauthorizedAccessException` sin usuario; ausente/false → `null`.
+- **JWT:** issuer `Enigma`, audience `Enigma.Client` (literal intacto por compatibilidad de tokens); secret `ENIGMA_JWT_SECRET` (validado al startup vía `JwtOptions.EnsureValid()`). Identity registra cookies como default scheme — la Api fuerza los tres defaults a JWT para que `[Authorize]` desafíe con bearer.
+- **Errores:** `[ApiController]` (400 automáticos); `InvalidOperationException` cuando falta contexto de usuario; transient MySQL retried por EF.
 
 ---
 
 ## Important Files
 
-| File | Purpose | Key Details |
-|------|---------|-------------|
-| `Enigma.slnx` | Solution file | 3 projects: Client, Server, Shared |
-| `Server/Program.cs` | Server entry point | DI, migration auto-run, OpenAPI |
-| `Server/Data/EnigmaDbContext.cs` | EF Core DbContext | Currently minimal, OnModelCreating empty |
-| `Server/Data/GenericEntity.cs` | Base entity class | Audit fields, soft-delete; audit via static `CurrentUserService` |
-| `Server/Data/Repositories/GenericRepository.cs` | Generic repo | Base sync methods + soft-delete support |
-| `Server/Controllers/GenericController.cs` | Base controller | `[ApiController]`, `[Route("[controller]")]` |
-| `Server/Controllers/Auth/AuthController.cs` | Auth endpoints | `POST auth/login`, `GET auth/me`, `GET auth/instituciones` |
-| `Server/Services/Auth/CurrentUserService.cs` | Current-user ambient access | Static `IsAuthenticated`/`GetClaimsPrincipal`/`GetCurrentUser` + `ICurrentUserService`; `IHttpContextAccessor` + AsyncLocal scope seeded by `CurrentUserMiddleware` |
-| `Server/Services/Auth/UsuarioService.cs` | Auth business logic | `IUsuarioService` + `UsuarioService`: login vía Identity (SignInManager/UserManager) + consultas al `UsuarioRepository` |
-| `docker-compose.yml` | MySQL dev DB | Credentials: enigma/enigma_dev_password |
-| `Server/appsettings.json` | Configuration | Environment variable interpolation |
-
----
-
-## Runtime & Tooling Preferences
-
-**Runtime Requirements:**
-
-- **.NET 10 SDK** (as of 2026-07-07, bleeding edge)
-- **MySQL 8.0** (via Docker Compose for development)
-- **Docker Compose** for local database
-
-**Package Manager:**
-
-- NuGet (native to .NET SDK)
-
-**Tooling:**
-
-- EF Core Tools 10.0.0 (`dotnet ef`)
-- Visual Studio Code extensions: `ms-dotnettools.csharp`, `ms-dotnettools.csdevkit`
-- Devcontainer: `mcr.microsoft.com/dotnet/sdk:10.0` with Oh My Pi feature
-
-**Constraints:**
-
-- No production Dockerfile defined
-- No CI/CD pipeline configured
-- No test projects (xUnit/NUnit/MSTest) — only .gitignore placeholders
-- Server does **not** explicitly reference Shared project (add `ProjectReference` if needed)
+|File|Purpose|
+|---|---|
+|`src/Enigma.Api/Program.cs`|DI completa (Identity, JWT, CORS, RateLimiter, DbContext), pipeline, `public partial class Program` (para `WebApplicationFactory`)|
+|`src/Enigma.Api/Data/EnigmaDbContext.cs`|`IdentityDbContext<Usuario, IdentityRole<int>, int>`; DbSets `Usuarios`, `Instituciones`|
+|`src/Enigma.Api/Controllers/Auth/AuthController.cs`|`POST auth/login`, `POST auth/logout`, `GET auth/me`, `GET auth/instituciones`|
+|`src/Enigma.Api/Services/Auth/CurrentUserService.cs`|Acceso ambiental al usuario actual|
+|`src/Enigma.SharedUI/EnigmaUIServiceCollectionExtensions.cs`|`AddEnigmaSharedUI()`: registra servicios de UI; consumida por Web y Maui|
+|`src/Enigma.Web/Program.cs` + `src/Enigma.Maui/MauiProgram.cs`|Hosts: montan `SharedUI.App` y registran `AddEnigmaSharedUI()`; `HttpClient` base desde `wwwroot/appsettings.json` (`ServerUri`; Maui: MauiAsset)|
+|`tests/Enigma.Tests/E2E/E2EWebFixture.cs`|Fixture E2E: levanta Api (:8081) y Web (:8080) con `dotnet run`, espera `/health` y `/`; requiere MySQL y browsers Playwright|
+|`Directory.Packages.props`|Central Package Management: versiones de todos los paquetes|
+|`infra/deploy/docker-compose.yml` + `infra/deploy/Caddyfile`|Stack de producción de la API en VPS|
+|`infra/api.Dockerfile`|Imagen de la API (build-server-image y Deploy API)|
+|`lefthook.yml`|pre-commit: build Release (warnings=errors) + yamllint strict; commit-msg: conventional; pre-push: build|
+|`.github/workflows/pr-validation.yml`|PR: job `security` (paquetes vulnerables = fail) + job `validate` (actionlint + `dotnet build Enigma.Core.slnf`) + job `test` (suite completa con service MySQL para E2E) + job `format` (aplica formato y commit si hay cambios)|
+|`.github/workflows/deploy.yml`|`workflow_dispatch` con toggles `run_api`/`run_web`/`run_maui` → orquesta los 4 jobs (api/web/maui-android/maui-windows) via composite actions|
+|`.github/workflows/deploy-api.yml`|`workflow_dispatch` → imagen GHCR `enigma-server` (`latest` solo se pisa desde `production`)|
+|`.github/workflows/deploy-web.yml`|`workflow_dispatch` → `dotnet publish src/Enigma.Web` → Cloudflare Pages|
+|`.github/workflows/deploy-maui.yml`|`workflow_dispatch` → APK Android + instalador Windows (Inno Setup) como artifacts|
+|`.github/workflows/build-server-image.yml`|Push a `production` → imagen GHCR `enigma-server` desde `infra/api.Dockerfile` (automation; convive con Deploy API manual)|
+|`.github/actions/{setup-dotnet,deploy-api,deploy-web,deploy-maui,sync-db,test}`|Composite actions reutilizables (CI y deploy; los secrets pasan como env desde el workflow)|
+|`.github/workflows/dev-db-image.yml`|`workflow_dispatch` → imagen dev de MySQL|
+|`.github/workflows/apply-rulesets.yml`|Aplica rulesets desde `main-branches.json`|
 
 ---
 
 ## Testing & QA
 
-**Current State:**
-
-- **NO test projects exist** in repository
-- `.gitignore` contains placeholders for `TestResults/*.trx` and `*.coverage`
-- No xUnit, NUnit, MSTest, Moq, or test host configuration
-- No integration tests for API controllers or DbContext
-- No E2E tests for Blazor client
-
-**Expected Test Structure (when added):**
-
-```
-Enigma/
-├── Server/
-│   ├── Enigma.Server.csproj
-│   └── ...
-├── Client/
-│   ├── Enigma.Client.csproj
-│   └── ...
-├── Shared/
-├── Server.Tests/              # Unit tests for services, repositories
-│   ├── Server.Tests.csproj
-│   ├── Repositories/
-│   └── Services/
-├── Client.Tests/              # bUnit tests for Blazor components
-│   ├── Client.Tests.csproj
-│   └── Pages/
-└── Integration.Tests/         # API integration, DbContext tests
-    ├── Integration.Tests.csproj
-    └── Api/
-```
-
-**Test Commands (when implemented):**
-
-```bash
-# Run all tests
-dotnet test
-
-# Run specific project
-dotnet test Server.Tests/Enigma.Server.Tests.csproj
-
-# With coverage (add coverlet.collector)
-dotnet test --collect:"XPlat Code Coverage"
-```
-
-**QA Expectations:**
-
-- Unit tests for repository methods ( GetById, SetBorradoLogico, soft-delete logic)
-- Service/entity audit tests via the ambient `CurrentUserService` scope (`WebApplicationFactory` E2E, o `InternalsVisibleTo` para `BeginScope`)
-- Controller tests with test server
-- Blazor component tests using bUnit
-- API integration tests using `WebApplicationFactory<Program>`
-- Coverage target: undefined (start with ≥80% for new code)
-
-**Code Quality (not enforced):**
-
-- No analyzers configured (add Roslyn analyzers, StyleCop, or SonarLint)
-- No formatting rules enforced (consider `.editorconfig` with format rules)
-- No pre-commit hooks or CI validation
+- **Un solo proyecto:** `tests/Enigma.Tests` — Unit + E2E juntos (53 unit + 6 E2E).
+- **Unit:** NUnit + `Mvc.Testing`; cubre Auth (login, tokens, usuario borrado, CurrentUserService), Data (GenericEntity/GenericRepository), Options (JwtOptions), Security (HSTS/headers), Config (password policy), Seed (idempotencia) y **Architecture tests** (reglas de dependencia: DTOs solo en `Enigma.Shared`).
+- **E2E:** `LoginFlowTest` — 6 tests Playwright del flujo login/logout/selección/token expirado/ruta protegida. `E2EWebFixture` levanta Api (:8081) y Web (:8080) con `dotnet run --no-build -c <config>` y espera `/health`. Requieren MySQL disponible (`MYSQL_*` en el entorno) y browsers Playwright instalados (`pwsh tests/Enigma.Tests/bin/<config>/net10.0/playwright.ps1 install`; si fallan con `Executable doesn't exist`, es el browser, no el código).
+- **Mutation:** Stryker con umbrales 100/90/80 (`tests/Enigma.Tests/stryker-config.json`) — los tests nuevos deben ser fuertes; evitar assertions débiles.
+- **Quality gates:** pre-commit builda Release con `TreatWarningsAsErrors`; pr-validation falla con paquetes vulnerables (`dotnet list Enigma.slnx package --vulnerable`) y valida `dotnet build Enigma.Core.slnf`.
 
 ---
 
@@ -392,40 +147,18 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ### Protected Configuration and Secrets
 
-- Editing `.editorconfig`, `.gitignore`, `lefthook.yml`, or `.yamllint` requires explicit user confirmation before the edit. This includes overwriting or modifying them through any command or tool.
-- Do not modify those protected files as a side effect of another task. If a requested change requires one of them, pause and ask for confirmation before proceeding.
-- Do not read, write, edit, copy, move, delete, or inspect `*.env` or `*.env.*` files. Treat them as credential-bearing files; the user must handle any required changes directly.
+- Editing `.editorconfig`, `.gitignore`, `lefthook.yml`, or `.yamllint` requires explicit user confirmation before the edit — including overwriting them via any command or tool.
+- Do not modify those protected files as a side effect of another task.
+- Do not read, write, edit, copy, move, delete, or inspect `*.env` or `*.env.*` files (incluye `.devcontainer/.env`). Treat them as credential-bearing; the user handles any required changes directly.
 - Do not expose secrets from environment files or command output in responses, logs, patches, or diagnostics.
 
-1. **Soft-Delete Awareness**: All entities inherit `BorradoLogico` field. Queries must filter unless explicitly including soft-deleted records.
+### Domain Rules
 
-2. **Audit Field Dependencies**: `GenericEntity` resuelve el usuario vía `CurrentUserService.GetCurrentUser()` (estático, sin inyección). New entities **must** call `SetCreadoPor()` / `SetModificadoPor()` before `SaveChanges()`.
-
-3. **Sync-to-Async Migration**: Current repositories are synchronous. New code should use async EF Core methods (`FindAsync`, `SaveChangesAsync`) with `CancellationToken`.
-
-4. **Shared Project Gap**: Shared project is empty. If passing DTOs or enums between Client/Server, add them to `Shared` and update project references:
-
-   ```xml
-   <!-- Server/Enigma.Server.csproj -->
-   <ItemGroup>
-     <ProjectReference Include="..\Shared\Enigma.Shared.csproj" />
-   </ItemGroup>
-   ```
-
-5. **Auth Implementation**: `CurrentUserService` expone acceso ambiental al usuario actual: `IsAuthenticated()`, `GetClaimsPrincipal()`, `GetCurrentUser()` (entidad `Usuario`, cacheada por request vía `Lazy`) — consumibles desde repositorios/controladores/entidades **sin inyectar nada**. El contexto se siembra con `CurrentUserMiddleware` (AsyncLocal) usando `IHttpContextAccessor`. JWT/cookies aún no configurados: todo request es anónimo hasta entonces. `ENIGMA_AUTH_REQUIRED=true` hace que `GetCurrentUser()` lance `UnauthorizedAccessException` cuando no hay usuario (ausente/false → `null`).
-
-6. **Auto-Migration in Dev**: In development, `Program.cs` auto-applies migrations via `db.Database.Migrate()` (called when `ASPNETCORE_ENVIRONMENT=Development`). Production deployments must run `dotnet ef database update` explicitly.
-
-7. **Database Credentials** (dev only):
-   - Host: `localhost` or `${MYSQL_HOST}`
-   - Port: 3306
-   - Database: `enigma_db`
-   - User: `enigma`
-   - Password: `enigma_dev_password`
-   - Root password: `root_password`
-
-8. **Spanish Naming**: Entity properties use Spanish (e.g., `BorradoLogico`, `CreadoPor`). Do **not** "fix" to English — consistency matters.
-
-9. **Bootstrap Version**: Bootstrap 5 (full dist) shipped in `wwwroot/lib/bootstrap/`. Comment in `index.html` notes deprecation plan for v6.
-
-10. **No Production Container**: No Dockerfile for app containers — only MySQL dev database via docker-compose.yml. Production deployment undefined.
+1. **Soft-delete + auditoría:** ver convenciones arriba — ninguna entidad escapa del patrón; queries filtran `BorradoLogico` por defecto.
+2. **Async para código nuevo:** repos nuevos async (`FindAsync`, `SaveChangesAsync`, `CancellationToken`); `GenericRepository` base queda sync por ahora (refactor pendiente, no hacerlo de rebote).
+3. **Multi-institución:** un usuario tiene membresías a varias instituciones (m2m); el flujo login → selección es parte del diseño. El contexto de institución activa aún no tiene persistencia definida — consultar `PRODUCT.md` antes de inventar una.
+4. **Seed dev:** `admin`/`admin123` + "Universidad Nacional del Plata" (Universidad) + "Colegio San Martín" (Secundaria), idempotente, solo Development.
+5. **Design system:** toda UI nueva sigue `DESIGN.md` (pares claro/oscuro, radio 10px, Manrope solo display, acento jade solo interacción, voseo).
+6. **Tests:** E2E nuevo usa el patrón `E2EWebFixture`; correr `dotnet test` local (con MySQL arriba y `MYSQL_*` en el entorno) antes de pushear — lefthook y CI buildan con warnings como errores.
+7. **Branches & deploy:** `development` es la rama de integración principal; `production` dispara la imagen GHCR de la API. Targets de deploy: **API** Docker + Caddy en VPS (manual, `infra/deploy/`; refresco sin SSH = workflow `Deploy API`); **Web** Cloudflare Pages, estático (`deploy-web.yml`, `workflow_dispatch`); **MAUI** APK Android + instalador Windows (Inno Setup) como artifacts de `deploy-maui.yml` (`workflow_dispatch`). Los tres dominios también se despliegan juntos con toggles desde `deploy.yml`. Features salen de `development` (ej. `feat/menusystem`).
+8. **Dependencias de proyecto:** nadie referencia `Enigma.Api` salvo los tests; `Enigma.SharedUI` es la única dueña de UI/assets — los hosts (Web, Maui) no agregan páginas ni estilos propios; versiones de NuGet solo en `Directory.Packages.props`.

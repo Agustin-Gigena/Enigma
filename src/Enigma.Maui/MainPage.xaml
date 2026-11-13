@@ -1,0 +1,12 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Enigma.Maui.MainPage"
+             xmlns:b="clr-namespace:Microsoft.AspNetCore.Components.WebView.Maui;assembly=Microsoft.AspNetCore.Components.WebView.Maui"
+             xmlns:sharedUI="clr-namespace:Enigma.SharedUI;assembly=Enigma.SharedUI"
+             NavigationPage.HasNavigationBar="False">
+    <b:BlazorWebView x:Name="Blazor" HostPage="wwwroot/index.html">
+        <b:BlazorWebView.RootComponents>
+            <b:RootComponent Selector="#app" ComponentType="{x:Type sharedUI:App}" />
+        </b:BlazorWebView.RootComponents>
+    </b:BlazorWebView>
+</ContentPage>
