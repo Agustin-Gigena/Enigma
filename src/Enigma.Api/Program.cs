@@ -45,9 +45,10 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Orígenes del frontend: dev por defecto; en prod, ENIGMA_CORS_ORIGINS (coma-separada,
-// ej: https://enigma.pages.dev).
+// ej: https://enigma.pages.dev). Dev incluye las dos variantes del loopback: según
+// el browser, el origin es localhost:8080 O 127.0.0.1:8080 (CORS matchea exacto).
 string[] corsOrigins = (Environment.GetEnvironmentVariable("ENIGMA_CORS_ORIGINS")
-        ?? "http://localhost:8080,https://localhost:8080")
+        ?? "http://localhost:8080,https://localhost:8080,http://127.0.0.1:8080,https://127.0.0.1:8080")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 if (corsOrigins.Length == 0 && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("ENIGMA_CORS_ORIGINS vacía: no hay orígenes CORS permitidos.");
