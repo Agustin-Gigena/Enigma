@@ -27,7 +27,9 @@ if [ -z "$VERSION" ]; then
 fi
 
 info "Instalando Chromium (npm playwright@$VERSION)"
-# --with-deps instala libs de sistema vía apt (el usuario vscode tiene sudo NOPASSWD).
-npx -y "playwright@$VERSION" install --with-deps chromium
+# SIN --with-deps: las libs de sistema ya van en la imagen (.devcontainer/
+# Dockerfile instala libnss3/libatk/etc. para Chrome headless). El paso apt
+# de --with-deps se colgó 12+ min en este entorno (verificado 2026-11-13).
+npx -y "playwright@$VERSION" install chromium
 
 info "OK: Chromium listo en ~/.cache/ms-playwright"
