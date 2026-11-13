@@ -12,7 +12,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
 {
-    BaseAddress = new Uri(builder.Configuration["ServerUri"] ?? builder.HostEnvironment.BaseAddress)
+    BaseAddress = new Uri(builder.Configuration["ServerUri"] ?? builder.HostEnvironment.BaseAddress),
+    Timeout = TimeSpan.FromSeconds(30)
 });
 
 builder.Services.AddEnigmaSharedUI();

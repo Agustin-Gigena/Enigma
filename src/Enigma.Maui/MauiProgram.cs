@@ -27,7 +27,8 @@ public static class MauiProgram
         builder.Services.AddScoped<CookieHandler>();
         builder.Services.AddScoped(sp => new HttpClient(sp.GetRequiredService<CookieHandler>())
         {
-            BaseAddress = new Uri(config["Api:BaseUrl"] ?? "http://10.0.2.2:8081")
+            BaseAddress = new Uri(config["Api:BaseUrl"] ?? "http://10.0.2.2:8081"),
+            Timeout = TimeSpan.FromSeconds(30)
         });
         builder.Services.AddEnigmaSharedUI();
 

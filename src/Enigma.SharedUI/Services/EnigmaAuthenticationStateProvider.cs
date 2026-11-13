@@ -34,19 +34,23 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
             return _cachedState;
         }
 
-        string json = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_usuario");
-        if (string.IsNullOrEmpty(json))
-        {
-            _cachedState = Anonymous();
-            return _cachedState;
-        }
-
         try
         {
-            HttpResponseMessage response = await _http.GetAsync("auth/me");
+            string json = await _js.InvokeAsync<string>("localStorage.getItem", "enigma_usuario");
+            if (string.IsNullOrEmpty(json))
+            {
+                _cachedState = Anonymous();
+                return _cachedState;
+            }
+
+            // Timeout corto: sin esto, un host inalcanzable (app MAUI en
+            // dispositivo/red sin ruta a la API) cuelga el AuthorizeRouteView
+            // ~100s (timeout default de HttpClient) y la UI queda "autorizando".
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
+            HttpResponseMessage response = await _http.GetAsync("auth/me", cts.Token);
             if (response.IsSuccessStatusCode)
             {
-                UsuarioDto? usuario = await response.Content.ReadFromJsonAsync<UsuarioDto>();
+                UsuarioDto? usuario = await response.Content.ReadFromJsonAsync<UsuarioDto>(cts.Token);
                 if (usuario is not null)
                 {
                     ClaimsPrincipal principal = CreatePrincipal(usuario);
@@ -56,7 +60,10 @@ public class EnigmaAuthenticationStateProvider : AuthenticationStateProvider
                 }
             }
         }
-        catch (HttpRequestException)
+        // Catch amplio apropósito: cualquier fallo (red, TLS bloqueado, JS
+        // interop no disponible en el arranque de Blazor Hybrid) resuelve
+        // anónimo y manda al Login en vez de colgar el Router.
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JSException or InvalidOperationException)
         {
         }
 
