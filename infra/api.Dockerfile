@@ -1,5 +1,5 @@
-# src/Enigma.Api/Dockerfile
-# Build context: repo root (docker build -f src/Enigma.Api/Dockerfile .)
+# infra/api.Dockerfile
+# Build context: repo root (docker build -f infra/api.Dockerfile .)
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src

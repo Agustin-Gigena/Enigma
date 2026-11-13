@@ -1,6 +1,6 @@
 # Deploy de producción (VPS)
 
-Stack: `api` (imagen GHCR `enigma-server` desde `src/Enigma.Api/Dockerfile`) + `db` (MySQL 8.0) + `caddy` (TLS automático). Deploy manual: `docker compose pull && docker compose up -d` desde `deploy/`. Refrescar la imagen sin SSH se puede con el workflow **Deploy API** (dispatch de GitHub Actions); la tag `latest` solo se pisa desde `production`.
+Stack: `api` (imagen GHCR `enigma-server` desde `infra/api.Dockerfile`) + `db` (MySQL 8.0) + `caddy` (TLS automático). Deploy manual: `docker compose pull && docker compose up -d` desde `infra/deploy/`. Refrescar la imagen sin SSH se puede con el workflow **Deploy API** (dispatch de GitHub Actions); la tag `latest` solo se pisa desde `production`.
 
 ## 1. Variables de entorno requeridas
 
@@ -33,7 +33,7 @@ dotnet ef migrations bundle --project src/Enigma.Api -o efbundle
 Copiar `efbundle` a la VPS (a la carpeta `deploy/` o la que se use) y ejecutarlo **dentro de la red del compose**, usando **la imagen de la propia API** (ya trae las deps runtime de .NET; una imagen genérica tipo `debian:bookworm-slim` NO sirve porque al bundle le faltan librerías):
 
 ```bash
-cd deploy
+cd infra/deploy
 chmod +x efbundle
 
 # compose run hereda el `environment` del servicio api (MYSQL_HOST=db, etc.).
@@ -50,7 +50,7 @@ docker compose run --rm --no-deps --entrypoint /efbundle \
 La seed (`admin`/`admin123` + las 2 instituciones de ejemplo, sobrescribibles con `ENIGMA_SEED_ADMIN_USER`/`ENIGMA_SEED_ADMIN_PASSWORD`) es **Development-only**. Como no existe aún un mecanismo de bootstrap de producción (decisión pendiente en `PRODUCT.md`), el bootstrap interim es:
 
 ```bash
-cd deploy
+cd infra/deploy
 
 # 1. Arrancar la api UNA VEZ en Development: auto-migra y siembra
 #    admin/admin123 + las 2 instituciones. Corre en primer plano;

@@ -14,7 +14,7 @@ Enigma/
 │   └── Enigma.Shared/     # Tipos comunes, DTOs (net10.0)
 ├── tests/
 │   └── Enigma.Tests/      # NUnit unit + Playwright E2E (net10.0)
-└── deploy/                # docker-compose + Caddyfile para la API en VPS
+└── infra/                 # Deploy VPS (compose + Caddy) + Dockerfile de la Api
 ```
 
 `Web` y `Maui` montan `SharedUI.App` vía `AddEnigmaSharedUI()`; todos los proyectos consumen `Shared` (DTOs) y solo los hosts referencian `SharedUI`. Nadie referencia `Enigma.Api` salvo los tests. La solution `Enigma.slnx` orquesta los seis proyectos; `Enigma.Core.slnf` excluye Maui para builds de CI/pr-validation.

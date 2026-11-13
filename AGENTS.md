@@ -40,7 +40,7 @@ Web (:8080, WASM) / Maui (Android/Windows)         Api (:8081)                  
 
 |Path|Purpose|Notes|
 |---|---|---|
-|`src/Enigma.Api/`|ASP.NET Core Web API + EF Core|Identity + JWT bearer, migraciones, `Dockerfile` (imagen GHCR)|
+|`src/Enigma.Api/`|ASP.NET Core Web API + EF Core|Identity + JWT bearer, migraciones|
 |`src/Enigma.Api/Controllers/Auth/`|`AuthController`|Único controller de dominio hoy|
 |`src/Enigma.Api/Services/Auth/`|`CurrentUserService`(+`ICurrentUserService`), `CurrentUserMiddleware`, `TokenService`(+`ITokenService`), `UsuarioService`(+`IUsuarioService`), `SecurityHeadersMiddleware`|Interfaz+impl juntas, namespace por dominio (`Enigma.Api.Services.Auth`)|
 |`src/Enigma.Api/Services/Seed/`|`SeedingService`, `SeedLogin`|Seed dev idempotente: `admin`/`admin123` + 2 instituciones con membresía|
@@ -57,7 +57,7 @@ Web (:8080, WASM) / Maui (Android/Windows)         Api (:8081)                  
 |`src/Enigma.Maui/`|Host Blazor Hybrid Android/Windows|`MauiProgram` registra `AddEnigmaSharedUI()`; `appsettings.json` como MauiAsset|
 |`src/Enigma.Shared/Dtos/AuthDtos.cs`|`LoginRequest`, `LoginResult`, `LoginBody`, `UsuarioDto`, `InstitucionDto`|Contratos hosts↔api|
 |`tests/Enigma.Tests/`|Unit (`Unit/`) + E2E (`E2E/`) en un solo proyecto|NUnit + Playwright; `stryker-config.json`, `mutation.run.sh`, `coverage.run.sh`|
-|`deploy/`|`docker-compose.yml` + `Caddyfile`|Deploy manual de la API en VPS (Docker + Caddy)|
+|`infra/`|Deploy VPS + Dockerfile de la Api|`deploy/` (compose + Caddy + README) y `api.Dockerfile` (imagen GHCR)|
 |`.github/workflows/`|CI (ver Testing & QA)|`pr-validation`, `deploy`, `deploy-api`, `deploy-web`, `deploy-maui`, `build-server-image`, `dev-db-image`, `apply-rulesets`|
 |`.github/actions/`|Composite actions|`setup-dotnet`, `deploy-api`, `deploy-web`, `deploy-maui`, `sync-db`, `test`|
 |`scripts/`|`validate.sh`, `validate-yaml.sh`, `validate-commit-msg.sh`, `free-ports.sh`|Usados por lefthook/CI|
@@ -118,14 +118,15 @@ dotnet ef database update --project src/Enigma.Api
 |`src/Enigma.Web/Program.cs` + `src/Enigma.Maui/MauiProgram.cs`|Hosts: montan `SharedUI.App` y registran `AddEnigmaSharedUI()`; `HttpClient` base desde `wwwroot/appsettings.json` (`ServerUri`; Maui: MauiAsset)|
 |`tests/Enigma.Tests/E2E/E2EWebFixture.cs`|Fixture E2E: levanta Api (:8081) y Web (:8080) con `dotnet run`, espera `/health` y `/`; requiere MySQL y browsers Playwright|
 |`Directory.Packages.props`|Central Package Management: versiones de todos los paquetes|
-|`deploy/docker-compose.yml` + `deploy/Caddyfile`|Stack de producción de la API en VPS|
+|`infra/deploy/docker-compose.yml` + `infra/deploy/Caddyfile`|Stack de producción de la API en VPS|
+|`infra/api.Dockerfile`|Imagen de la API (build-server-image y Deploy API)|
 |`lefthook.yml`|pre-commit: build Release (warnings=errors) + yamllint strict; commit-msg: conventional; pre-push: build|
 |`.github/workflows/pr-validation.yml`|PR: job `security` (paquetes vulnerables = fail) + job `validate` (actionlint + `dotnet build Enigma.Core.slnf`) + job `test` (suite completa con service MySQL para E2E) + job `format` (aplica formato y commit si hay cambios)|
 |`.github/workflows/deploy.yml`|`workflow_dispatch` con toggles `run_api`/`run_web`/`run_maui` → orquesta los 4 jobs (api/web/maui-android/maui-windows) via composite actions|
 |`.github/workflows/deploy-api.yml`|`workflow_dispatch` → imagen GHCR `enigma-server` (`latest` solo se pisa desde `production`)|
 |`.github/workflows/deploy-web.yml`|`workflow_dispatch` → `dotnet publish src/Enigma.Web` → Cloudflare Pages|
 |`.github/workflows/deploy-maui.yml`|`workflow_dispatch` → APK Android + instalador Windows (Inno Setup) como artifacts|
-|`.github/workflows/build-server-image.yml`|Push a `production` → imagen GHCR `enigma-server` desde `src/Enigma.Api/Dockerfile` (automation; convive con Deploy API manual)|
+|`.github/workflows/build-server-image.yml`|Push a `production` → imagen GHCR `enigma-server` desde `infra/api.Dockerfile` (automation; convive con Deploy API manual)|
 |`.github/actions/{setup-dotnet,deploy-api,deploy-web,deploy-maui,sync-db,test}`|Composite actions reutilizables (CI y deploy; los secrets pasan como env desde el workflow)|
 |`.github/workflows/dev-db-image.yml`|`workflow_dispatch` → imagen dev de MySQL|
 |`.github/workflows/apply-rulesets.yml`|Aplica rulesets desde `main-branches.json`|
@@ -159,5 +160,5 @@ dotnet ef database update --project src/Enigma.Api
 4. **Seed dev:** `admin`/`admin123` + "Universidad Nacional del Plata" (Universidad) + "Colegio San Martín" (Secundaria), idempotente, solo Development.
 5. **Design system:** toda UI nueva sigue `DESIGN.md` (pares claro/oscuro, radio 10px, Manrope solo display, acento jade solo interacción, voseo).
 6. **Tests:** E2E nuevo usa el patrón `E2EWebFixture`; correr `dotnet test` local (con MySQL arriba y `MYSQL_*` en el entorno) antes de pushear — lefthook y CI buildan con warnings como errores.
-7. **Branches & deploy:** `development` es la rama de integración principal; `production` dispara la imagen GHCR de la API. Targets de deploy: **API** Docker + Caddy en VPS (manual, `deploy/`; refresco sin SSH = workflow `Deploy API`); **Web** Cloudflare Pages, estático (`deploy-web.yml`, `workflow_dispatch`); **MAUI** APK Android + instalador Windows (Inno Setup) como artifacts de `deploy-maui.yml` (`workflow_dispatch`). Los tres dominios también se despliegan juntos con toggles desde `deploy.yml`. Features salen de `development` (ej. `feat/menusystem`).
+7. **Branches & deploy:** `development` es la rama de integración principal; `production` dispara la imagen GHCR de la API. Targets de deploy: **API** Docker + Caddy en VPS (manual, `infra/deploy/`; refresco sin SSH = workflow `Deploy API`); **Web** Cloudflare Pages, estático (`deploy-web.yml`, `workflow_dispatch`); **MAUI** APK Android + instalador Windows (Inno Setup) como artifacts de `deploy-maui.yml` (`workflow_dispatch`). Los tres dominios también se despliegan juntos con toggles desde `deploy.yml`. Features salen de `development` (ej. `feat/menusystem`).
 8. **Dependencias de proyecto:** nadie referencia `Enigma.Api` salvo los tests; `Enigma.SharedUI` es la única dueña de UI/assets — los hosts (Web, Maui) no agregan páginas ni estilos propios; versiones de NuGet solo en `Directory.Packages.props`.

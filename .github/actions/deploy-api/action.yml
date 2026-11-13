@@ -1,6 +1,6 @@
 name: Deploy API
 description: |
-  Construye y pushea la imagen GHCR de la API (src/Enigma.Api/Dockerfile).
+  Construye y pushea la imagen GHCR de la API (infra/api.Dockerfile).
   Reutiliza el mecanismo de tags/login probado en build-server-image.yml.
   GITHUB_TOKEN llega como env desde el workflow (las composite actions no
   acceden al contexto secrets). Regla de seguridad: `latest` SOLO se pisa
@@ -55,7 +55,7 @@ runs:
       uses: docker/build-push-action@v6
       with:
         context: .
-        file: src/Enigma.Api/Dockerfile
+        file: infra/api.Dockerfile
         push: true
         tags: ${{ steps.docker-meta.outputs.tags }}
         labels: ${{ steps.docker-meta.outputs.labels }}
