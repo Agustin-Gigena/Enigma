@@ -61,12 +61,15 @@ builder.Services.AddCors(options =>
 // Build the MySQL connection string from environment variables (with dev defaults).
 // NOTE: ${VAR} placeholders in appsettings.json are NOT expanded by .NET
 // IConfiguration (EnvSubst is not native). We assemble the string here.
+// Aiven (MySQL gestionado) exige TLS: en producción, MYSQL_SSL_MODE=REQUIRED.
+string sslMode = Environment.GetEnvironmentVariable("MYSQL_SSL_MODE") ?? "";
 string connectionString = $"Server={Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost"};"
     + $"Port={Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306"};"
     + $"Database={Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "enigma_db"};"
     + $"User Id={Environment.GetEnvironmentVariable("MYSQL_USER") ?? "enigma"};"
     + $"Password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "enigma_dev_password"};"
-    + $"ConnectionTimeout=3;";
+    + (sslMode == "" ? "" : $"SslMode={sslMode};")
+    + "ConnectionTimeout=3;";
 
 // Configure DbContext
 // Use a fixed MySQL 8.0 server version (no AutoDetect) so design-time EF

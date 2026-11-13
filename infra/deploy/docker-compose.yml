@@ -1,33 +1,24 @@
-# Stack de producción en la VPS: Api (imagen GHCR) + MySQL + Caddy (TLS).
-# Deploy manual por ahora: docker compose pull && docker compose up -d
+# Stack de producción en la VPS: Api (imagen GHCR) contra Aiven (MySQL
+# gestionado externo) + Caddy (TLS). Deploy manual por ahora:
+# docker compose pull && docker compose up -d
+# La DB NO vive acá: MYSQL_HOST/PORT apuntan al servicio Aiven (exige TLS:
+# MYSQL_SSL_MODE=REQUIRED).
 services:
   api:
     image: ghcr.io/agustin-gigena/enigma-server:latest
     restart: unless-stopped
     environment:
-      MYSQL_HOST: db
-      MYSQL_PORT: "3306"
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_SSL_MODE: ${MYSQL_SSL_MODE:-REQUIRED}
       ENIGMA_JWT_SECRET: ${ENIGMA_JWT_SECRET}
       ENIGMA_AUTH_REQUIRED: "true"
       ENIGMA_CORS_ORIGINS: ${ENIGMA_CORS_ORIGINS}
-    depends_on:
-      - db
     expose:
       - "8081"
-
-  db:
-    image: mysql:8.0
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    volumes:
-      - db-data:/var/lib/mysql
 
   caddy:
     image: caddy:2-alpine
@@ -43,6 +34,5 @@ services:
       - api
 
 volumes:
-  db-data:
   caddy-data:
   caddy-config:

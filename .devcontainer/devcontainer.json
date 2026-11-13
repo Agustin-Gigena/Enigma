@@ -19,6 +19,7 @@
   "postCreateCommand": {
     "Android SDK (maui-android)": "bash .devcontainer/setup.sh",
     "Install agent-browser": "npm install -g agent-browser && agent-browser install --with-deps",
+    "Install Playwright browsers": "bash .devcontainer/install-playwright.sh",
     "Configure git identity": "bash .devcontainer/configure-git-identity.sh",
     "Install git-extended helpers": "sudo install -m 0755 .agents/scripts/pm_detect.sh /usr/local/git-extended/pm_detect.sh && sudo install -m 0755 .agents/scripts/gcr.sh .agents/scripts/gwr.sh /usr/local/git-extended/functions/"
   },
